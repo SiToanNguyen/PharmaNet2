@@ -36,4 +36,6 @@ This project is for viewing only. If you'd like to make changes, feel free to cl
 
 ## License
 
-MIT License - see the [LICENSE](LICENSE) file for more info.
+This project is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License.  
+You are free to use, share, and modify the code, but **not for commercial purposes**.  
+See the [LICENSE](LICENSE) file for more details.
