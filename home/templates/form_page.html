@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="form-container">
+    <h2>{{ title }}</h2>  <!-- Dynamic title -->
+    <form method="POST" class="global-form">
+      {% csrf_token %}
+      
+      <fieldset>
+        <legend>{{ form_title }}</legend>  <!-- Dynamic form legend/title -->
+        
+        {{ form.as_p }}
+        
+      </fieldset>
+
+      <div class="form-buttons">
+        <button type="submit" class="submit-btn">Submit</button>
+        <!-- Cancel button goes back one level using JavaScript -->
+        <a href="javascript:history.back()" class="cancel-btn">Cancel</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

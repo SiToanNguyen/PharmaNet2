@@ -1,0 +1,23 @@
+{
+  "invoice_number": "INV-2025-001",
+  "manufacturer": "Pfizer",
+  "purchase_date": "2025-04-04",
+  "remarks": "Urgent order for new stock",
+  "total_cost": 450.00,
+  "products": [
+    {
+      "product": "OTC Product Pfizer 1",
+      "batch_number": "PFZ-OTC-001",
+      "quantity": 10,
+      "purchase_price": 5.00,
+      "expiry_date": "2026-04-30"
+    },
+    {
+      "product": "Prescription Only Product Pfizer 1",
+      "batch_number": "PFZ-RX-045",
+      "quantity": 15,
+      "purchase_price": 12.00,
+      "expiry_date": "2026-06-15"
+    }
+  ]
+}

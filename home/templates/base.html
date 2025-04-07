@@ -1,0 +1,73 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacy Management System</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="icon" href="{% static 'images/pharmacy-icon.svg' %}" type="image/svg+xml">
+</head>
+<body>
+    <div class="container">
+        <!-- Vertical Navigation Menu -->
+        <nav class="sidebar">
+            <ul>
+                <li><a>Hello {{ request.user.first_name }}!</a></li>
+                <li><a href="{% url 'homepage' %}">Home</a></li>
+                <li><a href="{% url 'user_list' %}">Users</a></li>
+                <li><a href="{% url 'manufacturer_list' %}">Manufacturers</a></li>
+                <li><a href="{% url 'category_list' %}">Categories</a></li>
+                <li><a href="{% url 'product_list' %}">Products</a></li>
+                <li><a href="{% url 'inventory_list' %}">Inventory</a></li>
+                <li><a href="{% url 'purchase_transaction_list' %}">Purchase Transactions</a></li>
+                <li><a href="#">Sales</a></li>
+                <li><a href="#">Reports</a></li>
+                <li><a href="#">Settings</a></li>
+                <li><a href="{% url 'activity_log_list' %}">Activity Logs</a></li>
+                <li><a href="#" onclick="logout(event)">Logout</a></li>
+            </ul>
+        </nav>
+        
+        <!-- Logout Form (hidden) -->
+        <form id="logout-form" method="post" action="{% url 'logout' %}" style="display: none;">
+            {% csrf_token %}
+        </form>
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <!-- Header for all pages -->
+            <header>
+                <h1>Welcome to the Pharmacy Management System!</h1>
+            </header>
+            
+            <!-- Messages -->
+            {% if messages %}
+                <ul class="messages">
+                    {% for message in messages %}
+                        <li class="{{ message.tags }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            
+            <!-- Content block -->
+            {% block content %}
+            <!-- Content will be inserted here -->
+            {% endblock %}
+
+            <!-- Footer for all pages -->
+            <footer>
+                <p>© 2025 Pharmacy Management System</p>
+            </footer>
+        </div>        
+    </div>
+
+    <script>
+        function logout(event) {
+            event.preventDefault();
+            document.getElementById('logout-form').submit();
+        }
+    </script>
+</body>
+</html>

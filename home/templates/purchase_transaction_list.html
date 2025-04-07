@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="list-container">
+        <!-- Button to Add New Purchase Transaction -->
+        <a href="{% url 'add_purchase_transaction' %}" class="add-item-btn top-left-btn">Add New Purchase Transaction</a>
+
+        <input type="file" id="scanInput" style="display: none;" accept=".json" />
+        <button class="submit-btn" onclick="document.getElementById('scanInput').click();">Scan</button>
+
+        <h2 class="list-title">Purchase Transactions</h2>
+
+        <!-- Search Form -->
+        <form method="GET" class="search-container">
+            <input type="text" name="invoice_number" placeholder="Search by Invoice Number" value="{{ invoice_number_query }}">
+            <input type="text" name="manufacturer_name" placeholder="Search by Manufacturer Name" value="{{ manufacturer_name_query }}">
+            <button type="submit">Search</button>
+        </form>
+
+        <table class="global-table">
+            <thead>
+                <tr>
+                    <th>Invoice Number</th>
+                    <th>Manufacturer</th>
+                    <th>Purchase Date</th>
+                    <th>Total Cost (€)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transaction in purchase_transactions %}
+                    <tr>
+                        <td>{{ transaction.invoice_number }}</td>
+                        <td>{{ transaction.manufacturer.name }}</td>
+                        <td>{{ transaction.purchase_date }}</td>
+                        <td>{{ transaction.total_cost }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        document.getElementById('scanInput').addEventListener('change', function () {
+          const file = this.files[0];
+          if (!file) return;
+      
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            try {
+              const data = JSON.parse(e.target.result);
+              
+              fetch("{% url 'scan_purchase_transaction' %}", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify(data)
+              })
+              .then(response => response.json())
+              .then(result => {
+                if (result.success) {
+                  alert("Purchase transaction saved!");
+                  location.reload();
+                } else {
+                  alert("Error: " + result.message);
+                }
+              });
+            } catch (err) {
+              alert("Invalid JSON format.");
+            }
+          };
+          reader.readAsText(file);
+        });
+    </script>
+{% endblock %}

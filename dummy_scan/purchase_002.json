@@ -1,0 +1,45 @@
+{
+    "invoice_number": "INV-2025-002",
+    "manufacturer": "Novartis",
+    "purchase_date": "2025-04-04",
+    "remarks": "Monthly stock refill",
+    "total_cost": 1280.00,
+    "products": [
+      {
+        "product": "OTC Product Novartis 1",
+        "batch_number": "NOV-OTC-011",
+        "quantity": 20,
+        "purchase_price": 4.00,
+        "expiry_date": "2026-03-15"
+      },
+      {
+        "product": "Prescription Only Product Novartis 1",
+        "batch_number": "NOV-RX-101",
+        "quantity": 30,
+        "purchase_price": 10.00,
+        "expiry_date": "2026-09-10"
+      },
+      {
+        "product": "Pharmacy Only Product Novartis 2",
+        "batch_number": "NOV-P-302",
+        "quantity": 25,
+        "purchase_price": 7.50,
+        "expiry_date": "2026-12-20"
+      },
+      {
+        "product": "Controlled Substance Product Novartis 1",
+        "batch_number": "NOV-CS-501",
+        "quantity": 10,
+        "purchase_price": 40.00,
+        "expiry_date": "2025-12-31"
+      },
+      {
+        "product": "OTC Product Novartis 3",
+        "batch_number": "NOV-OTC-033",
+        "quantity": 50,
+        "purchase_price": 3.00,
+        "expiry_date": "2026-02-28"
+      }
+    ]
+  }
+  

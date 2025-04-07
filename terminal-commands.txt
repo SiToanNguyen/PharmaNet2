@@ -1,0 +1,7 @@
+python manage.py runserver
+python dummy_data.py
+
+python manage.py migrate
+
+.\env\Scripts\activate
+deactivate

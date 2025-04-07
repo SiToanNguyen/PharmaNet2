@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="form-container">
+    <h2>Add Purchase Transaction</h2>
+
+    <form method="POST" class="global-form">
+      {% csrf_token %}
+
+      <fieldset>
+        <legend>Purchase Details</legend>
+        <p>
+          <label for="{{ form.invoice_number.id_for_label }}">Invoice Number:</label>
+          {{ form.invoice_number }}
+        </p>
+        <p>
+          <label for="{{ form.manufacturer.id_for_label }}">Manufacturer:</label>
+          <select id="manufacturer_id" name="manufacturer" class="manufacturer-select">
+            <option value="">Select a manufacturer</option>
+            {% for manufacturer in manufacturers %}
+              <option value="{{ manufacturer.id }}">{{ manufacturer.name }}</option>
+            {% endfor %}
+          </select>        
+        </p>
+
+        <p>
+          <label for="{{ form.purchase_date.id_for_label }}">Purchase Date:</label>
+          {{ form.purchase_date }}
+        </p>
+
+        <p>
+          <label for="{{ form.remarks.id_for_label }}">Remarks:</label>
+          {{ form.remarks }}
+        </p>
+
+        <p>
+          <label for="{{ form.total_cost.id_for_label }}">Total Cost (€):</label>
+          {{ form.total_cost }}
+        </p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Purchased Products</legend>
+
+        {{ formset.management_form }}
+
+        <table id="productsTable">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Batch Number</th>
+              <th>Quantity</th>
+              <th>Purchase Price (€)</th>
+              <th>Expiry Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for product_form in formset %}
+            <tr class="productRow">
+              <td><p>{{ product_form.product.as_widget }}</p></td>
+              <td><p>{{ product_form.batch_number }}</p></td>
+              <td><p>{{ product_form.quantity }}</p></td>
+              <td><p>{{ product_form.purchase_price }}</p></td>
+              <td><p>{{ product_form.expiry_date }}</p></td>
+              <td>
+                  <p>
+                      <button type="button" class="cancel-btn" onclick="removeRow(this)">Remove</button>
+                  </p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <!-- Hidden empty form template for cloning -->
+        <div id="empty-form" style="display: none;">
+          <table>
+            <tr class="productRow">
+              <td><p>{{ formset.empty_form.product.as_widget|safe }}</p></td>
+              <td><p>{{ formset.empty_form.batch_number.as_widget }}</p></td>
+              <td><p>{{ formset.empty_form.quantity.as_widget }}</p></td>
+              <td><p>{{ formset.empty_form.purchase_price.as_widget }}</p></td>
+              <td><p>{{ formset.empty_form.expiry_date.as_widget }}</p></td>
+              <td>
+                <button type="button" class="cancel-btn" onclick="removeRow(this)">Remove</button>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <button type="button" id="addRowBtn" class="submit-btn" onclick="addRow()">Add Product</button>
+      </fieldset>
+
+      <div class="form-buttons">
+        <button type="submit" class="submit-btn">Submit</button>
+        <a href="javascript:history.back()" class="cancel-btn">Cancel</a>
+      </div>
+    </form>
+
+    {% if form.errors or formset.errors %}
+      <div class="error-messages">
+        <ul>
+          {% for field in form %}
+            {% for error in field.errors %}
+              <li>{{ field.label }}: {{ error }}</li>
+            {% endfor %}
+          {% endfor %}
+          {% for form in formset %}
+            {% for field in form %}
+              {% for error in field.errors %}
+                <li>{{ field.label }}: {{ error }}</li>
+              {% endfor %}
+            {% endfor %}
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+
+  <script>
+    function addRow() {
+      const totalFormsInput = document.querySelector("input[name$='-TOTAL_FORMS']");
+      if (!totalFormsInput) {
+        alert("Error: Management form (TOTAL_FORMS) not found in DOM.");
+        return;
+      }
+
+      const formIndex = parseInt(totalFormsInput.value);
+      const tableBody = document.getElementById("productsTable").querySelector("tbody");
+      const emptyFormDiv = document.getElementById("empty-form");
+
+      if (!emptyFormDiv) {
+        alert("Error: Empty form template not found.");
+        return;
+      }
+
+      let templateRow = emptyFormDiv.querySelector(".productRow").cloneNode(true);
+
+      templateRow.querySelectorAll("input, select, textarea").forEach((el) => {
+        if (el.name) el.name = el.name.replace(/__prefix__/, formIndex);
+        if (el.id) el.id = el.id.replace(/__prefix__/, formIndex);
+        el.value = "";
+      });
+
+      tableBody.appendChild(templateRow);
+      totalFormsInput.value = formIndex + 1;
+    }
+
+    $(document).ready(function () {
+      $(".manufacturer-select").change(function () {  // Use the correct selector
+          var manufacturerId = $(this).val();
+          var url = "{% url 'get_products_by_manufacturer' %}";
+
+          console.log("Making AJAX request to: " + url);  // Debugging line
+
+          $.ajax({
+              url: url,
+              data: {
+                manufacturer_id: manufacturerId,
+                csrfmiddlewaretoken: '{{ csrf_token }}'  // Ensure CSRF token is passed
+              },
+              success: function (data) {
+                  console.log("Products received:", data); // Debugging log
+                  $("select[name$='-product']").each(function () {
+                      var dropdown = $(this);
+                      dropdown.empty().append('<option value="">Select a product</option>');
+
+                      $.each(data, function (index, product) {
+                          dropdown.append(`<option value="${product.id}">${product.name}</option>`);
+                      });
+                  });
+              },
+              error: function (xhr, status, error) {
+                  console.error("AJAX Error:", error);
+              }
+          });
+      });
+    });
+
+    function removeRow(button) {
+      let row = button.closest("tr");
+      row.remove();
+      updateTotalForms();
+    }
+
+    function updateTotalForms() {
+        let totalForms = document.getElementById("id_form-TOTAL_FORMS");
+        totalForms.value = document.querySelectorAll(".productRow").length;
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      document.querySelectorAll("input[name$='expiry_date']").forEach(function (input) {
+          input.setAttribute("type", "date");
+      });
+    });
+  </script>
+{% endblock %}
