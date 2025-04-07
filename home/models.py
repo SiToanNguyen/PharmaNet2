@@ -72,7 +72,9 @@ class Inventory(models.Model):
 
     class Meta:
         ordering = ['-updated_at']
-        unique_together = ('product', 'expiry_date')  # Prevent duplicate entries for the same product and expiry date
+        constraints = [
+            models.UniqueConstraint(fields=['product', 'expiry_date'], name='unique_product_expiry')
+        ]
 
     def __str__(self):
         return f"{self.product.name} - {self.quantity} units - Expires on {self.expiry_date}"

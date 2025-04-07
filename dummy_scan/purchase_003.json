@@ -1,0 +1,31 @@
+{
+    "invoice_number": "INV-2025-003",
+    "manufacturer": "Pfizer",
+    "purchase_date": "2025-04-07",
+    "total_cost": 480.00,
+    "remarks": "Pfizer order - April",
+    "products": [
+      {
+        "product": "OTC Product Pfizer 1",
+        "batch_number": "OTC-001",
+        "quantity": 30,
+        "purchase_price": 5.00,
+        "expiry_date": "2026-06-01"
+      },
+      {
+        "product": "Prescription Only Product Pfizer 2",
+        "batch_number": "RX-222",
+        "quantity": 20,
+        "purchase_price": 12.00,
+        "expiry_date": "2025-12-31"
+      },
+      {
+        "product": "Pharmacy Only Product Pfizer 3",
+        "batch_number": "PH-003",
+        "quantity": 10,
+        "purchase_price": 15.00,
+        "expiry_date": "2026-03-15"
+      }
+    ]
+  }
+  

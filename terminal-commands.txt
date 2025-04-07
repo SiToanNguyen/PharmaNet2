@@ -5,3 +5,7 @@ python manage.py migrate
 
 .\env\Scripts\activate
 deactivate
+
+git add .
+git commit -m "Message"
+git push

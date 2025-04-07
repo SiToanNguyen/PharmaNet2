@@ -9,7 +9,7 @@ from django.forms import modelformset_factory
 from django.utils import timezone
 from .models import Manufacturer, ActivityLog, Category, Product, Inventory, PurchaseTransaction, PurchasedProduct
 from .forms import UserCreationForm, UserEditForm, ManufacturerForm, CategoryForm, ProductForm, PurchaseTransactionForm, PurchasedProductForm
-from .utils import delete_object, add_object, edit_object, list_objects
+from .utils import *
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.utils.dateparse import parse_date
@@ -241,6 +241,23 @@ def add_purchase_transaction(request):
                     purchase_transaction.total_cost += purchased_product.total_price or 0  # Handle None values safely
 
             purchase_transaction.save()
+
+            for purchased_product in purchase_transaction.purchased_products.all():
+                inventory_item, created = Inventory.objects.get_or_create(
+                    product=purchased_product.product,
+                    expiry_date=purchased_product.expiry_date,
+                    defaults={'quantity': purchased_product.quantity}
+                )
+                if not created:
+                    inventory_item.quantity += purchased_product.quantity
+                    inventory_item.save()
+
+            log_activity(
+                user=request.user,
+                action="added purchase transaction",
+                additional_info=f"Invoice #{purchase_transaction.invoice_number}, Manufacturer: {purchase_transaction.manufacturer.name}"
+            )
+                    
             return redirect('purchase_transaction_list')
         else:
             # Set correct queryset for product fields in formset
@@ -321,6 +338,24 @@ def scan_purchase_transaction(request):
                 quantity=item["quantity"],
                 purchase_price=item["purchase_price"],
                 expiry_date=parse_date(item["expiry_date"])
+            )
+
+        # Update inventory after saving all purchased products
+        for purchased_product in transaction.purchased_products.all():
+            inventory_item, created = Inventory.objects.get_or_create(
+                product=purchased_product.product,
+                expiry_date=purchased_product.expiry_date,
+                defaults={'quantity': purchased_product.quantity}
+            )
+            if not created:
+                inventory_item.quantity += purchased_product.quantity
+                inventory_item.save()
+
+        if request.user.is_authenticated:
+            log_activity(
+                user=request.user,
+                action="scanned purchase transaction",
+                additional_info=f"Invoice #{transaction.invoice_number}, Manufacturer: {manufacturer.name}"
             )
 
         return JsonResponse({"success": True})
