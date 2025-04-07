@@ -43,3 +43,7 @@ Thumbs.db
 
 # dotenv environment variable files
 .env
+
+# Scripts
+create_admin.py
+dummy_data.py
