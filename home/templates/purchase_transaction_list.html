@@ -3,10 +3,10 @@
 {% block content %}
     <div class="list-container">
         <!-- Button to Add New Purchase Transaction -->
-        <a href="{% url 'add_purchase_transaction' %}" class="add-item-btn top-left-btn">Add New Purchase Transaction</a>
+        <a href="{% url 'add_purchase_transaction' %}" class="add-item-btn top-left-btn">Add New Transaction</a>
 
         <input type="file" id="scanInput" style="display: none;" accept=".json" />
-        <button class="submit-btn" onclick="document.getElementById('scanInput').click();">Scan</button>
+        <button class="add-item-btn top-left-btn" onclick="document.getElementById('scanInput').click();">Scan</button>
 
         <h2 class="list-title">Purchase Transactions</h2>
 
@@ -24,16 +24,50 @@
                     <th>Manufacturer</th>
                     <th>Purchase Date</th>
                     <th>Total Cost (€)</th>
+                    <th>Product List</th>
                 </tr>
             </thead>
             <tbody>
                 {% for transaction in purchase_transactions %}
                     <tr>
-                        <td>{{ transaction.invoice_number }}</td>
-                        <td>{{ transaction.manufacturer.name }}</td>
-                        <td>{{ transaction.purchase_date }}</td>
-                        <td>{{ transaction.total_cost }}</td>
+                      <td>{{ transaction.invoice_number }}</td>
+                      <td>{{ transaction.manufacturer.name }}</td>
+                      <td>{{ transaction.purchase_date }}</td>
+                      <td>{{ transaction.total_cost }}</td>
+                      <td><button class="toggle-btn" onclick="toggleProducts('products-{{ transaction.id }}')">Show/Hide Products</button></td>
                     </tr>
+                    <tr id="products-{{ transaction.id }}" style="display: none;">
+                      <td colspan="5">
+                        <div style="padding: 10px;">
+                          {% if transaction.purchased_products.all %}
+                            <table class="nested-table" style="width: 100%;">
+                              <thead>
+                                <tr>
+                                  <th>Product</th>
+                                  <th>Quantity</th>
+                                  <th>Purchase Price (€)</th>
+                                  <th>Batch Number</th>
+                                  <th>Expiry Date</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% for product in transaction.purchased_products.all %}
+                                  <tr>
+                                    <td>{{ product.product.name }}</td>
+                                    <td>{{ product.quantity }}</td>
+                                    <td>{{ product.purchase_price }}</td>
+                                    <td>{{ product.batch_number }}</td>
+                                    <td>{{ product.expiry_date }}</td>
+                                  </tr>
+                                {% endfor %}
+                              </tbody>
+                            </table>                          
+                          {% else %}
+                            <p>No products found.</p>
+                          {% endif %}
+                        </div>
+                      </td>
+                    </tr>                    
                 {% endfor %}
             </tbody>
         </table>
@@ -72,5 +106,35 @@
           };
           reader.readAsText(file);
         });
+
+      function toggleProducts(id) {
+        const row = document.getElementById(id);
+        if (row) {
+          row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+        }
+      }
     </script>
+
+    <style>
+      /* Styles for Show/Hide buttons of Product List on the Transaction list */
+      .toggle-btn {
+          background-color: #28a745; /* Green */
+          color: white;
+          padding: 6px 12px;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 14px;
+          transition: background-color 0.3s ease;
+      }
+
+      .toggle-btn:hover {
+          background-color: #218838; /* Darker green on hover */
+      }
+
+      .toggle-btn:focus {
+          outline: none;
+          box-shadow: 0 0 3px rgba(40, 167, 69, 0.5);
+      }
+    </style>
 {% endblock %}

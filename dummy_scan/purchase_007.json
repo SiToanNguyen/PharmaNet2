@@ -1,0 +1,38 @@
+{
+    "invoice_number": "INV-20250407-SOON",
+    "manufacturer": "Pfizer",
+    "purchase_date": "2025-04-07",
+    "total_cost": 200.00,
+    "remarks": "Expiring within 7 and 30 days",
+    "products": [
+      {
+        "product": "OTC Product Pfizer 1",
+        "batch_number": "EXP-001",
+        "quantity": 8,
+        "purchase_price": 4.00,
+        "expiry_date": "2025-04-10"
+      },
+      {
+        "product": "Pharmacy Only Product Pfizer 3",
+        "batch_number": "EXP-002",
+        "quantity": 5,
+        "purchase_price": 6.50,
+        "expiry_date": "2025-04-12"
+      },
+      {
+        "product": "Prescription Only Product Pfizer 2",
+        "batch_number": "EXP-003",
+        "quantity": 12,
+        "purchase_price": 7.00,
+        "expiry_date": "2025-04-25"
+      },
+      {
+        "product": "OTC Product Pfizer 3",
+        "batch_number": "EXP-004",
+        "quantity": 10,
+        "purchase_price": 5.00,
+        "expiry_date": "2025-05-01"
+      }
+    ]
+  }
+  

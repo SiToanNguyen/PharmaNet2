@@ -227,7 +227,7 @@ h2 {
 
 /* Button Styles for Lists */
 .add-item-btn {
-    display: block;
+    display: inline-block;
     width: 200px;
     padding: 12px;
     font-size: 1.2rem;

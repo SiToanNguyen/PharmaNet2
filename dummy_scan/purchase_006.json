@@ -1,0 +1,38 @@
+{
+    "invoice_number": "INV-20250407-EX",
+    "manufacturer": "Pfizer",
+    "purchase_date": "2025-04-07",
+    "total_cost": 150.00,
+    "remarks": "Includes expired and expiring products for testing",
+    "products": [
+      {
+        "product": "OTC Product Pfizer 1",
+        "batch_number": "EX123",
+        "quantity": 5,
+        "purchase_price": 2.00,
+        "expiry_date": "2025-03-01"
+      },
+      {
+        "product": "Prescription Only Product Pfizer 2",
+        "batch_number": "EX124",
+        "quantity": 3,
+        "purchase_price": 15.00,
+        "expiry_date": "2025-04-28"
+      },
+      {
+        "product": "Pharmacy Only Product Pfizer 2",
+        "batch_number": "EX125",
+        "quantity": 10,
+        "purchase_price": 5.00,
+        "expiry_date": "2025-03-15"
+      },
+      {
+        "product": "OTC Product Pfizer 2",
+        "batch_number": "EX126",
+        "quantity": 7,
+        "purchase_price": 3.50,
+        "expiry_date": "2025-05-01"
+      }
+    ]
+  }
+  

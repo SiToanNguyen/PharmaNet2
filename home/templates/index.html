@@ -1,7 +1,59 @@
 {% extends 'base.html' %}
 
+{% block extra_css %}
+<style>    
+  /* Ensure color styles are applied to td elements within specific rows */
+  .inventory-overview .global-table tr.expired td {
+    color: red !important;
+  }
+  
+  .inventory-overview .global-table tr.critical td {
+    color: yellow !important;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-    <div class="container">
-        <p>Your pharmacy management made easy and efficient!</p>
-    </div>
+  <div class="container">
+    <p>Your pharmacy management made easy and efficient!</p>
+  </div>
+  <div class="inventory-overview">
+    <h2>Expiring Products</h2>
+    <table class="global-table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Quantity</th>
+          <th>Expiry Date</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in inventory %}
+          {% if item.expiry_date < today %}
+              <tr class="expired">
+                  <td>{{ item.product.name }}</td>
+                  <td>{{ item.quantity }}</td>
+                  <td>{{ item.expiry_date }}</td>
+                  <td>Expired</td>
+              </tr>
+          {% elif item.days_diff <= 7 %}
+              <tr class="critical">
+                  <td>{{ item.product.name }}</td>
+                  <td>{{ item.quantity }}</td>
+                  <td>{{ item.expiry_date }}</td>
+                  <td>Expiring in {{ item.days_diff }} days</td>
+              </tr>
+          {% elif item.days_diff <= 30 %}
+              <tr>
+                  <td>{{ item.product.name }}</td>
+                  <td>{{ item.quantity }}</td>
+                  <td>{{ item.expiry_date }}</td>
+                  <td>Expiring in {{ item.days_diff }} days</td>
+              </tr>
+          {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 {% endblock %}

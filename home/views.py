@@ -14,10 +14,23 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.utils.dateparse import parse_date
 from django.utils.timezone import now
+from datetime import date, timedelta
 
 # Homepage
 def homepage(request):
-    return render(request, 'index.html')
+    today = date.today()
+
+    inventory = Inventory.objects.select_related('product').order_by('expiry_date')
+
+    # Add days_diff to each item in inventory
+    for item in inventory:
+        days_until_expiry = (item.expiry_date - today).days  # Calculate days difference
+        item.days_diff = days_until_expiry  # Add it to the item object
+
+    return render(request, 'index.html', {
+        'inventory': inventory,
+        'today': today,
+    })
 
 # Activity Log
 def activity_log_list(request):
@@ -198,7 +211,8 @@ def purchase_transaction_list(request):
     manufacturer_name_query = request.GET.get('manufacturer_name', '').strip()
     
     # Filter purchase transactions based on search parameters
-    purchase_transactions = PurchaseTransaction.objects.all()
+    # purchase_transactions = PurchaseTransaction.objects.all()
+    purchase_transactions = PurchaseTransaction.objects.prefetch_related('purchased_products').all()
 
     if invoice_number_query:
         purchase_transactions = purchase_transactions.filter(invoice_number__icontains=invoice_number_query)
