@@ -1,6 +1,7 @@
 python manage.py runserver
 python dummy_data.py
 
+python manage.py makemigrations
 python manage.py migrate
 
 .\env\Scripts\activate
@@ -8,4 +9,4 @@ deactivate
 
 git add .
 git commit -m "Message"
-git push
+git push origin main
