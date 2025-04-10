@@ -8,7 +8,7 @@
         <input type="file" id="scanInput" style="display: none;" accept=".json" />
         <button class="add-item-btn top-left-btn" onclick="document.getElementById('scanInput').click();">Scan</button>
 
-        <h2 class="list-title">Purchase Transactions</h2>
+        <h2 class="list-title">Purchase Transaction List</h2>
 
         <!-- Search Form -->
         <form method="GET" class="search-container">
@@ -25,6 +25,7 @@
                     <th>Purchase Date</th>
                     <th>Total Cost (€)</th>
                     <th>Product List</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -35,6 +36,12 @@
                       <td>{{ transaction.purchase_date }}</td>
                       <td>{{ transaction.total_cost }}</td>
                       <td><button class="toggle-btn" onclick="toggleProducts('products-{{ transaction.id }}')">Show/Hide Products</button></td>
+                      <td>
+                        <form method="POST" action="{% url 'delete_purchase_transaction' transaction.id %}" onsubmit="return confirm('Are you sure you want to delete this transaction?');">
+                          {% csrf_token %}
+                          <button type="submit" class="toggle-btn">Delete</button>
+                        </form>
+                      </td>                      
                     </tr>
                     <tr id="products-{{ transaction.id }}" style="display: none;">
                       <td colspan="5">

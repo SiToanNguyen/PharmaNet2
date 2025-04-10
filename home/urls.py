@@ -36,7 +36,8 @@ urlpatterns = [
 
     path('purchase_transactions/', views.purchase_transaction_list, name='purchase_transaction_list'),
     path('purchase_transactions/add/', views.add_purchase_transaction, name='add_purchase_transaction'),
+    path('purchase_transactions/delete/<int:transaction_id>/', views.delete_purchase_transaction, name='delete_purchase_transaction'),
+    path("purchase_transaction/scan/", views.scan_purchase_transaction, name="scan_purchase_transaction"),
     
     path('get-products-by-manufacturer/', views.get_products_by_manufacturer, name='get_products_by_manufacturer'),
-    path("scan_purchase_transaction/", views.scan_purchase_transaction, name="scan_purchase_transaction"),
 ]

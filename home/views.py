@@ -10,6 +10,7 @@ from django.utils import timezone
 from .models import Manufacturer, ActivityLog, Category, Product, Inventory, PurchaseTransaction, PurchasedProduct
 from .forms import UserCreationForm, UserEditForm, ManufacturerForm, CategoryForm, ProductForm, PurchaseTransactionForm, PurchasedProductForm
 from .utils import *
+from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.utils.dateparse import parse_date
@@ -377,3 +378,41 @@ def scan_purchase_transaction(request):
     except Exception as e:
         return JsonResponse({"success": False, "message": str(e)})
 
+@require_POST
+def delete_purchase_transaction(request, transaction_id):
+    transaction = get_object_or_404(PurchaseTransaction, id=transaction_id)
+
+    # Check if inventory has enough quantity to allow deletion
+    for purchased_product in transaction.purchased_products.all():
+        try:
+            inventory = Inventory.objects.get(
+                product=purchased_product.product,
+                expiry_date=purchased_product.expiry_date
+            )
+        except Inventory.DoesNotExist:
+            messages.error(request, "Cannot delete: Matching inventory item not found.")
+            return redirect('purchase_transaction_list')
+
+        if inventory.quantity < purchased_product.quantity:
+            messages.error(request, f"Cannot delete: Not enough inventory for {purchased_product.product.name}.")
+            return redirect('purchase_transaction_list')
+
+    # Roll back the inventory
+    for purchased_product in transaction.purchased_products.all():
+        inventory = Inventory.objects.get(
+            product=purchased_product.product,
+            expiry_date=purchased_product.expiry_date
+        )
+        inventory.quantity -= purchased_product.quantity
+        inventory.save()
+
+    transaction.delete()
+
+    log_activity(
+        user=request.user,
+        action="deleted purchase transaction",
+        additional_info=f"Invoice #{transaction.invoice_number}, Manufacturer: {transaction.manufacturer.name}"
+    )
+
+    messages.success(request, "Purchase transaction deleted and inventory updated.")
+    return redirect('purchase_transaction_list')
