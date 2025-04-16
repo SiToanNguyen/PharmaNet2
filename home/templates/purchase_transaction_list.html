@@ -41,10 +41,10 @@
                           {% csrf_token %}
                           <button type="submit" class="toggle-btn">Delete</button>
                         </form>
-                      </td>                      
+                      </td>
                     </tr>
                     <tr id="products-{{ transaction.id }}" style="display: none;">
-                      <td colspan="5">
+                      <td colspan="6">
                         <div style="padding: 10px;">
                           {% if transaction.purchased_products.all %}
                             <table class="nested-table" style="width: 100%;">

@@ -21,14 +21,13 @@
                 <li><a>Hello {{ request.user.first_name }}!</a></li>
                 <li><a href="{% url 'homepage' %}">Home</a></li>
                 <li><a href="{% url 'user_list' %}">Users</a></li>
+                <li><a href="{% url 'customer_list' %}">Customers</a></li>
                 <li><a href="{% url 'manufacturer_list' %}">Manufacturers</a></li>
                 <li><a href="{% url 'category_list' %}">Categories</a></li>
                 <li><a href="{% url 'product_list' %}">Products</a></li>
                 <li><a href="{% url 'inventory_list' %}">Inventory</a></li>
                 <li><a href="{% url 'purchase_transaction_list' %}">Purchase Transactions</a></li>
-                <li><a href="#">Sales</a></li>
-                <li><a href="#">Reports</a></li>
-                <li><a href="#">Settings</a></li>
+                <li><a href="{% url 'sale_transaction_list' %}">Sale Transactions</a></li>
                 <li><a href="{% url 'activity_log_list' %}">Activity Logs</a></li>
                 <li><a href="#" onclick="logout(event)">Logout</a></li>
             </ul>

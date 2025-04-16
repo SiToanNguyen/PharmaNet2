@@ -37,7 +37,19 @@ urlpatterns = [
     path('purchase_transactions/', views.purchase_transaction_list, name='purchase_transaction_list'),
     path('purchase_transactions/add/', views.add_purchase_transaction, name='add_purchase_transaction'),
     path('purchase_transactions/delete/<int:transaction_id>/', views.delete_purchase_transaction, name='delete_purchase_transaction'),
-    path("purchase_transaction/scan/", views.scan_purchase_transaction, name="scan_purchase_transaction"),
+    path("purchase_transactions/scan/", views.scan_purchase_transaction, name="scan_purchase_transaction"),
     
     path('get-products-by-manufacturer/', views.get_products_by_manufacturer, name='get_products_by_manufacturer'),
+
+    path('customers/', views.customer_list, name='customer_list'),
+    path('customers/add/', views.add_customer, name='add_customer'),
+    path('customers/edit/<int:customer_id>/', views.edit_customer, name='edit_customer'),
+    path('customers/delete/<int:customer_id>/', views.delete_customer, name='delete_customer'),
+
+    path('sale_transactions/', views.sale_transaction_list, name='sale_transaction_list'),
+    path('sale_transactions/add/', views.add_sale_transaction, name='add_sale_transaction'),
+    path('sale_transactions/delete/<int:transaction_id>/', views.delete_sale_transaction, name='delete_sale_transaction'),
+    path("sale_transactions/scan/", views.scan_sale_transaction, name="scan_sale_transaction"),
+
+    path('get_inventory_price/<int:inventory_id>/', views.get_inventory_price, name='get_inventory_price'),
 ]

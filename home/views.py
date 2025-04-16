@@ -7,8 +7,8 @@ import json
 from django.http import JsonResponse
 from django.forms import modelformset_factory
 from django.utils import timezone
-from .models import Manufacturer, ActivityLog, Category, Product, Inventory, PurchaseTransaction, PurchasedProduct
-from .forms import UserCreationForm, UserEditForm, ManufacturerForm, CategoryForm, ProductForm, PurchaseTransactionForm, PurchasedProductForm
+from .models import Manufacturer, ActivityLog, Category, Product, Inventory, PurchaseTransaction, PurchasedProduct, Customer, SaleTransaction, SoldProduct
+from .forms import UserCreationForm, UserEditForm, ManufacturerForm, CategoryForm, ProductForm, PurchaseTransactionForm, PurchasedProductForm, CustomerForm, SaleTransactionForm, SoldProductForm
 from .utils import *
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
@@ -16,6 +16,7 @@ from django.views.decorators.http import require_POST
 from django.utils.dateparse import parse_date
 from django.utils.timezone import now
 from datetime import date, timedelta
+from django.db import transaction  # for atomic operations
 
 # Homepage
 def homepage(request):
@@ -416,3 +417,241 @@ def delete_purchase_transaction(request, transaction_id):
 
     messages.success(request, "Purchase transaction deleted and inventory updated.")
     return redirect('purchase_transaction_list')
+
+# Customer management
+def customer_list(request):
+    return list_objects(
+        request,
+        model=Customer,
+        columns=['full_name', 'birthdate', 'phone_number', 'email', 'address'],
+        search_fields={'name': 'full_name'},
+        add=True,
+        actions=True
+    )
+
+def add_customer(request):
+    return add_object(
+        request=request,
+        form_class=CustomerForm,
+        model=Customer,
+        success_url='customer_list'
+    )
+
+def edit_customer(request, customer_id):
+    return edit_object(
+        request=request,
+        form_class=CustomerForm,
+        model=Customer,
+        object_id=customer_id,
+        success_url='customer_list'
+    )
+
+def delete_customer(request, customer_id):
+    if delete_object(request, Customer, customer_id):
+        return redirect('customer_list')
+    return redirect('customer_list')
+
+# Sale Transaction management
+def sale_transaction_list(request):
+    transaction_number_query = request.GET.get('transaction_number', '').strip()
+    customer_name_query = request.GET.get('customer_name', '').strip()
+
+    sale_transactions = SaleTransaction.objects.prefetch_related('sold_products').all()
+
+    if transaction_number_query:
+        sale_transactions = sale_transactions.filter(transaction_number__icontains=transaction_number_query)
+    if customer_name_query:
+        sale_transactions = sale_transactions.filter(customer__full_name__icontains=customer_name_query)
+
+    sale_transactions = sale_transactions.order_by('-transaction_date')
+
+    return render(request, 'sale_transaction_list.html', {
+        'sale_transactions': sale_transactions,
+        'transaction_number_query': transaction_number_query,
+        'customer_name_query': customer_name_query,
+    })
+
+def add_sale_transaction(request):
+    SoldProductFormSet = modelformset_factory(
+        SoldProduct, form=SoldProductForm, extra=1, can_delete=True
+    )
+
+    if request.method == "POST":
+        form = SaleTransactionForm(request.POST)
+        formset = SoldProductFormSet(request.POST, prefix="products")
+
+        if form.is_valid() and formset.is_valid():
+            try:
+                with transaction.atomic():
+                    sale_transaction = form.save(commit=False)
+                    sale_transaction.transaction_date = timezone.localtime(timezone.now())
+                    sale_transaction.created_by = request.user
+                    sale_transaction.price = 0  # will be calculated below
+                    sale_transaction.save()
+
+                    # Handle sold products
+                    for sold_form in formset:
+                        if sold_form.cleaned_data and not sold_form.cleaned_data.get('DELETE', False):
+                            sold_product = sold_form.save(commit=False)
+                            sold_product.sale_transaction = sale_transaction
+                            sold_product.sale_price = sold_product.inventory_item.product.sale_price
+                            sold_product.save()
+
+                            # Calculate total price
+                            sale_transaction.price += sold_product.total_price or 0
+
+                            # Subtract quantity from Inventory
+                            inventory_qs = sold_product.inventory_item
+
+                            if inventory_qs.quantity < sold_product.quantity:
+                                raise Exception(f"Not enough stock for {inventory_qs.product.name} (only {inventory_qs.quantity} available)")
+
+                            inventory_qs.quantity -= sold_product.quantity
+                            inventory_qs.save()
+
+                    sale_transaction.save()  # update with final price
+
+                    log_activity(
+                        user=request.user,
+                        action="added sale transaction",
+                        additional_info=f"Transaction #{sale_transaction.transaction_number}"
+                    )
+
+                    messages.success(request, "Sale transaction successfully recorded.")
+                    return redirect('sale_transaction_list')
+
+            except Exception as e:
+                messages.error(request, f"Error saving transaction: {e}")
+                return render(request, "add_sale_transaction.html", {
+                    "form": form,
+                    "formset": formset,
+                    "customers": Customer.objects.all(),
+                    "inventory_items": Inventory.objects.select_related('product', 'product__manufacturer').all(),
+                    "errors": form.errors,
+                    "formset_errors": formset.errors,
+                })
+
+        return render(request, "add_sale_transaction.html", {
+            "form": form,
+            "formset": formset,
+            "customers": Customer.objects.all(),
+            "inventory_items": Inventory.objects.select_related('product', 'product__manufacturer').all(),
+            "errors": form.errors,
+            "formset_errors": formset.errors,
+        })
+
+    else:
+        form = SaleTransactionForm()
+        formset = SoldProductFormSet(queryset=SoldProduct.objects.none(), prefix="products")
+
+    return render(request, "add_sale_transaction.html", {
+        "form": form,
+        "formset": formset,
+        "customers": Customer.objects.all(),
+        "inventory_items": Inventory.objects.select_related('product', 'product__manufacturer').all(),
+        "errors": form.errors,
+        "formset_errors": formset.errors,
+    })
+
+def get_inventory_price(request, inventory_id):
+    try:
+        inventory = Inventory.objects.get(id=inventory_id)
+        price = inventory.product.sale_price
+        return JsonResponse({'price': float(price)})
+    except Inventory.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+
+@csrf_exempt
+@require_POST
+def scan_sale_transaction(request):
+    try:
+        data = json.loads(request.body)
+
+        required_fields = {"transaction_number", "transaction_date", "price", "discount", "cash_received", "payment_method", "products"}
+        if not required_fields.issubset(data.keys()):
+            return JsonResponse({"success": False, "message": "Missing required fields."})
+
+        # Optional: customer
+        customer = None
+        if data.get("customer"):
+            customer_name = data["customer"].strip()
+            customer, created = Customer.objects.get_or_create(full_name=customer_name)
+    
+            if created and request.user.is_authenticated:
+                log_activity(
+                    user=request.user,
+                    action="added customer via scan",
+                    additional_info=f"Customer '{customer.full_name}' added during scanned sale transaction"
+                )
+
+        # Create transaction
+        transaction = SaleTransaction.objects.create(
+            transaction_number=data["transaction_number"],
+            customer=customer,
+            transaction_date=parse_date(data["transaction_date"]) or now(),
+            price=data["price"],
+            discount=data["discount"],
+            cash_received=data["cash_received"],
+            payment_method=data["payment_method"],
+            remarks=data.get("remarks", ""),
+            created_by=request.user if request.user.is_authenticated else None
+        )
+
+        # Add sold products
+        for item in data["products"]:
+            inventory = Inventory.objects.get(id=item["inventory_id"])
+            if inventory.quantity < item["quantity"]:
+                transaction.delete()
+                return JsonResponse({"success": False, "message": f"Not enough stock for {inventory.product.name}."})
+
+            SoldProduct.objects.create(
+                sale_transaction=transaction,
+                inventory_item=inventory,
+                quantity=item["quantity"],
+                sale_price=item.get("sale_price", inventory.product.sale_price)
+            )
+
+            inventory.quantity -= item["quantity"]
+            inventory.save()
+
+        if request.user.is_authenticated:
+            log_activity(
+                user=request.user,
+                action="scanned sale transaction",
+                additional_info=f"Transaction #{transaction.transaction_number}"
+            )
+
+        return JsonResponse({"success": True})
+
+    except Inventory.DoesNotExist:
+        return JsonResponse({"success": False, "message": "Inventory item not found."})
+    except Exception as e:
+        return JsonResponse({"success": False, "message": str(e)})
+
+@require_POST
+def delete_sale_transaction(request, transaction_id):
+    transaction = get_object_or_404(SaleTransaction, id=transaction_id)
+
+    # Check if all sold products still exist in Product table
+    for sold_product in transaction.sold_products.all():
+        product = sold_product.inventory_item.product
+        if not Product.objects.filter(id=product.id).exists():
+            messages.error(request, f"Cannot delete: Product '{product.name}' no longer exists in the system.")
+            return redirect('sale_transaction_list')
+
+    # Roll back the inventory
+    for sold_product in transaction.sold_products.all():
+        inventory = sold_product.inventory_item
+        inventory.quantity += sold_product.quantity
+        inventory.save()
+
+    transaction.delete()
+
+    log_activity(
+        user=request.user,
+        action="deleted sale transaction",
+        additional_info=f"Transaction #{transaction.transaction_number}"
+    )
+
+    messages.success(request, "Sale transaction deleted and inventory updated.")
+    return redirect('sale_transaction_list')

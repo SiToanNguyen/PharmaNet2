@@ -3,7 +3,7 @@ from django import forms
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from .models import Manufacturer, Category, Product, PurchaseTransaction, PurchasedProduct
+from .models import Manufacturer, Category, Product, Inventory, PurchaseTransaction, PurchasedProduct, Customer, SaleTransaction, SoldProduct
 import re  # Import the re module for regex validation
 
 # User management
@@ -164,3 +164,49 @@ class PurchasedProductForm(forms.ModelForm):
         if purchase_price <= 0:
             raise forms.ValidationError("Purchase price must be greater than zero.")
         return purchase_price
+
+# Customer management
+class CustomerForm(forms.ModelForm):
+    birthdate = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date'}),
+        required=True
+    ) # Use <input type="date"> for selecting birthdate
+
+    class Meta:
+        model = Customer
+        fields = ['full_name', 'birthdate', 'phone_number', 'email', 'address']
+
+# Sale Transaction management
+class SaleTransactionForm(forms.ModelForm):
+    class Meta:
+        model = SaleTransaction
+        fields = [
+            'transaction_number',
+            'customer',
+            'discount',
+            'cash_received',
+            'payment_method',
+            'remarks'
+        ]
+        widgets = {
+            'transaction_number': forms.TextInput(attrs={'placeholder': 'Enter transaction number'}),
+            'discount': forms.NumberInput(attrs={'step': '0.01'}),
+            'cash_received': forms.NumberInput(attrs={'step': '0.01'}),
+            'remarks': forms.Textarea(attrs={'rows': 2}),
+        }
+
+class SoldProductForm(forms.ModelForm):
+    class Meta:
+        model = SoldProduct
+        fields = [
+            'inventory_item',
+            'quantity'
+        ]
+        widgets = {
+            'quantity': forms.NumberInput(attrs={'min': 1})
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['inventory_item'].queryset = Inventory.objects.filter(quantity__gt=0)
+        self.fields['inventory_item'].label_from_instance = lambda obj: f"{obj.product.name} (Exp: {obj.expiry_date}) — {obj.quantity} left"

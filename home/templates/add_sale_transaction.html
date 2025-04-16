@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="form-container">
+    <h2>Add Sale Transaction</h2>
+
+    <form method="POST" class="global-form">
+      {% csrf_token %}
+
+      <fieldset>
+        <legend>Sale Details</legend>
+        <p>
+          {{ form.transaction_number.label_tag }}
+          {{ form.transaction_number }}
+        </p>
+        <p>
+          {{ form.customer.label_tag }}
+          {{ form.customer }}
+        </p>
+        <p>
+          {{ form.discount.label_tag }}
+          {{ form.discount }}
+        </p>
+        <p>
+          {{ form.cash_received.label_tag }}
+          {{ form.cash_received }}
+        </p>
+        <p>
+          {{ form.payment_method.label_tag }}
+          {{ form.payment_method }}
+        </p>
+        <p>
+          {{ form.remarks.label_tag }}
+          {{ form.remarks }}
+        </p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Sold Products</legend>
+        {{ formset.management_form }}
+
+        <table id="productsTable" class="global-table">
+          <thead>
+            <tr>
+              <th>Inventory Item</th>
+              <th>Quantity</th>
+              <th>Sale Price (€)</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for product_form in formset %}
+              <tr class="productRow">
+                <td>
+                  <input type="hidden" name="{{ product_form.inventory_item.name }}" id="{{ product_form.inventory_item.id_for_label }}">
+                  <span class="inventory-label">No item selected</span>
+                  <button class="toggle-btn" type="button" onclick="openInventoryModal(this)">Select</button>
+                </td>                
+                <td><p>{{ product_form.quantity }}</p></td>
+                <td><span class="price-display">-</span></td>
+                <td>
+                    <p>
+                        <button type="button" class="cancel-btn" onclick="removeRow(this)">Remove</button>
+                    </p>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <!-- Hidden empty form template for cloning -->
+        <div id="empty-form" style="display: none;">
+          <table>
+            <tr class="productRow">
+              <td>
+                <input type="hidden" name="__prefix__-inventory_item" id="id___prefix__-inventory_item">
+                <span class="inventory-label">No item selected</span>
+                <button class="toggle-btn" type="button" onclick="openInventoryModal(this)">Select</button>
+              </td>              
+              <td><p>{{ formset.empty_form.quantity }}</p></td>
+              <td><span class="price-display">-</span></td>
+              <td>
+                <button type="button" class="cancel-btn" onclick="removeRow(this)">Remove</button>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <button type="button" id="addRowBtn" class="submit-btn" onclick="addRow()">Add Product</button>
+      </fieldset>
+
+      <div class="form-buttons">
+        <button type="submit" class="submit-btn">Submit</button>
+        <a href="javascript:history.back()" class="cancel-btn">Cancel</a>
+      </div>
+    </form>
+
+    <div id="inventoryModal" class="modal" style="display:none;">
+      <div class="modal-content">
+        <span class="close" onclick="closeInventoryModal()">&times;</span>
+        <h3>Select Inventory Item</h3>
+    
+        <input type="text" id="searchInput" placeholder="Search..." onkeyup="filterInventory()">
+        <table id="inventoryTable" class="global-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Manufacturer</th>
+              <th>Price</th>
+              <th>Quantity</th>
+              <th>Expiry</th>
+              <th>Select</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in inventory_items %}
+            <tr>
+              <td>{{ item.product.name }}</td>
+              <td>{{ item.product.manufacturer.name }}</td>
+              <td>{{ item.product.sale_price }}</td>
+              <td>{{ item.quantity }}</td>
+              <td>{{ item.expiry_date }}</td>
+              <td> <!-- The button still works even with the errors -->
+                <button class="toggle-btn" type="button" onclick="selectInventory({{ item.id }}, '{{ item.product.name }} (exp: {{ item.expiry_date }})' )">Select</button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>    
+
+    {% if form.errors or formset.errors %}
+      <div class="error-messages">
+        <ul>
+          {% for field in form %}
+            {% for error in field.errors %}
+              <li>{{ field.label }}: {{ error }}</li>
+            {% endfor %}
+          {% endfor %}
+          {% for form in formset %}
+            {% for field in form %}
+              {% for error in field.errors %}
+                <li>{{ field.label }}: {{ error }}</li>
+              {% endfor %}
+            {% endfor %}
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+
+  <script>
+    function addRow() {
+      const totalFormsInput = document.querySelector("input[name$='-TOTAL_FORMS']");
+      const formIndex = parseInt(totalFormsInput.value);
+      const tableBody = document.getElementById("productsTable").querySelector("tbody");
+      const emptyFormDiv = document.getElementById("empty-form");
+
+      let templateRow = emptyFormDiv.querySelector(".productRow").cloneNode(true);
+
+      templateRow.querySelectorAll("input, select, textarea").forEach((el) => {
+        if (el.name) el.name = el.name.replace(/__prefix__/, formIndex);
+        if (el.id) el.id = el.id.replace(/__prefix__/, formIndex);
+        el.value = "";
+      });
+
+      templateRow.querySelector('.inventory-label').textContent = 'No item selected';
+
+      tableBody.appendChild(templateRow);
+      totalFormsInput.value = formIndex + 1;
+      fetchPrices();
+    }
+
+    function removeRow(button) {
+      let row = button.closest("tr");
+      row.remove();
+      updateTotalForms();
+    }
+
+    function updateTotalForms() {
+        let totalForms = document.getElementById("id_products-TOTAL_FORMS");
+        totalForms.value = document.querySelectorAll(".productRow").length;
+    }
+
+    function checkDuplicateInventorySelections() {
+      let selected = [];
+      let duplicates = false;
+
+      $('select[name$="inventory_item"]').each(function () {
+        const val = $(this).val();
+        if (val) {
+          if (selected.includes(val)) {
+            duplicates = true;
+          } else {
+            selected.push(val);
+          }
+        }
+      });
+
+      if (duplicates) {
+        alert("You've selected the same inventory item more than once!");
+        return false;
+      }
+      return true;
+    }
+
+    $(document).ready(function () {
+      fetchPrices();
+
+      $('form').on('submit', function (e) {
+        if (!checkDuplicateInventorySelections()) {
+          e.preventDefault();
+        }
+      });
+    });
+
+    function fetchPrices() {
+      $('.productRow').each(function () {
+        const row = $(this);
+        const select = row.find('select[name$="inventory_item"]');
+        const priceDisplay = row.find('.price-display');
+
+        select.off('change').on('change', function () {
+          const inventoryId = $(this).val();
+          if (!inventoryId) {
+            priceDisplay.text("-");
+            return;
+          }
+
+          $.ajax({
+            url: `/get_inventory_price/${inventoryId}/`,  // This is the endpoint we'll create
+            method: "GET",
+            success: function (data) {
+              priceDisplay.text(data.price.toFixed(2) + " €");
+            },
+            error: function () {
+              priceDisplay.text("Error");
+            }
+          });
+        });
+
+        // Trigger once in case of pre-filled form
+        select.trigger('change');
+      });
+    }
+
+    let currentInventoryField = null;
+    
+    function openInventoryModal(button) {
+      const row = button.closest('tr');
+      currentInventoryField = row.querySelector('input[type="hidden"]');
+      document.getElementById('inventoryModal').style.display = 'block';
+    }
+    
+    function closeInventoryModal() {
+      document.getElementById('inventoryModal').style.display = 'none';
+    }
+    
+    function selectInventory(id, label) {
+      if (currentInventoryField) {
+        currentInventoryField.value = id;
+        const labelSpan = currentInventoryField.closest('td').querySelector('.inventory-label');
+        labelSpan.textContent = label;
+
+        // Find the price cell in the same row
+        const row = currentInventoryField.closest('tr');
+        const priceDisplay = row.querySelector('.price-display');
+
+        // Fetch and update price
+        fetch(`/get_inventory_price/${id}/`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.price !== undefined) {
+              priceDisplay.textContent = parseFloat(data.price).toFixed(2) + " €";
+            } else {
+              priceDisplay.textContent = "Error";
+            }
+          })
+          .catch(() => {
+            priceDisplay.textContent = "Error";
+          });
+      }
+      closeInventoryModal();
+    }
+
+    
+    function filterInventory() {
+      const input = document.getElementById('searchInput').value.toLowerCase();
+      const rows = document.querySelectorAll('#inventoryTable tbody tr');
+    
+      rows.forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(input) ? '' : 'none';
+      });
+    }
+  </script>  
+  
+  <style>
+    #productsTable input[name$="quantity"] {
+      width: 80px;
+      text-align: right;
+    }
+    
+    /* Widen the Inventory Item dropdown */
+    #productsTable select[name$="inventory_item"] {
+      width: 100%;
+      min-width: 250px;
+    }
+
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.6);
+      z-index: 9999;
+    }
+    
+    .modal-content {
+      background-color: #222;
+      margin: 5% auto;
+      padding: 20px;
+      width: 80%;
+      border-radius: 8px;
+      color: white;
+    }
+    
+    .modal-content table {
+      width: 100%;
+    }
+    
+    .close {
+      float: right;
+      font-size: 24px;
+      cursor: pointer;
+      color: white;
+    }
+    
+    /* Styles for Show/Hide buttons of Product List on the Transaction list */
+    .toggle-btn {
+        background-color: #28a745; /* Green */
+        color: white;
+        padding: 6px 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.3s ease;
+    }
+
+    .toggle-btn:hover {
+        background-color: #218838; /* Darker green on hover */
+    }
+
+    .toggle-btn:focus {
+        outline: none;
+        box-shadow: 0 0 3px rgba(40, 167, 69, 0.5);
+    }
+  </style>
+    
+{% endblock %}

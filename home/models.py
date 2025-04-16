@@ -117,3 +117,74 @@ class PurchasedProduct(models.Model):
     @property
     def calculate_total_cost(self):
         return sum([p.total_price for p in self.purchased_products.all()])
+
+# Customer management
+class Customer(models.Model):
+    full_name = models.CharField(max_length=200)
+    birthdate = models.DateField(blank=True, null=True)
+    phone_number = models.CharField(max_length=20, blank=True, null=True, validators=[validate_phone_number])
+    email = models.EmailField(blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return self.full_name
+
+# Sale Transaction management
+class SaleTransaction(models.Model):
+    transaction_number = models.CharField(max_length=100, unique=True)
+    customer = models.ForeignKey('Customer', on_delete=models.SET_NULL, null=True, blank=True)
+    transaction_date = models.DateTimeField(default=timezone.now)
+    
+    # Prices and payments
+    price = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)  # Total before discount
+    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, blank=True)
+    cash_received = models.DecimalField(max_digits=15, decimal_places=2, default=0.00, blank=True)
+
+    @property
+    def total_amount(self):
+        return sum([item.total_price for item in self.sold_products.all()])
+
+    payment_method = models.CharField(
+        max_length=20,
+        choices=[('CASH', 'Cash'), ('CARD', 'Card'), ('INSURANCE', 'Insurance')],
+        default='CASH'
+    )
+    
+    remarks = models.TextField(blank=True, null=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-transaction_date']
+
+    def __str__(self):
+        return f"Transaction #{self.transaction_number}"
+
+    @property
+    def to_be_paid(self):
+        return max(self.price - self.discount, 0)
+
+    @property
+    def change(self):
+        return max(self.cash_received - self.to_be_paid, 0)
+
+class SoldProduct(models.Model):
+    sale_transaction = models.ForeignKey(SaleTransaction, on_delete=models.CASCADE, related_name='sold_products')
+    inventory_item = models.ForeignKey(Inventory, on_delete=models.PROTECT)
+    quantity = models.PositiveIntegerField()
+    sale_price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    class Meta:
+        ordering = ['-inventory_item__expiry_date']
+
+    @property
+    def total_price(self):
+        return self.quantity * self.sale_price
+
+    def __str__(self):
+        return f"{self.inventory_item.product.name} - {self.quantity} units @ {self.sale_price}€"
