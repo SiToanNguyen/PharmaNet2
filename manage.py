@@ -6,7 +6,8 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pharmacy_management.settings.local')
+    environment = os.getenv('DJANGO_ENV', 'local')  # Defaults to 'local' if the variable is not set
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', f'pharmacy_management.settings.{environment}')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
