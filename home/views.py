@@ -717,3 +717,33 @@ def financial_summary(request):
         'profit': profit,
     }
     return render(request, 'financial_summary.html', context)
+
+# Import generate_dummy_data from dummy_data.py
+from dummy_data import generate_dummy_data
+from dummy_transaction import generate_dummy_transaction
+from home.decorators import superuser_required
+
+# View for Scripts Page
+@superuser_required
+def scripts_page(request):
+    return render(request, 'scripts_page.html')
+
+# Run Dummy Data Script
+@superuser_required
+def run_dummy_data_script(request):
+    try:
+        # Run the generate_dummy_data function to generate the dummy data
+        generate_dummy_data()
+        return JsonResponse({"message": "Dummy data successfully generated!"})
+    except Exception as e:
+        return JsonResponse({"message": f"Error: {str(e)}"}, status=500)
+    
+# Run Dummy Transaction Script
+@superuser_required
+def run_dummy_transaction_script(request):
+    try:
+        # Run the generate_dummy_transaction function to generate the dummy data
+        generate_dummy_transaction()
+        return JsonResponse({"message": "Dummy transactions successfully generated!"})
+    except Exception as e:
+        return JsonResponse({"message": f"Error: {str(e)}"}, status=500)

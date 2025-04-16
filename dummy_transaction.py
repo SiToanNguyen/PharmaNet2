@@ -18,7 +18,7 @@ from home.utils import log_activity
 fake = Faker()
 
 P = 2  # Purchase transactions per manufacturer
-S = 100  # Total sale transactions
+S = 200  # Total sale transactions
 
 def get_random_date_within_range(start_date, end_date):
     """Returns a random timezone-aware datetime between start_date and end_date."""
@@ -127,7 +127,10 @@ def create_sale_transactions():
 
         log_activity(admin, "added sale transaction", f"{tx.transaction_number} - Customer: {customer or 'N/A'}")
 
-if __name__ == '__main__':
+def generate_dummy_transaction():
     create_purchase_transactions()
     create_sale_transactions()
     print("Dummy purchase and sale transactions created.")
+
+if __name__ == '__main__':
+    generate_dummy_transaction()

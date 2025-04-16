@@ -93,13 +93,15 @@ def create_random_product(manu, category, count, price_min, price_max, suffixes,
         )
         log_activity(user, f"added new product {name}", f"Category: {category.name}, Price: {price:.2f}")
 
-if __name__ == '__main__':
+def generate_dummy_data():
     reset_database()
     create_users()
     create_categories()
     create_manufacturers()
     create_products()
-    print("Dummy data successfully generated.")
-
     create_purchase_transactions()
     create_sale_transactions()
+    print("Dummy data successfully generated.")
+
+if __name__ == '__main__':
+    generate_dummy_data()
