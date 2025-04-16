@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% load humanize %}
+
+{% block content %}
+<h2>Financial Summary</h2>
+
+<form method="get">
+    {{ form.as_p }}
+    <button class="submit-btn" type="submit">Generate</button>
+</form>
+
+{% if form.is_valid %}
+    <h3>Results from {{ form.cleaned_data.from_date }} to {{ form.cleaned_data.to_date }}:</h3>
+    <ul>
+        <li><strong>Total Purchase Cost:</strong> {{ total_purchase|floatformat:2|intcomma }} €</li>
+        <li><strong>Total Sales Revenue:</strong> {{ total_sales|floatformat:2|intcomma }} €</li>
+        <li><strong>Estimated Profit:</strong> {{ profit|floatformat:2|intcomma }} €</li>
+    </ul>
+{% endif %}
+{% endblock %}

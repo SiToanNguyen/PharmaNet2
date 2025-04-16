@@ -190,10 +190,15 @@ class SaleTransactionForm(forms.ModelForm):
         ]
         widgets = {
             'transaction_number': forms.TextInput(attrs={'placeholder': 'Enter transaction number'}),
-            'discount': forms.NumberInput(attrs={'step': '0.01'}),
-            'cash_received': forms.NumberInput(attrs={'step': '0.01'}),
+            'discount': forms.NumberInput(attrs={'step': '1'}),
+            'cash_received': forms.NumberInput(attrs={'step': '1'}),
             'remarks': forms.Textarea(attrs={'rows': 2}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['discount'].initial = '0'
+        self.fields['cash_received'].initial = '0'
 
 class SoldProductForm(forms.ModelForm):
     class Meta:
@@ -210,3 +215,7 @@ class SoldProductForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['inventory_item'].queryset = Inventory.objects.filter(quantity__gt=0)
         self.fields['inventory_item'].label_from_instance = lambda obj: f"{obj.product.name} (Exp: {obj.expiry_date}) — {obj.quantity} left"
+
+class DateRangeForm(forms.Form):
+    from_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    to_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))

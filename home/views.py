@@ -8,7 +8,7 @@ from django.http import JsonResponse
 from django.forms import modelformset_factory
 from django.utils import timezone
 from .models import Manufacturer, ActivityLog, Category, Product, Inventory, PurchaseTransaction, PurchasedProduct, Customer, SaleTransaction, SoldProduct
-from .forms import UserCreationForm, UserEditForm, ManufacturerForm, CategoryForm, ProductForm, PurchaseTransactionForm, PurchasedProductForm, CustomerForm, SaleTransactionForm, SoldProductForm
+from .forms import UserCreationForm, UserEditForm, ManufacturerForm, CategoryForm, ProductForm, PurchaseTransactionForm, PurchasedProductForm, CustomerForm, SaleTransactionForm, SoldProductForm, DateRangeForm
 from .utils import *
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
@@ -17,6 +17,7 @@ from django.utils.dateparse import parse_date
 from django.utils.timezone import now
 from datetime import date, timedelta
 from django.db import transaction  # for atomic operations
+from django.db.models import Sum
 
 # Homepage
 def homepage(request):
@@ -199,11 +200,23 @@ def inventory_list(request):
     if sort_by in ['updated_at', 'expiry_date']:
         inventory_items = inventory_items.order_by(sort_by if sort_by == 'expiry_date' else f'-{sort_by}')
 
+    paginator = Paginator(inventory_items, 10)  # Show 10 items per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Preserve query parameters (except for 'page')
+    query_params = request.GET.copy()
+    if 'page' in query_params:
+        query_params.pop('page')
+    query_string = query_params.urlencode()
+        
     return render(request, 'inventory_list.html', {
-        'inventory_items': inventory_items,
+        'inventory_items': page_obj,
+        'page_obj': page_obj,
         'product_name_query': product_name_query,
         'manufacturer_name_query': manufacturer_name_query,
         'sort_by': sort_by,
+        'query_string': query_string,
     })
 
 # Purchase Transactions management
@@ -224,10 +237,22 @@ def purchase_transaction_list(request):
     # Sort transactions by purchase date (or other fields as needed)
     purchase_transactions = purchase_transactions.order_by('-purchase_date')
 
+    paginator = Paginator(purchase_transactions, 10)  # Show 10 items per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Preserve query parameters (except for 'page')
+    query_params = request.GET.copy()
+    if 'page' in query_params:
+        query_params.pop('page')
+    query_string = query_params.urlencode()
+
     return render(request, 'purchase_transaction_list.html', {
-        'purchase_transactions': purchase_transactions,
+        'purchase_transactions': page_obj,
+        'page_obj': page_obj,
         'invoice_number_query': invoice_number_query,
         'manufacturer_name_query': manufacturer_name_query,
+        'query_string': query_string,
     })
 
 def add_purchase_transaction(request):
@@ -465,10 +490,22 @@ def sale_transaction_list(request):
 
     sale_transactions = sale_transactions.order_by('-transaction_date')
 
+    paginator = Paginator(sale_transactions, 10)  # Show 10 items per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Preserve query parameters (except for 'page')
+    query_params = request.GET.copy()
+    if 'page' in query_params:
+        query_params.pop('page')
+    query_string = query_params.urlencode()
+
     return render(request, 'sale_transaction_list.html', {
-        'sale_transactions': sale_transactions,
+        'sale_transactions': page_obj,
+        'page_obj': page_obj,
         'transaction_number_query': transaction_number_query,
         'customer_name_query': customer_name_query,
+        'query_string': query_string,
     })
 
 def add_sale_transaction(request):
@@ -655,3 +692,28 @@ def delete_sale_transaction(request, transaction_id):
 
     messages.success(request, "Sale transaction deleted and inventory updated.")
     return redirect('sale_transaction_list')
+
+def financial_summary(request):
+    total_purchase = 0
+    total_sales = 0
+    profit = 0
+    form = DateRangeForm(request.GET or None)
+
+    if form.is_valid():
+        from_date = form.cleaned_data['from_date']
+        to_date = form.cleaned_data['to_date']
+
+        purchases = PurchaseTransaction.objects.filter(purchase_date__date__range=(from_date, to_date))
+        sales = SaleTransaction.objects.filter(transaction_date__date__range=(from_date, to_date))
+
+        total_purchase = purchases.aggregate(Sum('total_cost'))['total_cost__sum'] or 0
+        total_sales = sales.aggregate(Sum('price'))['price__sum'] or 0
+        profit = total_sales - total_purchase
+
+    context = {
+        'form': form,
+        'total_purchase': total_purchase,
+        'total_sales': total_sales,
+        'profit': profit,
+    }
+    return render(request, 'financial_summary.html', context)

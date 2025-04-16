@@ -52,4 +52,6 @@ urlpatterns = [
     path("sale_transactions/scan/", views.scan_sale_transaction, name="scan_sale_transaction"),
 
     path('get_inventory_price/<int:inventory_id>/', views.get_inventory_price, name='get_inventory_price'),
+
+    path('financial-summary/', views.financial_summary, name='financial_summary'),
 ]
