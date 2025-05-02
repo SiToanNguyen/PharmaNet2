@@ -1,3 +1,4 @@
+# pharmacy_management/asgi.py
 """
 ASGI config for pharmacy_management project.
 
@@ -8,11 +9,11 @@ https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
 """
 
 import os
-
 from django.core.asgi import get_asgi_application
 
-environment = os.getenv('DJANGO_ENV', 'local')  # Defaults to 'local' if the variable is not set
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', f'pharmacy_management.settings.{environment}')
-    
+# environment = os.getenv('DJANGO_ENV', 'local')  # Defaults to 'local' if the variable is not set
+# os.environ.setdefault('DJANGO_SETTINGS_MODULE', f'pharmacy_management.settings.{environment}')
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pharmacy_management.settings.production')    
 
 application = get_asgi_application()

@@ -2,22 +2,22 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator
-import json
-from django.http import JsonResponse
-from django.forms import modelformset_factory
-from django.utils import timezone
-from .models import Manufacturer, ActivityLog, Category, Product, Inventory, PurchaseTransaction, PurchasedProduct, Customer, SaleTransaction, SoldProduct
-from .forms import UserCreationForm, UserEditForm, ManufacturerForm, CategoryForm, ProductForm, PurchaseTransactionForm, PurchasedProductForm, CustomerForm, SaleTransactionForm, SoldProductForm, DateRangeForm
-from .utils import *
-from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.utils.dateparse import parse_date
 from django.utils.timezone import now
-from datetime import date, timedelta
+from django.utils import timezone
 from django.db import transaction  # for atomic operations
 from django.db.models import Sum
+from django.core.paginator import Paginator
+from django.http import JsonResponse
+from django.forms import modelformset_factory
+from django.contrib import messages
+from .models import Manufacturer, ActivityLog, Category, Product, Inventory, PurchaseTransaction, PurchasedProduct, Customer, SaleTransaction, SoldProduct
+from .forms import UserCreationForm, UserEditForm, ManufacturerForm, CategoryForm, ProductForm, PurchaseTransactionForm, PurchasedProductForm, CustomerForm, SaleTransactionForm, SoldProductForm, DateRangeForm
+from .utils import *
+from datetime import date, timedelta
+import json
 
 # Homepage
 def homepage(request):
@@ -30,9 +30,13 @@ def homepage(request):
         days_until_expiry = (item.expiry_date - today).days  # Calculate days difference
         item.days_diff = days_until_expiry  # Add it to the item object
 
+    page_obj, query_string = paginate_with_query_params(request, inventory)
+
     return render(request, 'index.html', {
-        'inventory': inventory,
+        'inventory': page_obj,
+        'page_obj': page_obj,
         'today': today,
+        'query_string': query_string,
     })
 
 # Activity Log
@@ -190,6 +194,7 @@ def inventory_list(request):
     
     # Filter inventory items based on search parameters
     inventory_items = Inventory.objects.select_related('product__manufacturer').all()
+    inventory_items = inventory_items.filter(quantity__gt=0)  # Only show items with quantity > 0
 
     if product_name_query:
         inventory_items = inventory_items.filter(product__name__icontains=product_name_query)
@@ -200,15 +205,7 @@ def inventory_list(request):
     if sort_by in ['updated_at', 'expiry_date']:
         inventory_items = inventory_items.order_by(sort_by if sort_by == 'expiry_date' else f'-{sort_by}')
 
-    paginator = Paginator(inventory_items, 10)  # Show 10 items per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    # Preserve query parameters (except for 'page')
-    query_params = request.GET.copy()
-    if 'page' in query_params:
-        query_params.pop('page')
-    query_string = query_params.urlencode()
+    page_obj, query_string = paginate_with_query_params(request, inventory_items)
         
     return render(request, 'inventory_list.html', {
         'inventory_items': page_obj,
@@ -237,15 +234,7 @@ def purchase_transaction_list(request):
     # Sort transactions by purchase date (or other fields as needed)
     purchase_transactions = purchase_transactions.order_by('-purchase_date')
 
-    paginator = Paginator(purchase_transactions, 10)  # Show 10 items per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    # Preserve query parameters (except for 'page')
-    query_params = request.GET.copy()
-    if 'page' in query_params:
-        query_params.pop('page')
-    query_string = query_params.urlencode()
+    page_obj, query_string = paginate_with_query_params(request, purchase_transactions)
 
     return render(request, 'purchase_transaction_list.html', {
         'purchase_transactions': page_obj,
@@ -490,15 +479,7 @@ def sale_transaction_list(request):
 
     sale_transactions = sale_transactions.order_by('-transaction_date')
 
-    paginator = Paginator(sale_transactions, 10)  # Show 10 items per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    # Preserve query parameters (except for 'page')
-    query_params = request.GET.copy()
-    if 'page' in query_params:
-        query_params.pop('page')
-    query_string = query_params.urlencode()
+    page_obj, query_string = paginate_with_query_params(request, sale_transactions)
 
     return render(request, 'sale_transaction_list.html', {
         'sale_transactions': page_obj,

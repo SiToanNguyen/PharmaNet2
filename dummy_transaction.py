@@ -31,7 +31,7 @@ def get_random_date_within_range(start_date, end_date):
 def create_purchase_transactions():
     admin = User.objects.get(username="admin")
     today = now().date()
-    four_years_ago = today - timedelta(days=4*365)
+    four_years_ago = today - timedelta(days=1461)
 
     for manu in Manufacturer.objects.all():
         products = Product.objects.filter(manufacturer=manu)

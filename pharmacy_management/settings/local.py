@@ -1,3 +1,4 @@
+# pharmacy_management/settings/local.py
 from .base import *
 
 DEBUG = True
