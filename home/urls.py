@@ -58,4 +58,6 @@ urlpatterns = [
     path('scripts/', views.scripts_page, name='scripts_page'),
     path('run-dummy-data/', views.run_dummy_data_script, name='run_dummy_data_script'),
     path('run-dummy-transaction/', views.run_dummy_transaction_script, name='run_dummy_transaction_script'),
+
+    path("debug-host/", views.debug_host)
 ]

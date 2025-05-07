@@ -728,3 +728,8 @@ def run_dummy_transaction_script(request):
         return JsonResponse({"message": "Dummy transactions successfully generated!"})
     except Exception as e:
         return JsonResponse({"message": f"Error: {str(e)}"}, status=500)
+    
+from django.http import HttpResponse
+
+def debug_host(request):
+    return HttpResponse(f"Host: {request.get_host()}")
