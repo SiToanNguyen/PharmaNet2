@@ -7,7 +7,7 @@ config = Config(repository=RepositoryEnv('.env.local'))
 DEBUG = config('DEBUG', cast=bool)
 SECRET_KEY = config('SECRET_KEY')
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS').split(',')
+ALLOWED_HOSTS = [host.strip() for host in config('ALLOWED_HOSTS').split(',')]
 
 DATABASES = {
     'default': {

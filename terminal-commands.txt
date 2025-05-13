@@ -11,7 +11,23 @@ git add .
 git commit -m "Message"
 git push origin main
 
-ssh -i /d/PharmacyManagement/pharmanet-key.pem ubuntu@16.16.217.97
+ssh -i "D:\PharmacyManagement\pharmanet-key.pem" ubuntu@13.51.194.70
 cd PharmaNet2
 source venv/bin/activate
 gunicorn --bind 0.0.0.0:8000 pharmacy_management.wsgi:application
+
+less pharmacy_management/settings/production.py
+
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+
+git fetch origin
+git reset --hard origin/main
+git clean -fd
+
+pip install -r requirements.txt
+
+nano .env.production
+Ctrl + O → Enter (to save)
+Ctrl + X (to exit)
+
+cat .env.production

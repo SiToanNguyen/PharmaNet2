@@ -49,3 +49,5 @@ Thumbs.db
 # Scripts
 create_admin.py
 #dummy_data.py
+
+pharmanet-key.pem
