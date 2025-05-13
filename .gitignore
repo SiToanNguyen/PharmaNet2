@@ -50,4 +50,8 @@ Thumbs.db
 create_admin.py
 #dummy_data.py
 
+# AWS files
 pharmanet-key.pem
+
+
+terminal-commands.txt

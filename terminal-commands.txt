@@ -31,3 +31,5 @@ Ctrl + O → Enter (to save)
 Ctrl + X (to exit)
 
 cat .env.production
+
+scp -i "/d/PharmacyManagement/pharmanet-key.pem" -r /d/PharmacyManagement ubuntu@13.51.194.70:/home/ubuntu/
