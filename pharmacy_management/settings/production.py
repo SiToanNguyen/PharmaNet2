@@ -1,14 +1,24 @@
+# pharmacy_management/settings/production.py
+from decouple import Config, RepositoryEnv
 from .base import *
-import dj_database_url
 
-DEBUG = False
-SECRET_KEY = os.environ.get("SECRET_KEY", "fallback-production-secret-key")
-ALLOWED_HOSTS = ['pharmanet2.onrender.com']
+config = Config(repository=RepositoryEnv('.env.production'))
+
+DEBUG = config('DEBUG', cast=bool)
+SECRET_KEY = config('SECRET_KEY')
+
+ALLOWED_HOSTS = config('ALLOWED_HOSTS').split(',')
 
 DATABASES = {
-    'default': dj_database_url.config(conn_max_age=600)
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST'),
+        'PORT': config('DB_PORT'),
+    }
 }
 
-# STATIC configuration for Render
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# STATIC configuration for AWS
+STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'

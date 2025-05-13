@@ -167,10 +167,7 @@ def list_objects(request, model, columns=None, search_fields=None, sort_fields=N
     if sort_fields and sort_by in sort_fields:  # Ensure sort_fields is not None
         objects = objects.order_by(sort_by)
 
-    # Paginate results
-    paginator = Paginator(objects, 10)  # nubmer of rows per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    page_obj, query_string = paginate_with_query_params(request, objects)
 
     context = {
         'title': extra_context.get('title', model._meta.verbose_name.capitalize()) if extra_context else model._meta.verbose_name.capitalize(),
@@ -180,6 +177,7 @@ def list_objects(request, model, columns=None, search_fields=None, sort_fields=N
         'sort_queries': sort_fields,
         'add': add,
         'actions': actions,  # Determines whether to show Edit/Delete buttons
+        'query_string': query_string,  # Pass the query string for pagination links
     }
 
     # Merge extra context if provided
@@ -187,3 +185,14 @@ def list_objects(request, model, columns=None, search_fields=None, sort_fields=N
         context.update(extra_context)
 
     return render(request, 'list_page.html', context)
+
+def paginate_with_query_params(request, queryset, per_page=10):
+    paginator = Paginator(queryset, per_page)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    query_params = request.GET.copy()
+    query_params.pop('page', None)  # Remove 'page' safely
+    query_string = query_params.urlencode()
+
+    return page_obj, query_string

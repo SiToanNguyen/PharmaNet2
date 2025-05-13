@@ -10,3 +10,8 @@ deactivate
 git add .
 git commit -m "Message"
 git push origin main
+
+ssh -i /d/PharmacyManagement/pharmanet-key.pem ubuntu@16.16.217.97
+cd PharmaNet2
+source venv/bin/activate
+gunicorn --bind 0.0.0.0:8000 pharmacy_management.wsgi:application

@@ -14,53 +14,69 @@
 {% endblock %}
 
 {% block content %}
-  <div class="container">
-    <p>Your pharmacy management made easy and efficient!</p>
-  </div>
+  <div class="list-container">
 
-  {% if user.is_superuser %}
-    <div style="margin: 20px 0;">
+    {% if user.is_superuser %}
       <a href="{% url 'scripts_page' %}" class="add-item-btn">Run Scripts</a>
-    </div>
-  {% endif %}
+    {% endif %}
 
-  <div class="inventory-overview">
-    <h2>Expiring Products</h2>
-    <table class="global-table">
-      <thead>
-        <tr>
-          <th>Product</th>
-          <th>Quantity</th>
-          <th>Expiry Date</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in inventory %}
-          {% if item.expiry_date < today %}
-              <tr class="expired">
-                  <td>{{ item.product.name }}</td>
-                  <td>{{ item.quantity }}</td>
-                  <td>{{ item.expiry_date }}</td>
-                  <td>Expired</td>
-              </tr>
-          {% elif item.days_diff <= 7 %}
-              <tr class="critical">
-                  <td>{{ item.product.name }}</td>
-                  <td>{{ item.quantity }}</td>
-                  <td>{{ item.expiry_date }}</td>
-                  <td>Expiring in {{ item.days_diff }} days</td>
-              </tr>
-          {% elif item.days_diff <= 30 %}
-              <tr>
-                  <td>{{ item.product.name }}</td>
-                  <td>{{ item.quantity }}</td>
-                  <td>{{ item.expiry_date }}</td>
-                  <td>Expiring in {{ item.days_diff }} days</td>
-              </tr>
+    <div class="inventory-overview">
+      <h2>Expiring Products</h2>
+      <table class="global-table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Expiry Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in inventory %}
+            {% if item.expiry_date < today %}
+                <tr class="expired">
+                    <td>{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.expiry_date }}</td>
+                    <td>Expired</td>
+                </tr>
+            {% elif item.days_diff <= 7 %}
+                <tr class="critical">
+                    <td>{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.expiry_date }}</td>
+                    <td>Expiring in {{ item.days_diff }} days</td>
+                </tr>
+            {% elif item.days_diff <= 30 %}
+                <tr>
+                    <td>{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.expiry_date }}</td>
+                    <td>Expiring in {{ item.days_diff }} days</td>
+                </tr>
+            {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- Pagination Controls -->
+      <div class="pagination">
+          <span class="step-links">
+          {% if page_obj.has_previous %}
+              <a href="?{{ query_string }}&page=1">&laquo; First</a>
+              <a href="?{{ query_string }}&page={{ page_obj.previous_page_number }}">Previous</a>
           {% endif %}
-        {% endfor %}
-      </tbody>
-    </table>
+  
+          <span class="current">
+              Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+          </span>
+  
+          {% if page_obj.has_next %}
+              <a href="?{{ query_string }}&page={{ page_obj.next_page_number }}">Next</a>
+              <a href="?{{ query_string }}&page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+          {% endif %}
+          </span>
+      </div>
+    </div>
   </div>
 {% endblock %}
