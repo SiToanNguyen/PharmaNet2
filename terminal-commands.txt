@@ -11,10 +11,12 @@ git add .
 git commit -m "Message"
 git push origin main
 
-ssh -i "D:\PharmacyManagement\pharmanet-key.pem" ubuntu@13.51.194.70
+ssh -i "D:\PharmacyManagement\pharmanet-key.pem" ubuntu@13.48.249.163
 cd PharmaNet2
 source venv/bin/activate
+export DJANGO_ENV=production
 gunicorn --bind 0.0.0.0:8000 pharmacy_management.wsgi:application
+gunicorn --env DJANGO_SETTINGS_MODULE=pharmacy_management.settings.production --bind 0.0.0.0:8000 pharmacy_management.wsgi:application
 
 less pharmacy_management/settings/production.py
 
