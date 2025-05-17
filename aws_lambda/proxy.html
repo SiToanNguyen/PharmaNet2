@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pharmacy Management System</title>
+  <script>
+    const apiUrl = "https://6fhwkm63x8.execute-api.eu-north-1.amazonaws.com/start";
+
+    async function callLambdaWithRetry(retries = 10, delay = 5000) {
+      for (let i = 0; i < retries; i++) {
+        try {
+          const res = await fetch(apiUrl);
+          console.log("Fetch response status:", res.status);
+
+          // If Lambda returns 503, treat as temporary and retry
+          if (res.status === 503) {
+            throw new Error(`HTTP 503 Service Unavailable`);
+          }
+
+          if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+          }
+
+          const data = await res.json();
+          return data;
+        } catch (e) {
+          console.warn(`Attempt ${i+1} failed: ${e.message}`);
+          // Wait before retrying
+          await new Promise(r => setTimeout(r, delay));
+        }
+      }
+      throw new Error(`Failed to start server after ${retries} attempts.`);
+    }
+
+    async function startServer() {
+      const statusEl = document.getElementById("status");
+      const infoEl = document.getElementById("info");
+      const urlEl = document.getElementById("server-url");
+
+      statusEl.textContent = "Starting server (this may take a while)...";
+      infoEl.textContent = "";
+      urlEl.textContent = "";
+
+      try {
+        const data = await callLambdaWithRetry();
+
+        if (!data) {
+          throw new Error("Response JSON is empty or invalid");
+        }
+
+        if (data.status) {
+          infoEl.textContent = `Status: ${data.status}`;
+        }
+        if (data.public_ip) {
+          infoEl.textContent += ` | Public IP: ${data.public_ip}`;
+        }
+
+        if (data.url) {
+          statusEl.textContent = "Server is starting. Redirecting soon...";
+          waitForServer(data.url);
+        } else {
+          throw new Error("Invalid response format: 'url' missing");
+        }
+      } catch (e) {
+        statusEl.textContent = `Error starting server: ${e.message}`;
+        console.error("Error in startServer:", e);
+      }
+    }
+
+    async function waitForServer(url) {
+      const statusEl = document.getElementById("status");
+      const urlEl = document.getElementById("server-url");
+
+      for (let i = 0; i < 30; i++) {
+        try {
+          const response = await fetch(url);
+          if (response.ok) {
+            urlEl.innerHTML = `Server is ready! <a href="${url}" target="_blank" rel="noopener">${url}</a>`;
+            // Redirect after short delay so user can see the link
+            setTimeout(() => { window.location.href = url; }, 2000);
+            return;
+          }
+        } catch (e) {
+          console.log("Server not ready yet...");
+        }
+        await new Promise(resolve => setTimeout(resolve, 5000));
+      }
+
+      statusEl.textContent = "Server failed to start. Try again later.";
+      urlEl.innerHTML = `You can try accessing the server manually here: <a href="${url}" target="_blank" rel="noopener">${url}</a>`;
+    }
+
+    window.onload = startServer;
+  </script>
+</head>
+<body>
+  <h1>Pharmacy Management System</h1>
+  <p id="status">Initializing...</p>
+  <p id="info" style="font-style: italic; color: #444;"></p>
+  <p id="server-url" style="margin-top: 1em; font-weight: bold;"></p>
+</body>
+</html>

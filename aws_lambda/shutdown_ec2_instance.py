@@ -1,11 +1,7 @@
-# This AWS Lambda function checks if a specific EC2 instance should be shut down
-# based on a shutdown timer stored in an S3 bucket and whether the application
-# is still running. If the shutdown time has passed or if there are no active
-# connections to the application, it stops the EC2 instance. The function is
-# triggered periodically (e.g., every 5 minutes) to check the conditions.
-
-# Note: This script runs on AWS Lambda, which includes boto3 by default.
-# You may see an import error in your IDE, but it will work correctly on AWS.
+# Run this script to
+# 1. Check if the shutdown timer has passed. If it has, stop the EC2 instance.
+# 2. Check if there is any active connection to the app on the EC2 instance.
+# 3. If there is no active connection, update the shutdown timer to 2 minutes from now.
 
 import boto3 # type: ignore
 import datetime
@@ -61,14 +57,16 @@ def lambda_handler(event, context):
     now = datetime.datetime.now(timezone.utc)
     shutdown_at = get_shutdown_time()
 
+    # 1. Check if the shutdown timer has passed. If it has, stop the EC2 instance.
     if shutdown_at and now > shutdown_at:
         print("Shutdown time has passed.")
         stop_instance()
         return {"status": "shutdown due to timeout"}
 
-    # Check if port is open (active connection check)
+    # 2. Check if there is any active connection to the app on the EC2 instance.
     if not is_port_open(EC2_PUBLIC_IP, APP_PORT):
         print("No active connection to app.")
+        # 3. If there is no active connection, update the shutdown timer to 2 minutes from now.
         new_shutdown_time = now + datetime.timedelta(minutes=2)
         update_shutdown_timer(new_shutdown_time)
         return {"status": "shutdown due to no active connection"}
