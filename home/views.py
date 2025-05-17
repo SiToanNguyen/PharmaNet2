@@ -19,9 +19,6 @@ from .utils import *
 from datetime import date, timedelta
 import json
 
-def health_check(request):
-    return JsonResponse({"status": "ok"})
-
 # Homepage
 def homepage(request):
     today = date.today()

@@ -66,18 +66,16 @@
       }
     }
 
-    async function checkServerReadiness(baseUrl) {
+    async function checkServerReadiness(url) {
       const statusEl = document.getElementById("status");
       const urlEl = document.getElementById("server-url");
 
-      const healthUrl = `${baseUrl.replace(/\/$/, "")}/health/`;
-
       for (let i = 0; i < 30; i++) {
         try {
-          const response = await fetch(healthUrl);
+          const response = await fetch(url);
           if (response.ok) {
             statusEl.textContent = "Server is ready!";
-            urlEl.innerHTML = `<a href="${baseUrl}" target="_blank" rel="noopener">${baseUrl}</a>`;
+            urlEl.innerHTML = <a href="${url}" target="_blank" rel="noopener">${url}</a>;
             return;
           }
         } catch (e) {
@@ -87,7 +85,7 @@
       }
 
       statusEl.textContent = "Server failed to become ready. Try again later.";
-      urlEl.innerHTML = `You can try manually at: <a href="${baseUrl}" target="_blank" rel="noopener">${baseUrl}</a>`;
+      urlEl.innerHTML = `You can try manually at: <a href="${url}" target="_blank" rel="noopener">${url}</a>`;
     }
 
     window.onload = startServer;
