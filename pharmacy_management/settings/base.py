@@ -35,6 +35,7 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://pharmanet-proxy-page.s3-website.eu-north-1.amazonaws.com",
+    "https://pharmanet-proxy-page.s3.eu-north-1.amazonaws.com",
 ] # CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = 'pharmacy_management.urls'
