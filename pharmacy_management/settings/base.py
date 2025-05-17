@@ -21,6 +21,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -30,11 +31,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'home.middleware.LoginRequiredMiddleware',  # Unlogged-in user is redicted to login page
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://pharmanet-proxy-page.s3-website.eu-north-1.amazonaws.com",    
+    "https://pharmanet-proxy-page.s3-website.eu-north-1.amazonaws.com",
 ] # CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = 'pharmacy_management.urls'

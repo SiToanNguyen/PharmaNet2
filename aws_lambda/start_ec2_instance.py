@@ -9,8 +9,6 @@ import boto3 # type: ignore
 import time
 import datetime
 import json
-import urllib.request
-import urllib.error
 
 REGION = 'eu-north-1'
 INSTANCE_ID = "i-0ae4c005f434d09bb"
@@ -21,45 +19,70 @@ ssm = boto3.client("ssm", region_name=REGION)
 s3 = boto3.client('s3')
 
 def initialize_shutdown_timer():
-    shutdown_time = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=2)).isoformat().replace('+00:00', 'Z')
+    shutdown_dt = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=2) # Will shut down in 2 hours
+    shutdown_time = shutdown_dt.isoformat().replace('+00:00', 'Z')
+
     s3.put_object(
         Bucket='pharmanet-shutdown-bucket',
         Key='shutdown_timer.json',
         Body=json.dumps({'shutdown_at': shutdown_time}),
         ContentType='application/json'
     )
-    print(f"Server will shut down at {shutdown_time}")
 
-def get_public_ip(INSTANCE_ID):
-    reservations = ec2.describe_instances(InstanceIds=[INSTANCE_ID])['Reservations']
+    readable_time = shutdown_dt.strftime('%A, %B %d, %Y at %I:%M %p UTC')
+    print(f"Server will shut down on {readable_time}")
+    return readable_time
+
+def get_public_ip(instance_id):
+    reservations = ec2.describe_instances(InstanceIds=[instance_id])['Reservations']
     instance = reservations[0]['Instances'][0]
     return instance['PublicIpAddress']
 
-def wait_for_django_server(ip, port=8000, timeout=150, interval=5):
-    url = f"http://{ip}:{port}"
-    print(f"Waiting for Django server at {url} to be ready...")
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        try:
-            with urllib.request.urlopen(url, timeout=3) as response:
-                if response.status == 200:
-                    print("Django server is ready.")
-                    return True
-        except urllib.error.URLError:
-            pass
-        time.sleep(interval)
-    print("Django server did not respond in time.")
-    return False
+def check_server_status(instance_id):
+    # Check if Gunicorn is already running
+    check_response = ssm.send_command(
+        InstanceIds=[instance_id],
+        DocumentName="AWS-RunShellScript",
+        Parameters={"commands": ["pgrep -f gunicorn"]},
+    )
+
+    command_id = check_response["Command"]["CommandId"]
+
+    # Wait for the command result
+    for _ in range(10):  # Retry up to ~10 seconds
+        time.sleep(1)
+        output = ssm.get_command_invocation(
+            CommandId=command_id,
+            InstanceId=instance_id,
+        )
+        if output["Status"] in ("Success", "Failed", "Cancelled", "TimedOut"):
+            break
+
+    # Determine if Gunicorn is running
+    if output["Status"] == "Success" and output["StandardOutputContent"].strip():
+        print("Gunicorn is already running. Skipping restart.")
+        return True
+    else:
+        print("Gunicorn is not running. Will start the server.")
+        return False
 
 def lambda_handler(event, context):
-    # 1. Start an EC2 instance.
-    ec2.start_instances(InstanceIds=[INSTANCE_ID])
-    print("Starting EC2 instance...")
+    # Check current EC2 instance state
+    response = ec2.describe_instances(InstanceIds=[INSTANCE_ID])
+    current_state = response['Reservations'][0]['Instances'][0]['State']['Name']
+    print(f"Current EC2 state: {current_state}")
 
-    # Wait until the instance is running
-    waiter = ec2.get_waiter("instance_running")
-    waiter.wait(InstanceIds=[INSTANCE_ID])
-    print("EC2 instance is running.")
+    if current_state != 'running':
+        # 1. Start an EC2 instance.
+        ec2.start_instances(InstanceIds=[INSTANCE_ID])
+        print("Starting EC2 instance...")
+
+        # Wait until the instance is running
+        waiter = ec2.get_waiter("instance_running")
+        waiter.wait(InstanceIds=[INSTANCE_ID])
+        print("EC2 instance is running.")
+    else:
+        print("EC2 instance already started.")
 
     # Wait until instance is online in SSM
     for i in range(30):
@@ -75,52 +98,51 @@ def lambda_handler(event, context):
 
     # 2. Get the public IP from the EC2 API to return it in the Lambda response.
     ip = get_public_ip(INSTANCE_ID)
-    print(f"Server is available at http://{ip}:{PORT}")
-    
-    commands = [
-        "pkill gunicorn || true",
-        "cd /home/ubuntu/PharmaNet2",
-        ". /home/ubuntu/PharmaNet2/venv/bin/activate",
-        "export DJANGO_ENV=production",
+    print(f"EC2's Public IP: {ip}")
 
-        # 3. Add the public IP to the Django settings for ALLOWED_HOSTS
-        f'sed -i -E "s/^ALLOWED_HOSTS=.*/ALLOWED_HOSTS=\\"{ip}\\"/" .env.production',
+    # Check if Django server is already running
+    if check_server_status(INSTANCE_ID):
+        print("Django server already started.")
+    else:
+        print("Starting Django server...")
+        commands = [
+            "pkill gunicorn || true",
+            "cd /home/ubuntu/PharmaNet2 || exit 1",
+            ". /home/ubuntu/PharmaNet2/venv/bin/activate",
+            "export DJANGO_ENV=production",
 
-        # 4. Start a Django Gunicorn server on the instance.
-        (
-            "nohup /home/ubuntu/PharmaNet2/venv/bin/gunicorn "
-            "--bind 0.0.0.0:8000 pharmacy_management.wsgi:application "
-            "> /home/ubuntu/PharmaNet2/gunicorn.log 2>&1 &"
+            # 3. Add the public IP to the Django settings for ALLOWED_HOSTS
+            f'sed -i -E "s/^ALLOWED_HOSTS=.*/ALLOWED_HOSTS=\\"{ip}\\"/" .env.production',
+
+            # 4. Start a Django Gunicorn server on the instance.
+            (
+                "nohup /home/ubuntu/PharmaNet2/venv/bin/gunicorn "
+                "--bind 0.0.0.0:8000 pharmacy_management.wsgi:application "
+                "> /home/ubuntu/PharmaNet2/gunicorn.log 2>&1 &"
+            )
+        ]
+        time.sleep(5)  # Small delay to ensure stability
+        response = ssm.send_command(
+            InstanceIds=[INSTANCE_ID],
+            DocumentName="AWS-RunShellScript",
+            Parameters={"commands": commands},
         )
-    ]
+        print("Django server is running.")
+        print("Command sent:", response["Command"]["CommandId"])
 
-    time.sleep(5)  # Optional: small delay to ensure stability
+    print(f"Server is available at http://{ip}:{PORT}")
 
-    response = ssm.send_command(
-        InstanceIds=[INSTANCE_ID],
-        DocumentName="AWS-RunShellScript",
-        Parameters={"commands": commands},
-    )
-
-    # 5. Set a shutdown timer for the server to stop after 2 hours.
+    # 5. Set a shutdown timer for the server to stop after 2 hours.    
     print("Shutdown timer updated.")
-    initialize_shutdown_timer()    
-
-    print("Command sent:", response["Command"]["CommandId"])
-    
-    # Wait for Django to respond before finishing
-    if not wait_for_django_server(ip, PORT):
-        return {
-            "statusCode": 500,
-            "body": json.dumps({
-                "status": "Django server failed to start in time.",
-                "public_ip": ip,
-                "url": f"http://{ip}:{PORT}"
-            })
-        }
+    shutdown_at_str = initialize_shutdown_timer()
 
     return {
-        "status": "EC2 instance started and Django server launching.",
-        "public_ip": ip,
-        "url": f"http://{ip}:{PORT}"
+        "statusCode": 200,
+        "headers": {"Content-Type": "application/json"},
+        "body": json.dumps({
+            "status": "EC2 instance started and Django server launching.",
+            "public_ip": ip,
+            "url": f"http://{ip}:{PORT}",
+            "shutdown_at": shutdown_at_str
+        })
     }

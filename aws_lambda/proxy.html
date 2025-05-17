@@ -12,20 +12,13 @@
           const res = await fetch(apiUrl);
           console.log("Fetch response status:", res.status);
 
-          // If Lambda returns 503, treat as temporary and retry
-          if (res.status === 503) {
-            throw new Error(`HTTP 503 Service Unavailable`);
-          }
-
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-          }
+          if (res.status === 503) throw new Error(`HTTP 503 Service Unavailable`);
+          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
           const data = await res.json();
           return data;
         } catch (e) {
-          console.warn(`Attempt ${i+1} failed: ${e.message}`);
-          // Wait before retrying
+          console.warn(`Attempt ${i + 1} failed: ${e.message}`);
           await new Promise(r => setTimeout(r, delay));
         }
       }
@@ -36,6 +29,7 @@
       const statusEl = document.getElementById("status");
       const infoEl = document.getElementById("info");
       const urlEl = document.getElementById("server-url");
+      const shutdownEl = document.getElementById("shutdown-info");
 
       statusEl.textContent = "Starting server (this may take a while)...";
       infoEl.textContent = "";
@@ -44,9 +38,7 @@
       try {
         const data = await callLambdaWithRetry();
 
-        if (!data) {
-          throw new Error("Response JSON is empty or invalid");
-        }
+        if (!data) throw new Error("Response JSON is empty or invalid");
 
         if (data.status) {
           infoEl.textContent = `Status: ${data.status}`;
@@ -56,10 +48,17 @@
         }
 
         if (data.url) {
-          statusEl.textContent = "Server is starting. Redirecting soon...";
-          waitForServer(data.url);
+          // IMMEDIATELY show the URL
+          urlEl.innerHTML = `<a href="${data.url}" target="_blank" rel="noopener">${data.url}</a>`;
+          
+          // Optionally continue readiness check in background
+          statusEl.textContent = "Waiting for server to become ready...";
+          checkServerReadiness(data.url);
         } else {
           throw new Error("Invalid response format: 'url' missing");
+        }
+        if (data.shutdown_at) {
+          shutdownEl.textContent = `Server will automatically shut down on ${data.shutdown_at}`;
         }
       } catch (e) {
         statusEl.textContent = `Error starting server: ${e.message}`;
@@ -67,17 +66,18 @@
       }
     }
 
-    async function waitForServer(url) {
+    async function checkServerReadiness(baseUrl) {
       const statusEl = document.getElementById("status");
       const urlEl = document.getElementById("server-url");
 
+      const healthUrl = `${baseUrl.replace(/\/$/, "")}/health/`;
+
       for (let i = 0; i < 30; i++) {
         try {
-          const response = await fetch(url);
+          const response = await fetch(healthUrl);
           if (response.ok) {
-            urlEl.innerHTML = `Server is ready! <a href="${url}" target="_blank" rel="noopener">${url}</a>`;
-            // Redirect after short delay so user can see the link
-            setTimeout(() => { window.location.href = url; }, 2000);
+            statusEl.textContent = "Server is ready!";
+            urlEl.innerHTML = `<a href="${baseUrl}" target="_blank" rel="noopener">${baseUrl}</a>`;
             return;
           }
         } catch (e) {
@@ -86,8 +86,8 @@
         await new Promise(resolve => setTimeout(resolve, 5000));
       }
 
-      statusEl.textContent = "Server failed to start. Try again later.";
-      urlEl.innerHTML = `You can try accessing the server manually here: <a href="${url}" target="_blank" rel="noopener">${url}</a>`;
+      statusEl.textContent = "Server failed to become ready. Try again later.";
+      urlEl.innerHTML = `You can try manually at: <a href="${baseUrl}" target="_blank" rel="noopener">${baseUrl}</a>`;
     }
 
     window.onload = startServer;
@@ -97,6 +97,7 @@
   <h1>Pharmacy Management System</h1>
   <p id="status">Initializing...</p>
   <p id="info" style="font-style: italic; color: #444;"></p>
+  <p id="shutdown-info" style="margin-top: 1em; color: #555;"></p>
   <p id="server-url" style="margin-top: 1em; font-weight: bold;"></p>
 </body>
 </html>
