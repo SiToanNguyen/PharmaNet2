@@ -75,7 +75,7 @@
           const response = await fetch(url);
           if (response.ok) {
             statusEl.textContent = "Server is ready!";
-            urlEl.innerHTML = <a href="${url}" target="_blank" rel="noopener">${url}</a>;
+            urlEl.innerHTML = `<a href="${url}" target="_blank" rel="noopener">${url}</a>`;
             return;
           }
         } catch (e) {
