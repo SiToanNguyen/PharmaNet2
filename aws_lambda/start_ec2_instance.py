@@ -9,10 +9,11 @@ import boto3 # type: ignore
 import time
 import datetime
 import json
+import os
 
-REGION = 'eu-north-1'
-INSTANCE_ID = "i-0ae4c005f434d09bb"
-PORT = 8000
+REGION = os.environ["REGION"]
+INSTANCE_ID = os.environ["INSTANCE_ID"]
+PORT = os.environ["PORT"]
 
 ec2 = boto3.client("ec2", region_name=REGION)
 ssm = boto3.client("ssm", region_name=REGION)

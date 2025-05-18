@@ -1,6 +1,6 @@
 # PharmaNet2
 
-PharmaNet2 is a personal project that I work on independently. The goal is to provide tools to pharmacies, helping them operate more efficiently and save time. In this version, I've switched from Flask and SQLite (used in my old project) to Django and PostgreSQL to improve performance and scalability.
+PharmaNet2 is a personal project that I work on independently. The goal is to provide tools to pharmacies, helping them operate more efficiently and save time. This is a remake of my bachelor project. In this version, I've switched from Flask and SQLite (used in my old project) to Django and PostgreSQL to improve performance and scalability. The web application is deployed on Amazon Web Service.
 
 ## Features
 
