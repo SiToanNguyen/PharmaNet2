@@ -15,11 +15,6 @@
 
 {% block content %}
   <div class="list-container">
-
-    {% if user.is_superuser %}
-      <a href="{% url 'scripts_page' %}" class="add-item-btn">Run Scripts</a>
-    {% endif %}
-
     <div class="inventory-overview">
       <h2>Expiring Products</h2>
       <table class="global-table">

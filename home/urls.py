@@ -54,8 +54,4 @@ urlpatterns = [
     path('get_inventory_price/<int:inventory_id>/', views.get_inventory_price, name='get_inventory_price'),
 
     path('financial-summary/', views.financial_summary, name='financial_summary'),
-    
-    path('scripts/', views.scripts_page, name='scripts_page'),
-    path('run-dummy-data/', views.run_dummy_data_script, name='run_dummy_data_script'),
-    path('run-dummy-transaction/', views.run_dummy_transaction_script, name='run_dummy_transaction_script'),
 ]
