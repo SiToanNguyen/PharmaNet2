@@ -13,7 +13,7 @@ PharmaNet2 is a personal project that I work on independently. The goal is to pr
 ## Screenshot Gallery
 
 The screenshots of the project’s AWS setup and user interface can be viewed here:  
-[My PharmaNet2 Screenshot Album](https://photos.app.goo.gl/2xr2reRrrC7ASP4Q7)
+[https://photos.app.goo.gl/2xr2reRrrC7ASP4Q7](https://photos.app.goo.gl/2xr2reRrrC7ASP4Q7)
 
 ## Accessing the Demo Website on AWS
 
