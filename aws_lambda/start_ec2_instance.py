@@ -106,6 +106,8 @@ def lambda_handler(event, context):
         print("Django server already started.")
     else:
         print("Starting Django server...")
+        duckdns_host = "pharmanet.duckdns.org"
+        allowed_hosts_value = f"{duckdns_host},{ip}"
         commands = [
             "pkill gunicorn || true",
             "cd /home/ubuntu/PharmaNet2 || exit 1",
@@ -113,7 +115,7 @@ def lambda_handler(event, context):
             "export DJANGO_ENV=production",
 
             # 3. Add the public IP to the Django settings for ALLOWED_HOSTS
-            f'sed -i -E "s/^ALLOWED_HOSTS=.*/ALLOWED_HOSTS=\\"{ip}\\"/" .env.production',
+            f"sed -i -E \"s/^ALLOWED_HOSTS=.*/ALLOWED_HOSTS={allowed_hosts_value}/\" .env.production",
 
             # 4. Start a Django Gunicorn server on the instance.
             (

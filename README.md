@@ -1,6 +1,6 @@
 # PharmaNet2
 
-PharmaNet2 is a personal project that I work on independently. The goal is to provide tools to pharmacies, helping them operate more efficiently and save time. This is a remake of my bachelor project. In this version, I've switched from Flask and SQLite (used in my old project) to Django and PostgreSQL to improve performance and scalability. The web application is deployed on Amazon Web Service.
+PharmaNet2 is a personal project that I work on independently. The goal is to provide tools for pharmacies, helping them operate more efficiently and save time. This is a remake of my bachelor’s project. In this version, I've switched from Flask and SQLite (used in the original version) to Django and PostgreSQL to improve performance and scalability. The web application is deployed on Amazon Web Services (AWS).
 
 ## Features
 
@@ -9,6 +9,17 @@ PharmaNet2 is a personal project that I work on independently. The goal is to pr
 - Manage inventory, track products coming in and out, and monitor expiry dates.
 - Generate financial and inventory reports.
 - Keep activity logs of system use, including user actions and timestamps.
+
+## Accessing the Demo Website on AWS
+
+To try out the live demo hosted on AWS:
+
+1. Start the server by visiting the proxy page:  
+   [http://pharmanet-proxy-page.s3-website.eu-north-1.amazonaws.com/](http://pharmanet-proxy-page.s3-website.eu-north-1.amazonaws.com/)
+
+2. Wait for the server to boot up. This may take up to 2 minutes.
+
+3. When the server is ready, its URL will be displayed on the page.
 
 ## Installation
 

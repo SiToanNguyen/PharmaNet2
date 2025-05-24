@@ -11,105 +11,99 @@
   
   <script>
     const apiUrl = "https://6fhwkm63x8.execute-api.eu-north-1.amazonaws.com/start";
+    const fixedUrl = "https://pharmanet.duckdns.org";
 
-    async function callLambdaWithRetry(retries = 10, delay = 5000) {
+    async function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function callLambdaWithRetry(retries = 10, delay = 5000, updateStatus = () => {}) {
+      let elapsedSeconds = 0;
       for (let i = 0; i < retries; i++) {
+        updateStatus(elapsedSeconds);
         try {
           const res = await fetch(apiUrl);
-          console.log("Fetch response status:", res.status);
-
-          if (res.status === 503) throw new Error(`HTTP 503 Service Unavailable`);
+          if (res.status === 503) throw new Error("503 Service Unavailable");
           if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-
           const data = await res.json();
           return data;
         } catch (e) {
           console.warn(`Attempt ${i + 1} failed: ${e.message}`);
-          await new Promise(r => setTimeout(r, delay));
+          await sleep(delay);
+          elapsedSeconds += delay / 1000;
         }
       }
-      throw new Error(`Failed to start server after ${retries} attempts.`);
+      throw new Error("Failed to start EC2 after multiple attempts.");
+    }
+
+    async function checkDjangoServer(url, updateStatus, retries = 30, delay = 5000) {
+      let elapsedSeconds = 0;
+      for (let i = 0; i < retries; i++) {
+        updateStatus(elapsedSeconds);
+        try {
+          const res = await fetch(url, { method: 'GET' });
+          if (res.ok) return true;
+        } catch (e) {
+          // ignore error
+        }
+        await sleep(delay);
+        elapsedSeconds += delay / 1000;
+      }
+      return false;
     }
 
     async function startServer() {
-      const statusEl = document.getElementById("status");
-      const infoEl = document.getElementById("info");
-      const urlEl = document.getElementById("server-url");
-      const shutdownEl = document.getElementById("shutdown-info");
-
-      statusEl.textContent = "Starting server (this may take a while)...";
-      infoEl.textContent = "";
-      urlEl.textContent = "";
+      const step1 = document.getElementById("step1");
+      const step2 = document.getElementById("step2");
+      const step3 = document.getElementById("step3");
+      const step4 = document.getElementById("step4");
+      const step5 = document.getElementById("step5");
 
       try {
-        const data = await callLambdaWithRetry();
+        // Step 1 with counter
+        step1.textContent = "1. Starting EC2 instance... (0 seconds elapsed)";
+        const data = await callLambdaWithRetry(10, 5000, seconds => {
+          step1.textContent = `1. Starting EC2 instance... (${seconds} seconds elapsed)`;
+        });
 
-        if (!data) throw new Error("Response JSON is empty or invalid");
+        step2.textContent = `2. EC2 is running. Public IP: ${data.public_ip || "Unknown"}`;
 
-        if (data.status) {
-          infoEl.textContent = `Status: ${data.status}`;
-        }
-        if (data.public_ip) {
-          infoEl.textContent += ` | Public IP: ${data.public_ip}`;
-        }
+        // Step 3 with counter
+        step3.textContent = "3. Starting Django server... (0 seconds elapsed)";
+        const djangoReady = await checkDjangoServer(fixedUrl, seconds => {
+          step3.textContent = `3. Starting Django server... (${seconds} seconds elapsed)`;
+        });
 
-        if (data.url) {
-          // IMMEDIATELY show the URL
-          urlEl.innerHTML = `Server is available at: <a href="${data.url}" target="_blank" rel="noopener">${data.url}</a>`;
-          
-          // Optionally continue readiness check in background
-          statusEl.textContent = "Waiting for server to become ready...";
-          checkServerReadiness(data.url);
-        } else {
-          throw new Error("Invalid response format: 'url' missing");
-        }
-        if (data.shutdown_at) {
-          shutdownEl.textContent = `Server will automatically shut down on ${data.shutdown_at}`;
-        }
+        if (!djangoReady) throw new Error("Django server failed to start in time");
+
+        step4.innerHTML = `4. Django server is running. Available at: <a href="${fixedUrl}" target="_blank">${fixedUrl}</a>`;
+        step5.textContent = `5. Server will shut down automatically on ${data.shutdown_at || "unknown time"}`;
+
+        document.getElementById("guest-info").style.display = "block";
       } catch (e) {
-        statusEl.textContent = `Error starting server: ${e.message}`;
-        console.error("Error in startServer:", e);
+        step1.textContent = "Error: " + e.message;
       }
-    }
-
-    async function checkServerReadiness(url) {
-      const statusEl = document.getElementById("status");
-      const urlEl = document.getElementById("server-url");
-
-      for (let i = 0; i < 30; i++) {
-        try {
-          const response = await fetch(url);
-          if (response.ok) {
-            statusEl.textContent = "Server is ready!";
-            urlEl.innerHTML = `Server is available at: <a href="${url}" target="_blank" rel="noopener">${url}</a>`;
-            return;
-          }
-        } catch (e) {
-          console.log("Server not ready yet...");
-        }
-        await new Promise(resolve => setTimeout(resolve, 5000));
-      }
-
-      statusEl.textContent = "Server failed to become ready. Try again later.";
-      urlEl.innerHTML = `Server is available at: <a href="${url}" target="_blank" rel="noopener">${url}</a>`;
     }
 
     window.onload = startServer;
   </script>
+
 </head>
 <body>
   <h1>Pharmacy Management System</h1>
-  <p id="status">Initializing...</p>
-  <p id="info" style="font-style: italic; color: #444;"></p>
-  <p id="shutdown-info" style="margin-top: 1em; color: #555;"></p>
-  <p id="server-url" style="margin-top: 1em; font-weight: bold;"></p>
-  <p style="margin-top: 1em; font-size: 0.9em; color: #666;">
-    Guest account:
+  <p id="step1"></p>
+  <p id="step2"></p>
+  <p id="step3"></p>
+  <p id="step4"></p>
+  <p id="step5"></p>
+  <div id="guest-info" style="display: none; margin-top: 1em; font-size: 0.9em;">
+    <p>Guest account:</p>
     <ul>
       <li>Username: guest</li>
       <li>Password: currywurst!</li>
     </ul>
-  </p>
+  </div>
+
   <h2>start_ec2_instance.py</h2>
   <pre><code class="language-python">
     # Run this script to
@@ -123,6 +117,7 @@
     import time
     import datetime
     import json
+    import os
 
     REGION = os.environ["REGION"]
     INSTANCE_ID = os.environ["INSTANCE_ID"]
@@ -219,6 +214,8 @@
             print("Django server already started.")
         else:
             print("Starting Django server...")
+            duckdns_host = "pharmanet.duckdns.org"
+            allowed_hosts_value = f"{duckdns_host},{ip}"
             commands = [
                 "pkill gunicorn || true",
                 "cd /home/ubuntu/PharmaNet2 || exit 1",
@@ -226,7 +223,7 @@
                 "export DJANGO_ENV=production",
 
                 # 3. Add the public IP to the Django settings for ALLOWED_HOSTS
-                f'sed -i -E "s/^ALLOWED_HOSTS=.*/ALLOWED_HOSTS=\\"{ip}\\"/" .env.production',
+                f"sed -i -E \"s/^ALLOWED_HOSTS=.*/ALLOWED_HOSTS={allowed_hosts_value}/\" .env.production",
 
                 # 4. Start a Django Gunicorn server on the instance.
                 (
