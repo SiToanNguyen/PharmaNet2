@@ -21,6 +21,8 @@ To try out the live demo hosted on AWS:
 
 3. When the server is ready, its URL will be displayed on the page.
 
+4. The server shuts down automatically after a period of time.
+
 ## Installation
 
 1. Clone the repo:
