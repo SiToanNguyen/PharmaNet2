@@ -33,15 +33,11 @@ To try out the live demo hosted on AWS:
 2. Install dependencies:
    ```bash
    pip install -r requirements.txt
+
+3. Run the project with:
+   ```bash
+   python manage.py runserver
    ```
-
-## Usage
-
-Run the project with:
-
-```bash
-python manage.py runserver
-```
 
 ## Contributing
 
