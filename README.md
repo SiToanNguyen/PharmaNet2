@@ -10,6 +10,11 @@ PharmaNet2 is a personal project that I work on independently. The goal is to pr
 - Generate financial and inventory reports.
 - Keep activity logs of system use, including user actions and timestamps.
 
+## Screenshot Gallery
+
+The screenshots of the project’s AWS setup and user interface can be viewed here:  
+[My PharmaNet2 Screenshot Album](https://photos.app.goo.gl/2xr2reRrrC7ASP4Q7)
+
 ## Accessing the Demo Website on AWS
 
 To try out the live demo hosted on AWS:
