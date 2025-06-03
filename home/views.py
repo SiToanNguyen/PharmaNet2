@@ -1,4 +1,9 @@
 # home/views.py
+from datetime import date
+import json
+from reportlab.pdfgen import canvas
+from io import BytesIO
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
@@ -7,17 +12,23 @@ from django.views.decorators.http import require_POST
 from django.utils.dateparse import parse_date
 from django.utils.timezone import now
 from django.utils import timezone
-from django.db import transaction  # for atomic operations
+from django.db import transaction
 from django.db.models import Sum
-from django.core.paginator import Paginator
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.forms import modelformset_factory
 from django.contrib import messages
-from .models import Manufacturer, ActivityLog, Category, Product, Inventory, PurchaseTransaction, PurchasedProduct, Customer, SaleTransaction, SoldProduct
-from .forms import UserCreationForm, UserEditForm, ManufacturerForm, CategoryForm, ProductForm, PurchaseTransactionForm, PurchasedProductForm, CustomerForm, SaleTransactionForm, SoldProductForm, DateRangeForm
-from .utils import *
-from datetime import date, timedelta
-import json
+
+from .models import (
+    ActivityLog, Customer, 
+    Manufacturer, Category, Product, Inventory, 
+    PurchaseTransaction, PurchasedProduct, SaleTransaction, SoldProduct
+    )
+from .forms import (
+    UserCreationForm, UserEditForm, CustomerForm, DateRangeForm,
+    ManufacturerForm, CategoryForm, ProductForm, 
+    PurchaseTransactionForm, PurchasedProductForm, SaleTransactionForm, SoldProductForm
+    )
+from .utils import paginate_with_query_params, add_object, edit_object, delete_object, list_objects, log_activity
 
 # Homepage
 def homepage(request):
@@ -698,3 +709,37 @@ def financial_summary(request):
         'profit': profit,
     }
     return render(request, 'financial_summary.html', context)
+
+def export_financial_summary_pdf(request):
+    form = DateRangeForm(request.GET or None)
+
+    if not form.is_valid():
+        return redirect('financial_summary')
+
+    from_date = form.cleaned_data['from_date']
+    to_date = form.cleaned_data['to_date']
+
+    purchases = PurchaseTransaction.objects.filter(purchase_date__date__range=(from_date, to_date))
+    sales = SaleTransaction.objects.filter(transaction_date__date__range=(from_date, to_date))
+
+    total_purchase = purchases.aggregate(Sum('total_cost'))['total_cost__sum'] or 0
+    total_sales = sales.aggregate(Sum('price'))['price__sum'] or 0
+    profit = total_sales - total_purchase
+
+    # Create PDF
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer)
+    p.setFont("Helvetica-Bold", 14)
+    p.drawString(100, 800, "Financial Summary Report")
+    p.setFont("Helvetica", 12)
+
+    p.drawString(100, 770, f"Date Range: {from_date} to {to_date}")
+    p.drawString(100, 740, f"Total Purchase Cost: € {total_purchase:,.2f}")
+    p.drawString(100, 720, f"Total Sales Revenue: € {total_sales:,.2f}")
+    p.drawString(100, 700, f"Estimated Profit: € {profit:,.2f}")
+
+    p.showPage()
+    p.save()
+
+    buffer.seek(0)
+    return HttpResponse(buffer, content_type='application/pdf', headers={'Content-Disposition': 'attachment; filename="financial_summary.pdf"'})

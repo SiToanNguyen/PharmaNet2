@@ -17,5 +17,11 @@
         <li><strong>Total Sales Revenue:</strong> {{ total_sales|floatformat:2|intcomma }} €</li>
         <li><strong>Estimated Profit:</strong> {{ profit|floatformat:2|intcomma }} €</li>
     </ul>
+
+    <form action="{% url 'export_financial_summary_pdf' %}" method="get" style="margin-top: 20px;">
+        <input type="hidden" name="from_date" value="{{ form.cleaned_data.from_date }}">
+        <input type="hidden" name="to_date" value="{{ form.cleaned_data.to_date }}">
+        <button type="submit" class="submit-btn">Export to PDF</button>
+    </form>
 {% endif %}
 {% endblock %}

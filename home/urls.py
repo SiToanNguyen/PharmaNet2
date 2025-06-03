@@ -54,4 +54,5 @@ urlpatterns = [
     path('get_inventory_price/<int:inventory_id>/', views.get_inventory_price, name='get_inventory_price'),
 
     path('financial-summary/', views.financial_summary, name='financial_summary'),
+    path('financial-summary/pdf/', views.export_financial_summary_pdf, name='export_financial_summary_pdf'),
 ]
