@@ -35,9 +35,12 @@ def initialize_shutdown_timer():
     return readable_time
 
 def get_public_ip(instance_id):
-    reservations = ec2.describe_instances(InstanceIds=[instance_id])['Reservations']
-    instance = reservations[0]['Instances'][0]
-    return instance['PublicIpAddress']
+    try:
+        reservations = ec2.describe_instances(InstanceIds=[instance_id])['Reservations']
+        instance = reservations[0]['Instances'][0]
+        return instance['PublicIpAddress']
+    except (KeyError, IndexError) as e:
+        raise RuntimeError("Failed to retrieve public IP address") from e
 
 def check_server_status(instance_id):
     # Check if Gunicorn is already running
@@ -83,7 +86,7 @@ def lambda_handler(event, context):
         waiter.wait(InstanceIds=[INSTANCE_ID])
         print("EC2 instance is running.")
     else:
-        print("EC2 instance already started.")
+        print("EC2 instance already running.")
 
     # Wait until instance is online in SSM
     for i in range(30):
@@ -101,37 +104,34 @@ def lambda_handler(event, context):
     ip = get_public_ip(INSTANCE_ID)
     print(f"EC2's Public IP: {ip}")
 
-    # Check if Django server is already running
-    if check_server_status(INSTANCE_ID):
-        print("Django server already started.")
-    else:
-        print("Starting Django server...")
-        duckdns_host = "pharmanet.duckdns.org"
-        allowed_hosts_value = f"{duckdns_host},{ip}"
-        commands = [
-            "pkill gunicorn || true",
-            "cd /home/ubuntu/PharmaNet2 || exit 1",
-            ". /home/ubuntu/PharmaNet2/venv/bin/activate",
-            "export DJANGO_ENV=production",
+    print("Starting Django server...")
+    duckdns_host = "pharmanet.duckdns.org"
+    hosts = {duckdns_host, ip}
+    allowed_hosts_value = ",".join(hosts)
+    commands = [
+        "pkill gunicorn || true",
+        "cd /home/ubuntu/PharmaNet2 || exit 1",
+        ". /home/ubuntu/PharmaNet2/venv/bin/activate",
+        "export DJANGO_ENV=production",
 
-            # 3. Add the public IP to the Django settings for ALLOWED_HOSTS
-            f"sed -i -E \"s/^ALLOWED_HOSTS=.*/ALLOWED_HOSTS={allowed_hosts_value}/\" .env.production",
+        # 3. Add the public IP to the Django settings for ALLOWED_HOSTS
+        f"sed -i -E \"s/^ALLOWED_HOSTS=.*/ALLOWED_HOSTS={allowed_hosts_value}/\" .env.production",
 
-            # 4. Start a Django Gunicorn server on the instance.
-            (
-                "nohup /home/ubuntu/PharmaNet2/venv/bin/gunicorn "
-                "--bind 0.0.0.0:8000 pharmacy_management.wsgi:application "
-                "> /home/ubuntu/PharmaNet2/gunicorn.log 2>&1 &"
-            )
-        ]
-        time.sleep(5)  # Small delay to ensure stability
-        response = ssm.send_command(
-            InstanceIds=[INSTANCE_ID],
-            DocumentName="AWS-RunShellScript",
-            Parameters={"commands": commands},
+        # 4. Start a Django Gunicorn server on the instance.
+        (
+            "nohup /home/ubuntu/PharmaNet2/venv/bin/gunicorn "
+            "--bind 0.0.0.0:8000 pharmacy_management.wsgi:application "
+            "> /home/ubuntu/PharmaNet2/gunicorn.log 2>&1 &"
         )
-        print("Django server is running.")
-        print("Command sent:", response["Command"]["CommandId"])
+    ]
+    time.sleep(5)  # Small delay to ensure stability
+    response = ssm.send_command(
+        InstanceIds=[INSTANCE_ID],
+        DocumentName="AWS-RunShellScript",
+        Parameters={"commands": commands},
+    )
+    print("Django server is running.")
+    print("Command sent:", response["Command"]["CommandId"])        
 
     print(f"Server is available at http://{ip}:{PORT}")
 

@@ -1,13 +1,16 @@
 # pharmacy_management/settings/production.py
 from decouple import Config, RepositoryEnv
 from .base import *
+import os
 
-config = Config(repository=RepositoryEnv('.env.production'))
+ENV_FILE = os.path.join(BASE_DIR, '.env.production')
+config = Config(repository=RepositoryEnv(ENV_FILE))
 
 DEBUG = config('DEBUG', cast=bool)
 SECRET_KEY = config('SECRET_KEY')
 
 ALLOWED_HOSTS = [host.strip() for host in config('ALLOWED_HOSTS').split(',')]
+print("ALLOWED_HOSTS =", ALLOWED_HOSTS)
 
 DATABASES = {
     'default': {
