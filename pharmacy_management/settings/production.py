@@ -2,8 +2,11 @@
 from decouple import Config, RepositoryEnv
 from .base import *
 import os
+from pathlib import Path
 
-ENV_FILE = os.path.join(BASE_DIR, '.env.production')
+BASE_DIR = Path(__file__).resolve().parents[2]  # Go up 3 levels from production.py
+ENV_FILE = BASE_DIR / '.env.production'
+
 config = Config(repository=RepositoryEnv(ENV_FILE))
 
 DEBUG = config('DEBUG', cast=bool)
