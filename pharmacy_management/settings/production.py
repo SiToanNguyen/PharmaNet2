@@ -30,4 +30,4 @@ DATABASES = {
 STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 # The absolute path to the directory where static files will be collected
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, 'pharmacy_management', 'staticfiles')
