@@ -120,9 +120,12 @@ def lambda_handler(event, context):
         # 4. Start a Django Gunicorn server on the instance.
         (
             "nohup /home/ubuntu/PharmaNet2/venv/bin/gunicorn "
-            "--bind 0.0.0.0:8000 pharmacy_management.wsgi:application "
+            "--env DJANGO_SETTINGS_MODULE=pharmacy_management.settings.production "
+            "--bind unix:/home/ubuntu/PharmaNet2/gunicorn.sock "
+            "pharmacy_management.wsgi:application "
             "> /home/ubuntu/PharmaNet2/gunicorn.log 2>&1 &"
         )
+
     ]
     time.sleep(5)  # Small delay to ensure stability
     response = ssm.send_command(
