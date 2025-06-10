@@ -4,6 +4,7 @@ import json
 from reportlab.pdfgen import canvas
 from io import BytesIO
 from collections import defaultdict
+from decimal import Decimal
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.models import User
@@ -806,6 +807,9 @@ def export_financial_summary_pdf(request):
     form = DateRangeForm(request.GET or None)
 
     if not form.is_valid():
+        print("[DEBUG] Export PDF form is invalid.")
+        print("[DEBUG] GET data:", request.GET.dict())
+        print("[DEBUG] Form errors:", form.errors.as_json())
         return redirect('financial_summary')
 
     from_date = form.cleaned_data['from_date']
@@ -818,7 +822,7 @@ def export_financial_summary_pdf(request):
     total_sales = sales.aggregate(Sum('price'))['price__sum'] or 0
     profit = total_sales - total_purchase
 
-    # Product summary calculation (same logic as in financial_summary)
+    # Product summary calculation
     purchased_summary = (
         PurchasedProduct.objects
         .filter(purchase_transaction__purchase_date__date__range=(from_date, to_date))
@@ -893,7 +897,7 @@ def export_financial_summary_pdf(request):
     p.drawString(100, 800, "Financial Summary Report")
     p.setFont("Helvetica", 12)
 
-    p.drawString(100, 770, f"Date Range: {from_date} to {to_date}")
+    p.drawString(100, 770, f"Date Range: {from_date.strftime('%B %d, %Y')} to {to_date.strftime('%B %d, %Y')}")
     p.drawString(100, 750, f"Total Purchase Cost: € {total_purchase:,.2f}")
     p.drawString(100, 730, f"Total Sales Revenue: € {total_sales:,.2f}")
     p.drawString(100, 710, f"Estimated Profit: € {profit:,.2f}")
