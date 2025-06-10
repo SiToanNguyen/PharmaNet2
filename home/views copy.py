@@ -3,7 +3,6 @@ from datetime import date, timedelta
 import json
 from reportlab.pdfgen import canvas
 from io import BytesIO
-from collections import defaultdict
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.models import User
@@ -12,8 +11,7 @@ from django.views.decorators.http import require_POST
 from django.utils.dateparse import parse_date
 from django.utils.timezone import now, timezone
 from django.db import transaction
-from django.db.models import Sum, F, Value, ExpressionWrapper, DecimalField
-from django.db.models.functions import Coalesce
+from django.db.models import Sum
 from django.http import JsonResponse, HttpResponse
 from django.forms import modelformset_factory
 from django.contrib import messages
@@ -697,8 +695,6 @@ def financial_summary(request):
     profit = 0
     form = DateRangeForm(request.GET or None)
 
-    product_summary = []
-
     if form.is_valid():
         from_date = form.cleaned_data['from_date']
         to_date = form.cleaned_data['to_date']
@@ -710,95 +706,11 @@ def financial_summary(request):
         total_sales = sales.aggregate(Sum('price'))['price__sum'] or 0
         profit = total_sales - total_purchase
 
-        product_summary = defaultdict(lambda: {
-            'purchased_quantity': 0,
-            'total_spent': 0,
-            'sold_quantity': 0,
-            'total_earned': 0
-        })
-
-        # Purchased Products
-        purchased_summary = (
-            PurchasedProduct.objects
-            .filter(purchase_transaction__purchase_date__date__range=(from_date, to_date))
-            .values(name=F('product__name'))
-            .annotate(
-                total_quantity=Coalesce(Sum('quantity'), Value(0)),
-                total_spent=Coalesce(
-                    Sum(
-                        ExpressionWrapper(
-                            F('quantity') * F('purchase_price'),
-                            output_field=DecimalField(max_digits=15, decimal_places=2)
-                        )
-                    ),
-                    Value(0, output_field=DecimalField(max_digits=15, decimal_places=2))
-                )
-            )
-            .order_by('name')
-        )
-
-        # Sold Products
-        sold_summary = (
-            SoldProduct.objects
-            .filter(sale_transaction__transaction_date__date__range=(from_date, to_date))
-            .values(name=F('inventory_item__product__name'))
-            .annotate(
-                total_quantity=Coalesce(Sum('quantity'), Value(0)),
-                total_earned=Coalesce(
-                    Sum(
-                        ExpressionWrapper(
-                            F('quantity') * F('sale_price'),
-                            output_field=DecimalField(max_digits=15, decimal_places=2)
-                        )
-                    ),
-                    Value(0, output_field=DecimalField(max_digits=15, decimal_places=2))
-                )
-            )
-            .order_by('name')
-        )
-
-        # Initialize merge container
-        product_summary_dict = defaultdict(lambda: {
-            'purchased_quantity': 0,
-            'total_spent': 0,
-            'sold_quantity': 0,
-            'total_earned': 0
-        })
-
-        # Merge purchase data
-        for item in purchased_summary:
-            name = item['name']
-            product_summary_dict[name]['purchased_quantity'] = item['total_quantity']
-            product_summary_dict[name]['total_spent'] = item['total_spent']
-
-        # Merge sales data
-        for item in sold_summary:
-            name = item['name']
-            product_summary_dict[name]['sold_quantity'] = item['total_quantity']
-            product_summary_dict[name]['total_earned'] = item['total_earned']
-
-        # Convert to sorted list
-        product_summary = [
-            {
-                'name': name,
-                'purchased_quantity': data['purchased_quantity'],
-                'sold_quantity': data['sold_quantity'],
-                'total_spent': data['total_spent'],
-                'total_earned': data['total_earned'],
-                'profit': data['total_earned'] - data['total_spent']
-            }
-            for name, data in sorted(product_summary_dict.items())
-        ]
-
-        # Sort by profit in descending order
-        product_summary.sort(key=lambda x: x['profit'], reverse=True)
-
     context = {
         'form': form,
         'total_purchase': total_purchase,
         'total_sales': total_sales,
         'profit': profit,
-        'product_summary': product_summary,
     }
     return render(request, 'financial_summary.html', context)
 
@@ -818,75 +730,7 @@ def export_financial_summary_pdf(request):
     total_sales = sales.aggregate(Sum('price'))['price__sum'] or 0
     profit = total_sales - total_purchase
 
-    # Product summary calculation (same logic as in financial_summary)
-    purchased_summary = (
-        PurchasedProduct.objects
-        .filter(purchase_transaction__purchase_date__date__range=(from_date, to_date))
-        .values(name=F('product__name'))
-        .annotate(
-            total_quantity=Coalesce(Sum('quantity'), Value(0)),
-            total_spent=Coalesce(
-                Sum(
-                    ExpressionWrapper(
-                        F('quantity') * F('purchase_price'),
-                        output_field=DecimalField(max_digits=15, decimal_places=2)
-                    )
-                ),
-                Value(0, output_field=DecimalField(max_digits=15, decimal_places=2))
-            )
-        )
-    )
-
-    sold_summary = (
-        SoldProduct.objects
-        .filter(sale_transaction__transaction_date__date__range=(from_date, to_date))
-        .values(name=F('inventory_item__product__name'))
-        .annotate(
-            total_quantity=Coalesce(Sum('quantity'), Value(0)),
-            total_earned=Coalesce(
-                Sum(
-                    ExpressionWrapper(
-                        F('quantity') * F('sale_price'),
-                        output_field=DecimalField(max_digits=15, decimal_places=2)
-                    )
-                ),
-                Value(0, output_field=DecimalField(max_digits=15, decimal_places=2))
-            )
-        )
-    )
-
-    product_summary_dict = defaultdict(lambda: {
-        'purchased_quantity': 0,
-        'total_spent': 0,
-        'sold_quantity': 0,
-        'total_earned': 0
-    })
-
-    for item in purchased_summary:
-        name = item['name']
-        product_summary_dict[name]['purchased_quantity'] = item['total_quantity']
-        product_summary_dict[name]['total_spent'] = item['total_spent']
-
-    for item in sold_summary:
-        name = item['name']
-        product_summary_dict[name]['sold_quantity'] = item['total_quantity']
-        product_summary_dict[name]['total_earned'] = item['total_earned']
-
-    product_summary = [
-        {
-            'name': name,
-            'purchased_quantity': data['purchased_quantity'],
-            'sold_quantity': data['sold_quantity'],
-            'total_spent': data['total_spent'],
-            'total_earned': data['total_earned'],
-            'profit': data['total_earned'] - data['total_spent']
-        }
-        for name, data in product_summary_dict.items()
-    ]
-
-    product_summary.sort(key=lambda x: x['profit'], reverse=True)
-
-    # Generate PDF
+    # Create PDF
     buffer = BytesIO()
     p = canvas.Canvas(buffer)
     p.setFont("Helvetica-Bold", 14)
@@ -894,62 +738,12 @@ def export_financial_summary_pdf(request):
     p.setFont("Helvetica", 12)
 
     p.drawString(100, 770, f"Date Range: {from_date} to {to_date}")
-    p.drawString(100, 750, f"Total Purchase Cost: € {total_purchase:,.2f}")
-    p.drawString(100, 730, f"Total Sales Revenue: € {total_sales:,.2f}")
-    p.drawString(100, 710, f"Estimated Profit: € {profit:,.2f}")
+    p.drawString(100, 740, f"Total Purchase Cost: € {total_purchase:,.2f}")
+    p.drawString(100, 720, f"Total Sales Revenue: € {total_sales:,.2f}")
+    p.drawString(100, 700, f"Estimated Profit: € {profit:,.2f}")
 
-    # Product summary table
-    y = 680
-    p.setFont("Helvetica-Bold", 12)
-    p.drawString(40, y, "Product Summary:")
-    y -= 20
-    p.setFont("Helvetica-Bold", 10)
-
-    # Define column positions (x coordinates)
-    x_name = 40
-    x_bought = 260
-    x_sold = 310
-    x_spent = 360
-    x_earned = 430
-    x_profit = 500
-    col_width = 50  # for centering numbers
-
-    # Draw headers
-    p.drawString(x_name, y, "Name")
-    p.drawCentredString(x_bought + col_width // 2, y, "Bought")
-    p.drawCentredString(x_sold + col_width // 2, y, "Sold")
-    p.drawCentredString(x_spent + col_width // 2, y, "Spent (€)")
-    p.drawCentredString(x_earned + col_width // 2, y, "Earned (€)")
-    p.drawCentredString(x_profit + col_width // 2, y, "Profit (€)")
-    y -= 15
-
-    p.setFont("Helvetica", 10)
-    for item in product_summary:
-        if y < 60:
-            p.showPage()
-            y = 800
-            p.setFont("Helvetica-Bold", 10)
-            p.drawString(x_name, y, "Name")
-            p.drawCentredString(x_bought + col_width // 2, y, "Bought")
-            p.drawCentredString(x_sold + col_width // 2, y, "Sold")
-            p.drawCentredString(x_spent + col_width // 2, y, "Spent (€)")
-            p.drawCentredString(x_earned + col_width // 2, y, "Earned (€)")
-            p.drawCentredString(x_profit + col_width // 2, y, "Profit (€)")
-            y -= 15
-            p.setFont("Helvetica", 10)
-
-        # Name left-aligned, numbers centered in their columns
-        p.drawString(x_name, y, str(item['name'])[:32])
-        p.drawCentredString(x_bought + col_width // 2, y, str(item['purchased_quantity']))
-        p.drawCentredString(x_sold + col_width // 2, y, str(item['sold_quantity']))
-        p.drawCentredString(x_spent + col_width // 2, y, f"{item['total_spent']:,.2f}")
-        p.drawCentredString(x_earned + col_width // 2, y, f"{item['total_earned']:,.2f}")
-        p.drawCentredString(x_profit + col_width // 2, y, f"{item['profit']:,.2f}")
-        y -= 15
-
+    p.showPage()
     p.save()
 
     buffer.seek(0)
-    response = HttpResponse(buffer, content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="financial_summary.pdf"'
-    return response
+    return HttpResponse(buffer, content_type='application/pdf', headers={'Content-Disposition': 'attachment; filename="financial_summary.pdf"'})

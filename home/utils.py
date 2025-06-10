@@ -114,7 +114,7 @@ def edit_object(request, form_class, model, object_id, success_url):
     if request.method == 'POST':
         form = form_class(request.POST, instance=obj)  # Bind the form with the existing object
         if form.is_valid():
-            instance = form.save()  # Save the updated object
+            form.save()  # Save the updated object
             # Log the activity
             log_activity(
                 user=request.user,

@@ -6,7 +6,7 @@ from datetime import timedelta
 from django.utils.timezone import now
 from decimal import Decimal
 from uuid import uuid4
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 from faker import Faker
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pharmacy_management.settings')
@@ -18,20 +18,21 @@ from home.utils import log_activity
 fake = Faker()
 
 P = 2  # Purchase transactions per manufacturer
-S = 200  # Total sale transactions
+S = 1000  # Total sale transactions
 
 def get_random_date_within_range(start_date, end_date):
     """Returns a random timezone-aware datetime between start_date and end_date."""
     delta_days = (end_date - start_date).days
     random_days = random.randint(0, delta_days)
     random_date = start_date + timedelta(days=random_days)
-    # Return timezone-aware datetime at midnight
-    return timezone.make_aware(datetime.combine(random_date, datetime.min.time()))
+    noon_time = time(12, 0)  # 12:00 PM
+    return timezone.make_aware(datetime.combine(random_date, noon_time))
 
 def create_purchase_transactions():
     admin = User.objects.get(username="admin")
     today = now().date()
-    four_years_ago = today - timedelta(days=4*365)
+    days_in_four_years = 4 * 365 + 1 # 4 years including leap year
+    four_years_ago = today - timedelta(days=days_in_four_years)
 
     for manu in Manufacturer.objects.all():
         products = Product.objects.filter(manufacturer=manu)
@@ -47,7 +48,7 @@ def create_purchase_transactions():
             for prod in products:
                 quantity = random.randint(10, 50)
                 price = round(random.uniform(1, float(prod.sale_price)), 2)
-                expiry_offset = random.randint(-30, 1461)  # -30 days to +4 years
+                expiry_offset = random.randint(-30, days_in_four_years)  # -30 days to +4 years
                 expiry = today + timedelta(days=expiry_offset)
 
                 item = PurchasedProduct.objects.create(
@@ -75,7 +76,8 @@ def create_sale_transactions():
     admin = User.objects.get(username="admin")
     customers = list(Customer.objects.all())
     today = now().date()
-    four_years_ago = today - timedelta(days=4*365)
+    days_in_four_years = 4 * 365 + 1  # 4 years including leap year
+    four_years_ago = today - timedelta(days=days_in_four_years)
 
     for i in range(S):
         # 1/3 no customer, 1/3 new, 1/3 existing
@@ -85,7 +87,7 @@ def create_sale_transactions():
         elif choice == "new":
             customer = Customer.objects.create(
                 full_name=fake.name(),
-                birthdate=fake.date_of_birth(minimum_age=18, maximum_age=90),
+                birthdate=fake.date_of_birth(minimum_age=16, maximum_age=100),
                 phone_number=fake.phone_number()[:20],
                 address=fake.address().replace('\n', ', ')
             )
