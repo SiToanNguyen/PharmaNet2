@@ -48,10 +48,21 @@
             {% endif %}
 
             <form action="{% url 'export_financial_summary_pdf' %}" method="get" style="margin-top: 20px;">
-                <input type="hidden" name="from_date" value="{{ form.cleaned_data.from_date }}">
-                <input type="hidden" name="to_date" value="{{ form.cleaned_data.to_date }}">
+                <input type="hidden" name="from_date" value="{{ form.cleaned_data.from_date|date:'Y-m-d' }}">
+                <input type="hidden" name="to_date" value="{{ form.cleaned_data.to_date|date:'Y-m-d' }}">
                 <button type="submit" class="submit-btn">Export to PDF</button>
             </form>
+
+            {% if form.errors %}
+                <div class="form-errors">
+                    <ul>
+                        {% for field, errors in form.errors.items %}
+                            <li>{{ field }}: {{ errors|join:", " }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
         {% endif %}
     </div>
 {% endblock %}
