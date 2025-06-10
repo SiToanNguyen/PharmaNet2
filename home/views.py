@@ -4,7 +4,6 @@ import json
 from reportlab.pdfgen import canvas
 from io import BytesIO
 from collections import defaultdict
-from decimal import Decimal
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.models import User
@@ -928,9 +927,13 @@ def export_financial_summary_pdf(request):
     y -= 15
 
     p.setFont("Helvetica", 10)
+    page_num = 1
     for item in product_summary:
         if y < 60:
+            # Draw page number before moving to next page
+            draw_page_number(p, page_num)
             p.showPage()
+            page_num += 1
             y = 800
             p.setFont("Helvetica-Bold", 10)
             p.drawString(x_name, y, "Name")
@@ -951,9 +954,17 @@ def export_financial_summary_pdf(request):
         p.drawCentredString(x_profit + col_width // 2, y, f"{item['profit']:,.2f}")
         y -= 15
 
+    # Draw page number on the last page
+    draw_page_number(p, page_num)
     p.save()
 
     buffer.seek(0)
     response = HttpResponse(buffer, content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="financial_summary.pdf"'
     return response
+
+def draw_page_number(canvas_obj, page_number):
+    canvas_obj.setFont("Helvetica", 9)
+    text = f"{page_number}"
+    width = canvas_obj._pagesize[0]
+    canvas_obj.drawRightString(width - 40, 20, text)
