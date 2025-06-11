@@ -1,11 +1,15 @@
 # home/utils.py
+from urllib.parse import urlencode
+import logging
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import IntegrityError
 from django.contrib import messages
-from .models import ActivityLog
 from django.core.paginator import Paginator
+from django.urls import reverse, NoReverseMatch
 
-import logging
+from .models import ActivityLog
+
 logger = logging.getLogger(__name__)
 
 def log_activity(user, action, additional_info=""):
@@ -86,14 +90,19 @@ def add_object(request, form_class, model, success_url):
 
             messages.success(request, f"The {model_name} '{object_name}' has been added.")
             return redirect(success_url)  # Redirect to the success URL
-
     else:
         form = form_class()  # Empty form on GET request
+
+    try:
+        resolved_success_url = reverse(success_url)
+    except NoReverseMatch:
+        resolved_success_url = success_url
 
     return render(request, 'form_page.html', {
         'title': f'Add New {model_name.capitalize()}',  # Dynamic title
         'form_title': f'{model_name.capitalize()} Details',  # Dynamic form legend/title
         'form': form,  # Form passed to template
+        'success_url': resolved_success_url,
     })
 
 def edit_object(request, form_class, model, object_id, success_url):
@@ -126,10 +135,16 @@ def edit_object(request, form_class, model, object_id, success_url):
     else:
         form = form_class(instance=obj)  # Prepopulate the form with the object's current data
 
+    try:
+        resolved_success_url = reverse(success_url)
+    except NoReverseMatch:
+        resolved_success_url = success_url
+    
     return render(request, 'form_page.html', {
         'title': f'Edit {model_name.capitalize()}',  # Dynamic title
         'form_title': f'{model_name.capitalize()} Details',  # Dynamic form legend/title
         'form': form,  # Form passed to template
+        'success_url': resolved_success_url,
     })
 
 def list_objects(request, model, columns=None, search_fields=None, sort_fields=None, extra_context=None, add=False, actions=False):
@@ -140,15 +155,24 @@ def list_objects(request, model, columns=None, search_fields=None, sort_fields=N
     :param model: The model class (e.g., User, Manufacturer, Product).
     :param template_name: The template to render (e.g., 'user_list.html').
     :param search_fields: A dictionary where keys are request GET parameters and values are model fields to filter by.
-    :param sort_field: The default field for sorting (e.g., '-updated_at').
+    :param sort_field: The default field for sorting (e.g., '-updated_at'). A dictionary with values as alternative names.
     :param extra_context: Any additional context data needed in the template.
     :param add: Whether to include Add action in the template.
     :param actions: Whether to include Edit/Delete actions in the template.
     :return: Rendered response with paginated and filtered object list.
     """
-    objects = model.objects.all()
+    # Use the pre-fetched object_list if provided
+    objects = extra_context.get('object_list') if extra_context and 'object_list' in extra_context else model.objects.all()
 
-    # Apply search filters dynamically
+    # Columns configuration
+    if isinstance(columns, dict):
+        column_keys = list(columns.keys())
+        column_labels = columns
+    else:
+        column_keys = columns or []
+        column_labels = {col: None for col in column_keys}
+
+    # Search configuration
     search_values = {}
     if search_fields:
         for param, field in search_fields.items():
@@ -157,25 +181,32 @@ def list_objects(request, model, columns=None, search_fields=None, sort_fields=N
                 objects = objects.filter(**{f"{field}__icontains": value})
             search_values[param] = value  # Preserve search values
 
-    # To fix the warning: UnorderedObjectListWarning: Pagination may yield inconsistent results with an unordered object_list: <class 'django.contrib.auth.models.User'> QuerySet.
-    # Check if the model has Meta ordering; if not, sort by id
-    default_ordering = getattr(model._meta, "ordering", None) or ["id"]
-    objects = objects.order_by(*default_ordering)
+    # Sort configuration
+    sort_by = request.GET.get('sort_by', '')
+    if isinstance(sort_fields, dict):
+        valid_sort_fields = list(sort_fields.keys())
+    else:
+        valid_sort_fields = sort_fields or []
 
-    # Handle sorting based on user selection
-    sort_by = request.GET.get('sort_by', '')  # Default is empty
-    if sort_fields and sort_by in sort_fields:  # Ensure sort_fields is not None
+    if sort_by in valid_sort_fields:
         objects = objects.order_by(sort_by)
+    else:
+        # Apply default ordering only if no valid sort_by given
+        default_ordering = getattr(model._meta, "ordering", None) or ["id"]
+        objects = objects.order_by(*default_ordering)
 
     page_obj, query_string = paginate_with_query_params(request, objects)
 
     context = {
         'title': extra_context.get('title', model._meta.verbose_name.capitalize()) if extra_context else model._meta.verbose_name.capitalize(),
+        'model_name': model._meta.model_name,
         'page_obj': page_obj,
-        'columns': columns,
+        'columns': column_keys,         # Used for iteration
+        'column_labels': column_labels, # Used for display
         'search_queries': {param: request.GET.get(param, '') for param in search_fields} if search_fields else {},
         'sort_queries': sort_fields,
-        'add': add,
+        'sort_by': sort_by,
+        'add': add, # Determines whether to show Add button
         'actions': actions,  # Determines whether to show Edit/Delete buttons
         'query_string': query_string,  # Pass the query string for pagination links
     }
@@ -186,13 +217,15 @@ def list_objects(request, model, columns=None, search_fields=None, sort_fields=N
 
     return render(request, 'list_page.html', context)
 
-def paginate_with_query_params(request, queryset, per_page=10):
+def paginate_with_query_params(request, queryset, per_page=10, page_param='page'):
     paginator = Paginator(queryset, per_page)
-    page_number = request.GET.get('page')
+    page_number = request.GET.get(page_param)
     page_obj = paginator.get_page(page_number)
 
-    query_params = request.GET.copy()
-    query_params.pop('page', None)  # Remove 'page' safely
-    query_string = query_params.urlencode()
+    querydict = request.GET.copy()
+    for key in ['page', 'lowstockpage']:
+        querydict.pop(key, None)
+
+    query_string = urlencode(querydict)
 
     return page_obj, query_string

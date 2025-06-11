@@ -37,6 +37,7 @@ class Category(models.Model):
     name = models.CharField(max_length=200)  # Category name
     description = models.TextField(blank=True, null=True)  # Category description
     requires_prescription = models.BooleanField(default=False)  # Checkbox to indicate if prescription is required
+    low_stock_threshold = models.PositiveIntegerField(default=10)  # Threshold for low stock alert
     created_at = models.DateTimeField(auto_now_add=True)  # Date of creation
     updated_at = models.DateTimeField(auto_now=True)  # Date of last update
 
@@ -64,7 +65,7 @@ class Product(models.Model):
 
 # Inventory management    
 class Inventory(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.PROTECT)  # Reference to the product
+    product = models.ForeignKey(Product, on_delete=models.PROTECT, related_name='inventory')  # Reference to the product
     quantity = models.PositiveIntegerField()  # Quantity in stock
     expiry_date = models.DateField()  # Expiry date of the product
     created_at = models.DateTimeField(auto_now_add=True)  # Date of creation

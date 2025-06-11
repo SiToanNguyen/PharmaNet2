@@ -91,7 +91,7 @@
 
       <div class="form-buttons">
         <button type="submit" class="submit-btn">Submit</button>
-        <a href="javascript:history.back()" class="cancel-btn">Cancel</a>
+        <a href="{{ success_url }}" class="cancel-btn">Cancel</a>
       </div>
     </form>
 
@@ -100,7 +100,9 @@
         <span class="close" onclick="closeInventoryModal()">&times;</span>
         <h3>Select Inventory Item</h3>
     
-        <input type="text" id="searchInput" placeholder="Search..." onkeyup="filterInventory()">
+        <form method="GET" class="search-container">
+          <input type="text" id="searchInput" placeholder="Search..." onkeyup="filterInventory()">
+        </form>
         <table id="inventoryTable" class="global-table">
           <thead>
             <tr>
@@ -293,70 +295,6 @@
         row.style.display = row.textContent.toLowerCase().includes(input) ? '' : 'none';
       });
     }
-  </script>  
-  
-  <style>
-    #productsTable input[name$="quantity"] {
-      width: 80px;
-      text-align: right;
-    }
-    
-    /* Widen the Inventory Item dropdown */
-    #productsTable select[name$="inventory_item"] {
-      width: 100%;
-      min-width: 250px;
-    }
-
-    .modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.6);
-      z-index: 9999;
-    }
-    
-    .modal-content {
-      background-color: #222;
-      margin: 5% auto;
-      padding: 20px;
-      width: 80%;
-      border-radius: 8px;
-      color: white;
-    }
-    
-    .modal-content table {
-      width: 100%;
-    }
-    
-    .close {
-      float: right;
-      font-size: 24px;
-      cursor: pointer;
-      color: white;
-    }
-    
-    /* Styles for Show/Hide buttons of Product List on the Transaction list */
-    .toggle-btn {
-        background-color: #28a745; /* Green */
-        color: white;
-        padding: 6px 12px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: background-color 0.3s ease;
-    }
-
-    .toggle-btn:hover {
-        background-color: #218838; /* Darker green on hover */
-    }
-
-    .toggle-btn:focus {
-        outline: none;
-        box-shadow: 0 0 3px rgba(40, 167, 69, 0.5);
-    }
-  </style>
+  </script>
     
 {% endblock %}

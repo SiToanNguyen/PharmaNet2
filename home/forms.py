@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from .models import Manufacturer, Category, Product, Inventory, PurchaseTransaction, PurchasedProduct, Customer, SaleTransaction, SoldProduct
-import re  # Import the re module for regex validation
+from .validators import validate_phone_number
 
 # User management
 class UserCreationForm(forms.ModelForm):
@@ -67,27 +67,32 @@ class ManufacturerForm(forms.ModelForm):
 
     def clean_name(self):
         name = self.cleaned_data.get('name')
-        if Manufacturer.objects.filter(name=name).exists():
+        qs = Manufacturer.objects.filter(name=name)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
             raise forms.ValidationError("A manufacturer with this name already exists. Please choose another name.")
         return name
 
     # Validate the phone number format
     def clean_phone_number(self):
         phone_number = self.cleaned_data.get('phone_number')
-        # Example validation: check the phone number pattern
-        if not re.match(r'^\+?\d{1,4}?[-.\s]?\(?\d{1,4}?\)?[-.\s]?\d{1,9}[-.\s]?\d{1,9}$', phone_number):
-            raise forms.ValidationError('Enter a valid phone number (e.g., +1-800-123-4567).')
+        validate_phone_number(phone_number)
         return phone_number
 
 # Category management
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
-        fields = ['name', 'description', 'requires_prescription']
+        fields = ['name', 'description', 'requires_prescription', 'low_stock_threshold']
 
     def clean_name(self):
         name = self.cleaned_data.get('name')
-        if Category.objects.filter(name=name).exists():
+        # Exclude the current instance when editing
+        qs = Category.objects.filter(name=name)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
             raise forms.ValidationError("A category with this name already exists. Please choose another name.")
         return name
 
@@ -99,7 +104,10 @@ class ProductForm(forms.ModelForm):
 
     def clean_name(self):
         name = self.cleaned_data.get('name')
-        if Product.objects.filter(name=name).exists():
+        qs = Product.objects.filter(name=name)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
             raise forms.ValidationError("A product with this name already exists. Please choose another name.")
         return name
 
@@ -125,8 +133,11 @@ class PurchaseTransactionForm(forms.ModelForm):
 
     def clean_invoice_number(self):
         invoice_number = self.cleaned_data.get('invoice_number')
-        if PurchaseTransaction.objects.filter(invoice_number=invoice_number).exists():
-            raise ValidationError("A purchase transaction with this invoice number already exists.")
+        qs = PurchaseTransaction.objects.filter(invoice_number=invoice_number)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError("A purchase transaction with this invoice number already exists.")
         return invoice_number
     
     def clean_purchase_date(self):
@@ -175,6 +186,11 @@ class CustomerForm(forms.ModelForm):
     class Meta:
         model = Customer
         fields = ['full_name', 'birthdate', 'phone_number', 'email', 'address']
+
+    def clean_phone_number(self):
+        phone_number = self.cleaned_data.get('phone_number')
+        validate_phone_number(phone_number)
+        return phone_number
 
 # Sale Transaction management
 class SaleTransactionForm(forms.ModelForm):

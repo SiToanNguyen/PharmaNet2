@@ -53,21 +53,13 @@
                     <tr>
                         {% for column in columns %}
                             <td>
-                                {% if forloop.first %}
-                                    <a href="#" class="modal-link" 
-                                        data-object="{{ obj|get_attr:column }}" 
-                                        data-id="{{ obj.id }}" 
-                                        data-model="{{ title|lower }}">
-                                        {{ obj|get_attr:column }}
-                                    </a>
-                                {% elif column == "stock" %}
+                                {% if column == "stock" %}
                                     {{ obj|get_attr:column|default:0 }}
                                 {% else %}
                                     {{ obj|get_attr:column }}
                                 {% endif %}
                             </td>
                         {% endfor %}
-
                         {% if actions %}
                             <td>
                                 <a href="/{{ title|pluralize|lower }}/edit/{{ obj.id }}/">Edit</a> |
@@ -97,19 +89,7 @@
             {% endif %}
             </span>
         </div>
-
-        <!-- Hidden modal for displaying details -->
-        <div id="detailModal" class="modal" style="display:none;">
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <h3>Details</h3>
-                <div id="modal-body">
-                <!-- Populated dynamically -->
-                </div>
-            </div>
-        </div>
-
-    </div> <!-- div class="list-container" -->
+    </div>
 
     {% if actions %}
     <script>
@@ -125,41 +105,5 @@
         });
     </script>
     {% endif %}
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const modal = document.getElementById("detailModal");
-            const modalBody = document.getElementById("modal-body");
-            const closeBtn = document.querySelector(".close");
-
-            document.querySelectorAll('.modal-link').forEach(link => {
-                link.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const objId = this.getAttribute("data-id");
-
-                    // Optional: Ajax call to fetch details by ID
-                    const modelName = this.getAttribute("data-model");
-                    fetch(`/api/get_object_details/${modelName}/${objId}/`)
-                        .then(response => response.json())
-                        .then(data => {
-                            let html = "";
-                            for (const [key, value] of Object.entries(data)) {
-                                html += `<p><strong>${key}:</strong> ${value}</p>`;
-                            }
-                            modalBody.innerHTML = html;
-                            modal.style.display = "flex";
-                        })
-                        .catch(() => {
-                            modalBody.innerHTML = "<p>Error loading details.</p>";
-                            modal.style.display = "flex";
-                        });
-                });
-            });
-
-            closeBtn.onclick = () => modal.style.display = "none";
-            window.onclick = e => { if (e.target == modal) modal.style.display = "none"; };
-        });
-    </script>
-
 
 {% endblock %}

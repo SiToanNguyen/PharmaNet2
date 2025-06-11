@@ -1,77 +1,127 @@
 {% extends 'base.html' %}
 
 {% block extra_css %}
-<style>    
-  /* Ensure color styles are applied to td elements within specific rows */
-  .inventory-overview .global-table tr.expired td {
-    color: red !important;
-  }
-  
-  .inventory-overview .global-table tr.critical td {
-    color: yellow !important;
-  }
-</style>
+
 {% endblock %}
 
 {% block content %}
   <div class="list-container">
-    <div class="inventory-overview">
-      <h2>Expiring Products</h2>
+    <div class="tab-container">
+      <a href="?tab=expiring" class="tab {% if active_tab == 'expiring' %}active{% endif %}">
+        Expiring Products ({{ expiring_count }})
+      </a>
+      <a href="?tab=lowstock" class="tab {% if active_tab == 'lowstock' %}active{% endif %}">
+        Low Stock ({{ low_stock_count }})
+      </a>
+    </div>
+
+    {% if active_tab == 'expiring' %}
+      <div class="inventory-overview">        
+        {% if inventory_page_obj %}
+        <h2>Expiring Products</h2>
+        <table class="global-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Quantity</th>
+              <th>Expiry Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in inventory_page_obj %}
+              {% if item.expiry_date < today %}
+                  <tr class="expired">
+                      <td>{{ item.product.name }}</td>
+                      <td>{{ item.quantity }}</td>
+                      <td>{{ item.expiry_date }}</td>
+                      <td>Expired</td>
+                  </tr>
+              {% elif item.days_diff <= 7 %}
+                  <tr class="critical">
+                      <td>{{ item.product.name }}</td>
+                      <td>{{ item.quantity }}</td>
+                      <td>{{ item.expiry_date }}</td>
+                      <td>Expiring in {{ item.days_diff }} days</td>
+                  </tr>
+              {% elif item.days_diff <= 30 %}
+                  <tr>
+                      <td>{{ item.product.name }}</td>
+                      <td>{{ item.quantity }}</td>
+                      <td>{{ item.expiry_date }}</td>
+                      <td>Expiring in {{ item.days_diff }} days</td>
+                  </tr>
+              {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <!-- Pagination Controls for Expiring -->
+        <div class="pagination" id="expiring">
+            <span class="step-links">
+              {% if inventory_page_obj.has_previous %}
+                  <a href="?{{ inventory_query }}&page=1#expiring">&laquo; First</a>
+                  <a href="?{{ inventory_query }}&page={{ inventory_page_obj.previous_page_number }}#expiring">Previous</a>
+              {% endif %}
+      
+              <span class="current">
+                  Page {{ inventory_page_obj.number }} of {{ inventory_page_obj.paginator.num_pages }}
+              </span>
+      
+              {% if inventory_page_obj.has_next %}
+                  <a href="?{{ inventory_query }}&page={{ inventory_page_obj.next_page_number }}#expiring">Next</a>
+                  <a href="?{{ inventory_query }}&page={{ inventory_page_obj.paginator.num_pages }}#expiring">Last &raquo;</a>
+              {% endif %}
+            </span>
+        </div>
+        {% else %}
+            <p style="text-align: center;">No expiring products currently.</p>
+        {% endif %} <!-- if inventory_page_obj -->
+      </div> <!-- div class="inventory-overview" -->
+    {% elif active_tab == 'lowstock' %}
+      <h2>Low Stock Alerts</h2>
+      {% if low_stock_page_obj %}
       <table class="global-table">
-        <thead>
-          <tr>
-            <th>Product</th>
-            <th>Quantity</th>
-            <th>Expiry Date</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in inventory %}
-            {% if item.expiry_date < today %}
-                <tr class="expired">
-                    <td>{{ item.product.name }}</td>
-                    <td>{{ item.quantity }}</td>
-                    <td>{{ item.expiry_date }}</td>
-                    <td>Expired</td>
-                </tr>
-            {% elif item.days_diff <= 7 %}
-                <tr class="critical">
-                    <td>{{ item.product.name }}</td>
-                    <td>{{ item.quantity }}</td>
-                    <td>{{ item.expiry_date }}</td>
-                    <td>Expiring in {{ item.days_diff }} days</td>
-                </tr>
-            {% elif item.days_diff <= 30 %}
-                <tr>
-                    <td>{{ item.product.name }}</td>
-                    <td>{{ item.quantity }}</td>
-                    <td>{{ item.expiry_date }}</td>
-                    <td>Expiring in {{ item.days_diff }} days</td>
-                </tr>
-            {% endif %}
-          {% endfor %}
-        </tbody>
+          <thead>
+              <tr>
+                  <th>Product</th>
+                  <th>Category</th>
+                  <th>Total Quantity</th>
+              </tr>
+          </thead>
+          <tbody>
+              {% for item in low_stock_page_obj %}
+              <tr>
+                  <td>{{ item.product.name }}</td>
+                  <td>{{ item.product.category.name }}</td>
+                  <td>{{ item.total_quantity }}</td>
+              </tr>
+              {% endfor %}
+          </tbody>
       </table>
 
-      <!-- Pagination Controls -->
-      <div class="pagination">
+      <!-- Pagination Controls for Low Stock -->
+      <div class="pagination" id="lowstock">
           <span class="step-links">
-          {% if page_obj.has_previous %}
-              <a href="?{{ query_string }}&page=1">&laquo; First</a>
-              <a href="?{{ query_string }}&page={{ page_obj.previous_page_number }}">Previous</a>
-          {% endif %}
-  
-          <span class="current">
-              Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-          </span>
-  
-          {% if page_obj.has_next %}
-              <a href="?{{ query_string }}&page={{ page_obj.next_page_number }}">Next</a>
-              <a href="?{{ query_string }}&page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
-          {% endif %}
+            {% if low_stock_page_obj.has_previous %}
+                <a href="?{{ low_stock_query }}&lowstockpage=1#lowstock">&laquo; First</a>
+                <a href="?{{ low_stock_query }}&lowstockpage={{ low_stock_page_obj.previous_page_number }}#lowstock">Previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ low_stock_page_obj.number }} of {{ low_stock_page_obj.paginator.num_pages }}
+            </span>
+
+            {% if low_stock_page_obj.has_next %}
+                <a href="?{{ low_stock_query }}&lowstockpage={{ low_stock_page_obj.next_page_number }}#lowstock">Next</a>
+                <a href="?{{ low_stock_query }}&lowstockpage={{ low_stock_page_obj.paginator.num_pages }}#lowstock">Last &raquo;</a>
+            {% endif %}
           </span>
       </div>
-    </div>
-  </div>
+      {% else %}
+          <p style="text-align: center;">No low stock products currently.</p>
+      {% endif %} <!-- if low_stock_page_obj -->
+    {% endif %} <!-- if active_tab == 'expiring' -->
+
+  </div> <!-- div class="list-container" -->
 {% endblock %}

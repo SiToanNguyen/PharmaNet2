@@ -1,6 +1,6 @@
 # home/views.py
-from datetime import date, timedelta
 import json
+from datetime import date, timedelta
 from reportlab.pdfgen import canvas
 from io import BytesIO
 from collections import defaultdict
@@ -10,13 +10,17 @@ from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.utils.dateparse import parse_date
-from django.utils.timezone import now, timezone
+from django.utils.timezone import now
+from django.utils import timezone
 from django.db import transaction
 from django.db.models import Sum, F, Value, ExpressionWrapper, DecimalField
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse, HttpResponse
 from django.forms import modelformset_factory
+from django.forms.models import model_to_dict
 from django.contrib import messages
+from django.urls import reverse
+from django.apps import apps
 
 from .models import (
     ActivityLog, Customer, 
@@ -31,30 +35,61 @@ from .forms import (
 from .utils import paginate_with_query_params, add_object, edit_object, delete_object, list_objects, log_activity
 
 # Homepage
+
 def homepage(request):
+    tab = request.GET.get('tab', 'expiring')
     today = date.today()
     cutoff_date = today + timedelta(days=30)
 
-    # Get inventory items that are expired or expiring within 30 days
-    inventory = (
-        Inventory.objects
-        .select_related('product')
-        .filter(expiry_date__lte=cutoff_date)
-        .order_by('expiry_date')
-    )
-
-    # Add days_diff to each item
-    for item in inventory:
-        item.days_diff = (item.expiry_date - today).days
-
-    page_obj, query_string = paginate_with_query_params(request, inventory)
-
-    return render(request, 'index.html', {
-        'inventory': page_obj,
-        'page_obj': page_obj,
+    # Shared context
+    context = {
         'today': today,
-        'query_string': query_string,
-    })
+        'active_tab': tab,
+    }
+
+    # Get expiring products count
+    expiring_qs = Inventory.objects.filter(
+        expiry_date__lte=cutoff_date,
+        quantity__gt=0
+    )
+    context['expiring_count'] = expiring_qs.count()
+
+    # Get low stock products count
+    product_quantities = (
+        Inventory.objects
+        .values('product')
+        .annotate(total_quantity=Sum('quantity'))
+    )
+    quantity_map = {entry['product']: entry['total_quantity'] for entry in product_quantities}
+
+    low_stock_products = []
+    for product in Product.objects.select_related('category'):
+        total_qty = quantity_map.get(product.id, 0)
+        if total_qty < product.category.low_stock_threshold:
+            low_stock_products.append({
+                'product': product,
+                'total_quantity': total_qty,
+            })
+    context['low_stock_count'] = len(low_stock_products)
+
+    # Tab-specific pagination
+    if tab == 'expiring':
+        inventory = (
+            expiring_qs.select_related('product')
+            .order_by('expiry_date')
+        )
+        for item in inventory:
+            item.days_diff = (item.expiry_date - today).days
+        page_obj, query = paginate_with_query_params(request, inventory, page_param='page')
+        context['inventory_page_obj'] = page_obj
+        context['inventory_query'] = query
+
+    elif tab == 'lowstock':
+        page_obj, query = paginate_with_query_params(request, low_stock_products, page_param='lowstockpage')
+        context['low_stock_page_obj'] = page_obj
+        context['low_stock_query'] = query
+
+    return render(request, 'index.html', context)
 
 # Activity Log
 def activity_log_list(request):
@@ -62,7 +97,11 @@ def activity_log_list(request):
         request,
         model=ActivityLog,
         columns=['timestamp', 'user', 'action', 'additional_info'],
-        search_fields={'user': 'user__username', 'action': 'action', 'additional_info': 'additional_info'}
+        search_fields={
+            'user': 'user__username', 
+            'action': 'action', 
+            'additional_info': 'additional_info'
+        }
     )
 
 # User management
@@ -76,7 +115,10 @@ def user_list(request):
             'first_name': 'first_name',
             'last_name': 'last_name',
         },
-        sort_fields=['date_joined', 'last_login'],
+        sort_fields={
+            'date_joined': 'Date Joined', 
+            'last_login': 'Last Login'
+        },
         add=True,
         actions=True
     )
@@ -109,7 +151,10 @@ def manufacturer_list(request):
         request,
         model=Manufacturer,
         columns=['name', 'address', 'phone_number', 'email'],
-        search_fields={'name': 'name', 'address': 'address'},
+        search_fields={
+            'name': 'name', 
+            'address': 'address'
+        },
         add=True,
         actions=True
     )
@@ -141,8 +186,10 @@ def category_list(request):
     return list_objects(
         request,
         model=Category,
-        columns=['name', 'description', 'requires_prescription'],
-        search_fields={'category_name': 'name'},
+        columns=['name', 'description', 'requires_prescription', 'low_stock_threshold'],
+        search_fields={
+            'name': 'name'
+        },
         add=True,
         actions=True
     )
@@ -165,19 +212,31 @@ def edit_category(request, category_id):
     )
 
 def delete_category(request, category_id):
-    if delete_object(request, Product, category_id):
+    if delete_object(request, Category, category_id):
         return redirect('category_list')
     return redirect('category_list')  # In case of error, just redirect
 
 # Product management
 def product_list(request):
+    products_with_stock = Product.objects.annotate(
+        stock=Sum('inventory__quantity')
+    )
+
     return list_objects(
         request,
         model=Product,
-        columns=['name', 'category', 'manufacturer', 'sale_price'],
-        search_fields={'product_name': 'name', 'manufacturer_name': 'manufacturer__name'},
+        columns=['name', 'category', 'manufacturer', 'sale_price', 'stock'],
+        search_fields={
+            'name': 'name', 
+            'manufacturer': 'manufacturer__name'
+        },
+        sort_fields={
+            'updated_at': 'Last Updated', 
+            'stock': 'Stock'
+        },
         add=True,
-        actions=True
+        actions=True,
+        extra_context={'object_list': products_with_stock}
     )
 
 def add_product(request):
@@ -204,34 +263,32 @@ def delete_product(request, product_id):
 
 # Inventory management
 def inventory_list(request):
-    # Get search parameters from the GET request
-    product_name_query = request.GET.get('product_name', '')
-    manufacturer_name_query = request.GET.get('manufacturer_name', '')
-    sort_by = request.GET.get('sort_by', '-updated_at')  # Default sort by 'updated_at'
-    
-    # Filter inventory items based on search parameters
-    inventory_items = Inventory.objects.select_related('product__manufacturer').all()
-    inventory_items = inventory_items.filter(quantity__gt=0)  # Only show items with quantity > 0
+    # Queryset with product and manufacturer preloaded
+    base_qs = Inventory.objects.select_related('product__manufacturer').filter(quantity__gt=0)
 
-    if product_name_query:
-        inventory_items = inventory_items.filter(product__name__icontains=product_name_query)
-    if manufacturer_name_query:
-        inventory_items = inventory_items.filter(product__manufacturer__name__icontains=manufacturer_name_query)
-    
-    # Sort inventory items by the specified field
-    if sort_by in ['updated_at', 'expiry_date']:
-        inventory_items = inventory_items.order_by(sort_by if sort_by == 'expiry_date' else f'-{sort_by}')
-
-    page_obj, query_string = paginate_with_query_params(request, inventory_items)
-        
-    return render(request, 'inventory_list.html', {
-        'inventory_items': page_obj,
-        'page_obj': page_obj,
-        'product_name_query': product_name_query,
-        'manufacturer_name_query': manufacturer_name_query,
-        'sort_by': sort_by,
-        'query_string': query_string,
-    })
+    return list_objects(
+        request,
+        model=Inventory,
+        columns = {
+            'product': 'Product',
+            'product.manufacturer': 'Manufacturer',
+            'product.sale_price': 'Sale Price (€)',
+            'quantity': 'Quantity',
+            'expiry_date': 'Expiry Date',
+        },
+        search_fields={
+            'product_name': 'product__name',
+            'manufacturer_name': 'product__manufacturer__name'
+        },
+        sort_fields={
+            'updated_at': 'Last Updated',
+            'expiry_date': 'Expiry Date'
+        },
+        extra_context={
+            'title': 'Inventory',
+            'object_list': base_qs
+        }
+    )
 
 # Purchase Transactions management
 def purchase_transaction_list(request):
@@ -334,6 +391,7 @@ def add_purchase_transaction(request):
         "manufacturers": Manufacturer.objects.all(),
         "errors": form.errors,
         "formset_errors": formset.errors,
+        "success_url": reverse("purchase_transaction_list"),
     })
 
 def get_products_by_manufacturer(request):
@@ -455,7 +513,9 @@ def customer_list(request):
         request,
         model=Customer,
         columns=['full_name', 'birthdate', 'phone_number', 'email', 'address'],
-        search_fields={'name': 'full_name'},
+        search_fields={
+            'name': 'full_name'
+        },
         add=True,
         actions=True
     )
@@ -557,35 +617,38 @@ def add_sale_transaction(request):
 
             except Exception as e:
                 messages.error(request, f"Error saving transaction: {e}")
-                return render(request, "add_sale_transaction.html", {
+                return render(request, "add_sale_transaction.html", { # POST request with a valid form, but a backend failure (except block)
                     "form": form,
                     "formset": formset,
                     "customers": Customer.objects.all(),
                     "inventory_items": Inventory.objects.select_related('product', 'product__manufacturer').all(),
                     "errors": form.errors,
                     "formset_errors": formset.errors,
+                    "success_url": reverse("sale_transaction_list"),
                 })
 
-        return render(request, "add_sale_transaction.html", {
+        return render(request, "add_sale_transaction.html", { # POST request with form/formset errors
             "form": form,
             "formset": formset,
             "customers": Customer.objects.all(),
             "inventory_items": Inventory.objects.select_related('product', 'product__manufacturer').all(),
             "errors": form.errors,
-            "formset_errors": formset.errors,
+            "formset_errors": formset.errors,            
+            "success_url": reverse("sale_transaction_list"),
         })
 
     else:
         form = SaleTransactionForm()
         formset = SoldProductFormSet(queryset=SoldProduct.objects.none(), prefix="products")
 
-    return render(request, "add_sale_transaction.html", {
+    return render(request, "add_sale_transaction.html", { # GET request (initial form page)
         "form": form,
         "formset": formset,
         "customers": Customer.objects.all(),
         "inventory_items": Inventory.objects.select_related('product', 'product__manufacturer').all(),
         "errors": form.errors,
         "formset_errors": formset.errors,
+        "success_url": reverse("sale_transaction_list"),
     })
 
 def get_inventory_price(request, inventory_id):
@@ -968,3 +1031,20 @@ def draw_page_number(canvas_obj, page_number):
     text = f"{page_number}"
     width = canvas_obj._pagesize[0]
     canvas_obj.drawRightString(width - 40, 20, text)
+
+
+def get_object_details(request, model_name, pk):
+    try:
+        # Look up the model from registered apps (case-insensitive)
+        model = apps.get_model('home', model_name.capitalize())
+        if model is None:
+            return JsonResponse({'error': f'Model "{model_name}" not found'}, status=404)
+
+        obj = model.objects.get(pk=pk)
+        data = model_to_dict(obj)
+
+        return JsonResponse(data)
+    except model.DoesNotExist:
+        return JsonResponse({'error': 'Object not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
