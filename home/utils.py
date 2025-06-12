@@ -153,9 +153,9 @@ def list_objects(request, model, columns=None, search_fields=None, sort_fields=N
 
     :param request: HTTP request object.
     :param model: The model class (e.g., User, Manufacturer, Product).
-    :param template_name: The template to render (e.g., 'user_list.html').
+    :param columns: A list or a dictionary for column names. Dictionary values as alternative names.
     :param search_fields: A dictionary where keys are request GET parameters and values are model fields to filter by.
-    :param sort_field: The default field for sorting (e.g., '-updated_at'). A dictionary with values as alternative names.
+    :param sort_field: A list or a dictionary for sort option names. Dictionary values as alternative names.
     :param extra_context: Any additional context data needed in the template.
     :param add: Whether to include Add action in the template.
     :param actions: Whether to include Edit/Delete actions in the template.
@@ -197,6 +197,7 @@ def list_objects(request, model, columns=None, search_fields=None, sort_fields=N
 
     page_obj, query_string = paginate_with_query_params(request, objects)
 
+    # Data provided to the template
     context = {
         'title': extra_context.get('title', model._meta.verbose_name.capitalize()) if extra_context else model._meta.verbose_name.capitalize(),
         'model_name': model._meta.model_name,

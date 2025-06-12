@@ -13,7 +13,7 @@ from django.utils.dateparse import parse_date
 from django.utils.timezone import now
 from django.utils import timezone
 from django.db import transaction
-from django.db.models import Sum, F, Value, ExpressionWrapper, DecimalField
+from django.db.models import Sum, F, Value, ExpressionWrapper, DecimalField, ForeignKey, DateTimeField, DateField
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse, HttpResponse
 from django.forms import modelformset_factory
@@ -1034,16 +1034,54 @@ def draw_page_number(canvas_obj, page_number):
 
 
 def get_object_details(request, model_name, pk):
-    try:
-        # Look up the model from registered apps (case-insensitive)
-        model = apps.get_model('home', model_name.capitalize())
-        if model is None:
-            return JsonResponse({'error': f'Model "{model_name}" not found'}, status=404)
+    # Normalize model name: "activity log" -> "ActivityLog"
+    normalized_name = ''.join(word.capitalize() for word in model_name.split())
 
+    try:
+        # Special case: if user model requested, get it from auth app
+        if normalized_name.lower() == 'user':
+            model = apps.get_model('auth', 'User')
+            exclude_fields = ['password']
+        else:
+            model = apps.get_model('home', normalized_name)
+            exclude_fields = []
+    except LookupError:
+        return JsonResponse({'error': f'Model "{model_name}" not found'}, status=404)
+
+    try:
         obj = model.objects.get(pk=pk)
-        data = model_to_dict(obj)
+        data = {}
+
+        for field in model._meta.fields:
+            if field.name in exclude_fields:
+                continue
+
+            value = getattr(obj, field.name)
+
+            # Format value based on field type
+            if isinstance(field, ForeignKey):
+                display_value = str(value) if value else None
+            elif isinstance(field, DateTimeField):
+                if value:
+                    time_str = value.strftime('%I:%M %p').lstrip('0').lower()
+                    time_str = time_str.replace('am', 'a.m.').replace('pm', 'p.m.')
+                    display_value = value.strftime('%d %b %Y') + ', ' + time_str
+                else:
+                    display_value = None
+            elif isinstance(field, DateField):
+                display_value = value.strftime('%d %b %Y') if value else None
+            else:
+                display_value = value
+
+            # Format field label
+            label = field.verbose_name.title()
+            if label == "Id":
+                label = "ID"
+
+            data[label] = display_value
 
         return JsonResponse(data)
+    
     except model.DoesNotExist:
         return JsonResponse({'error': 'Object not found'}, status=404)
     except Exception as e:

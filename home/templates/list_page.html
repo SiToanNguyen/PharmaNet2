@@ -55,7 +55,7 @@
                             <td>
                                 {% if forloop.first %}
                                     <a href="#" class="modal-link" 
-                                        data-object="{{ obj|get_attr:column }}" 
+                                        data-object="{{ obj|get_attr:column|uk_date }}" 
                                         data-id="{{ obj.id }}" 
                                         data-model="{{ title|lower }}">
                                         {{ obj|get_attr:column }}
@@ -102,7 +102,7 @@
         <div id="detailModal" class="modal" style="display:none;">
             <div class="modal-content">
                 <span class="close">&times;</span>
-                <h3>Details</h3>
+                <h2><span id="modal-model-name"></span> Details</h2>
                 <div id="modal-body">
                 <!-- Populated dynamically -->
                 </div>
@@ -127,6 +127,17 @@
     {% endif %}
 
     <script>
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            if (isNaN(date)) return dateStr; // fallback if it's not a valid date
+
+            return new Intl.DateTimeFormat('en-GB', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+            }).format(date);
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             const modal = document.getElementById("detailModal");
             const modalBody = document.getElementById("modal-body");
@@ -139,20 +150,28 @@
 
                     // Optional: Ajax call to fetch details by ID
                     const modelName = this.getAttribute("data-model");
+                    document.getElementById("modal-model-name").textContent = modelName.charAt(0).toUpperCase() + modelName.slice(1);
                     fetch(`/api/get_object_details/${modelName}/${objId}/`)
                         .then(response => response.json())
                         .then(data => {
                             let html = "";
-                            for (const [key, value] of Object.entries(data)) {
-                                html += `<p><strong>${key}:</strong> ${value}</p>`;
+                            function formatFieldLabel(fieldName) {
+                                return fieldName
+                                    .replace(/_/g, ' ')
+                                    .replace(/\bid\b/, 'ID')
+                                    .replace(/\b\w/g, c => c.toUpperCase());
                             }
+
+                            for (const [key, value] of Object.entries(data)) {
+                                const label = formatFieldLabel(key);
+                                const formattedValue = /\d{4}-\d{2}-\d{2}/.test(value) ? formatDate(value) : (value ?? '');
+
+                                html += `<p><strong>${label}:</strong> ${formattedValue}</p>`;
+                            }
+
                             modalBody.innerHTML = html;
                             modal.style.display = "flex";
                         })
-                        .catch(() => {
-                            modalBody.innerHTML = "<p>Error loading details.</p>";
-                            modal.style.display = "flex";
-                        });
                 });
             });
 
@@ -160,6 +179,5 @@
             window.onclick = e => { if (e.target == modal) modal.style.display = "none"; };
         });
     </script>
-
 
 {% endblock %}

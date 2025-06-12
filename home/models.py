@@ -1,8 +1,9 @@
 # home/models.py
 from django.db import models
-from .validators import validate_phone_number  # Import the validator
 from django.contrib.auth.models import User
 from django.utils import timezone
+
+from .validators import validate_phone_number  # Import the validator
 
 # Activity Log
 class ActivityLog(models.Model):

@@ -1,4 +1,7 @@
+# home/templatetags/custom_filters.py
+from datetime import date, datetime
 from django import template
+from django.utils.dateformat import DateFormat
 
 register = template.Library()
 
@@ -46,3 +49,12 @@ def dict_get(d, key):
     Template filter to safely get a value from a dictionary.
     """ 
     return d.get(key, None)
+
+@register.filter
+def uk_date(value):
+    """
+    Formats date/datetime as '22 June 1979'
+    """
+    if isinstance(value, (date, datetime)):
+        return DateFormat(value).format('j F Y')
+    return value
