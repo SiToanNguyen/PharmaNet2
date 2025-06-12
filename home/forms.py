@@ -179,7 +179,8 @@ class PurchasedProductForm(forms.ModelForm):
 # Customer management
 class CustomerForm(forms.ModelForm):
     birthdate = forms.DateField(
-        widget=forms.DateInput(attrs={'type': 'date'}),
+        widget=forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+        input_formats=['%Y-%m-%d'],  # Optional, to ensure consistent parsing on submit
         required=True
     ) # Use <input type="date"> for selecting birthdate
 
