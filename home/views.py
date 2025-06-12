@@ -140,6 +140,7 @@ def edit_user(request, user_id):
         success_url='user_list'
     )
 
+@require_POST
 def delete_user(request, user_id):
     if delete_object(request, User, user_id):
         return redirect('user_list')
@@ -176,6 +177,7 @@ def edit_manufacturer(request, manufacturer_id):
         success_url='manufacturer_list'
     )
 
+@require_POST
 def delete_manufacturer(request, manufacturer_id):
     if delete_object(request, Manufacturer, manufacturer_id):
         return redirect('manufacturer_list')
@@ -211,6 +213,7 @@ def edit_category(request, category_id):
         success_url='category_list'
     )
 
+@require_POST
 def delete_category(request, category_id):
     if delete_object(request, Category, category_id):
         return redirect('category_list')
@@ -256,6 +259,7 @@ def edit_product(request, product_id):
         success_url='product_list'
     )
 
+@require_POST
 def delete_product(request, product_id):
     if delete_object(request, Product, product_id):
         return redirect('product_list')
@@ -537,6 +541,7 @@ def edit_customer(request, customer_id):
         success_url='customer_list'
     )
 
+@require_POST
 def delete_customer(request, customer_id):
     if delete_object(request, Customer, customer_id):
         return redirect('customer_list')

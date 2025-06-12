@@ -72,6 +72,9 @@
                             <td>
                                 <a href="/{{ title|pluralize|lower }}/edit/{{ obj.id }}/">Edit</a> |
                                 <a href="#" class="delete-btn" data-id="{{ obj.id }}">Delete</a>
+                                <form id="delete-form-{{ obj.id }}" action="/{{ title|pluralize|lower }}/delete/{{ obj.id }}/" method="post" style="display:none;">
+                                    {% csrf_token %}
+                                </form>
                             </td>
                         {% endif %}
                     </tr>
@@ -117,13 +120,17 @@
             button.addEventListener('click', function(event) {
                 event.preventDefault();
                 const objId = this.getAttribute('data-id');
-                const confirmDelete = confirm('Are you sure you want to delete this data?');
-                if (confirmDelete && objId) {
-                    window.location.href = "/delete/" + objId + "/";
+                const confirmDelete = confirm('Are you sure to delete this data?');
+                if (confirmDelete) {
+                    const form = document.getElementById('delete-form-' + objId);
+                    if (form) {
+                        form.submit();  // Use POST and reloads the same page
+                    }
                 }
             });
         });
     </script>
+
     {% endif %}
 
     <script>
