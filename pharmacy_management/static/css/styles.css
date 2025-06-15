@@ -249,6 +249,8 @@ h2 {
 }
 
 .messages li {
+    position: relative;
+    padding-right: 40px;
     padding: 10px;
     border: 1px solid transparent;
     border-radius: 5px;
@@ -269,8 +271,8 @@ h2 {
 
 .close-msg {
     position: absolute;
-    right: 28px;
-    top: 12.3%;
+    right: 10px;
+    top: 50%;
     transform: translateY(-50%);
     border: none;
     background-color: transparent;
