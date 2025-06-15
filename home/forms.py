@@ -113,23 +113,25 @@ class ProductForm(forms.ModelForm):
 
 # Purchase Transaction management
 class PurchaseTransactionForm(forms.ModelForm):
-    purchase_date = forms.DateField(
-        widget=forms.DateInput(attrs={'type': 'date'}),
-        required=True
-    )  # Use <input type="date"> for selecting purchase date
-
-    total_cost = forms.DecimalField(
-        max_digits=15, decimal_places=2, required=False, widget=forms.NumberInput(attrs={'readonly': 'readonly'})
-    )  # Total cost is read-only
-
-    remarks = forms.CharField(
-        widget=forms.Textarea(attrs={'rows': 3}),
-        required=False
-    )  # Remarks field
-
     class Meta:
         model = PurchaseTransaction
-        fields = ['invoice_number', 'manufacturer', 'purchase_date', 'remarks', 'total_cost']
+        exclude = ['total_cost'] # Exclude total_cost as it will be calculated automatically
+        fields = [
+            'invoice_number', 
+            'manufacturer', 
+            'purchase_date', 
+            'remarks', 
+            'total_cost'
+        ]
+        widgets = {
+            'manufacturer': forms.Select(attrs={'class': 'form-control'}),
+            'purchase_date': forms.DateInput(
+                attrs={'type': 'date'},
+                format='%Y-%m-%d'
+            ),
+            'remarks': forms.Textarea(attrs={'rows': 3}),
+            'total_cost': forms.NumberInput(attrs={'readonly': 'readonly'})        
+        }
 
     def clean_invoice_number(self):
         invoice_number = self.cleaned_data.get('invoice_number')
@@ -149,6 +151,9 @@ class PurchaseTransactionForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['purchase_date'].input_formats = ['%Y-%m-%d']
+        if not self.instance.pk:
+            self.fields['purchase_date'].initial = timezone.now()
 
 class PurchasedProductForm(forms.ModelForm):
     batch_number = forms.CharField(required=False)  # Batch number is optional
@@ -167,14 +172,16 @@ class PurchasedProductForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Initially allow all products; the view will override this if needed
-        self.fields['product'].queryset = Product.objects.all()
+        self.fields['product'].queryset = Product.objects.none()  # Start with empty list
 
     def clean_purchase_price(self):
         purchase_price = self.cleaned_data.get('purchase_price')
         if purchase_price <= 0:
             raise forms.ValidationError("Purchase price must be greater than zero.")
         return purchase_price
+
+class PurchaseScanForm(forms.Form):
+    json_file = forms.FileField(label="Scan Purchase JSON File", required=True)
 
 # Customer management
 class CustomerForm(forms.ModelForm):
@@ -199,6 +206,7 @@ class SaleTransactionForm(forms.ModelForm):
         model = SaleTransaction
         fields = [
             'transaction_number',
+            'transaction_date',
             'customer',
             'discount',
             'cash_received',
@@ -206,7 +214,10 @@ class SaleTransactionForm(forms.ModelForm):
             'remarks'
         ]
         widgets = {
-            'transaction_number': forms.TextInput(attrs={'placeholder': 'Enter transaction number'}),
+            'transaction_date': forms.DateInput(
+                attrs={'type': 'date'},
+                format='%Y-%m-%d'
+            ),
             'discount': forms.NumberInput(attrs={'step': '1'}),
             'cash_received': forms.NumberInput(attrs={'step': '1'}),
             'remarks': forms.Textarea(attrs={'rows': 2}),
@@ -214,8 +225,12 @@ class SaleTransactionForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['customer'].widget = forms.HiddenInput()
         self.fields['discount'].initial = '0'
-        self.fields['cash_received'].initial = '0'
+        self.fields['cash_received'].initial = '0'        
+        self.fields['transaction_date'].input_formats = ['%Y-%m-%d']
+        if not self.instance.pk:  # Only for new forms
+            self.fields['transaction_date'].initial = timezone.now()
 
 class SoldProductForm(forms.ModelForm):
     class Meta:
@@ -232,7 +247,12 @@ class SoldProductForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['inventory_item'].queryset = Inventory.objects.filter(quantity__gt=0)
         self.fields['inventory_item'].label_from_instance = lambda obj: f"{obj.product.name} (Exp: {obj.expiry_date}) — {obj.quantity} left"
+        self.fields['quantity'].widget.attrs.update({'disabled': 'disabled'})
 
+class SaleScanForm(forms.Form):
+    json_file = forms.FileField(label="Scan Sale JSON File", required=True)
+
+# Reports management
 class DateRangeForm(forms.Form):
     from_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
     to_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))

@@ -42,14 +42,17 @@
         <div class="main-content">
             <!-- Header for all pages -->
             <header>
-                <h1>Hello {{ request.user.first_name }}! Welcome to the Pharmacy Management System!</h1>
+                <h1>Hello {{ request.user.first_name }}! Welcome to PharmaNet!</h1>
             </header>
             
             <!-- Messages -->
             {% if messages %}
                 <ul class="messages">
                     {% for message in messages %}
-                        <li class="{{ message.tags }}">{{ message }}</li>
+                        <li class="{{ message.tags }}">
+                            {{ message }}
+                            <button class="close-msg" aria-label="Close message">&times;</button>
+                        </li>
                     {% endfor %}
                 </ul>
             {% endif %}
@@ -61,7 +64,7 @@
 
             <!-- Footer for all pages -->
             <footer>
-                <p>© 2025 Pharmacy Management System</p>
+                <p>© 2025 PharmaNet</p>
             </footer>
         </div>        
     </div>
@@ -71,6 +74,17 @@
             event.preventDefault();
             document.getElementById('logout-form').submit();
         }
+        
+        // Button to close messages
+        document.addEventListener('DOMContentLoaded', function() {
+            // Attach click listeners to all close buttons
+            document.querySelectorAll('.close-msg').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    // Hide the parent <li> message
+                    this.parentElement.style.display = 'none';
+                });
+            });
+        });
     </script>
 </body>
 </html>

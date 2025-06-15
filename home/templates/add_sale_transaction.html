@@ -14,9 +14,16 @@
           {{ form.transaction_number }}
         </p>
         <p>
-          {{ form.customer.label_tag }}
-          {{ form.customer }}
+          {{ form.transaction_date.label_tag }}
+          {{ form.transaction_date }}
         </p>
+        <p>
+          {{ form.customer.label_tag }}
+          <input type="hidden" name="customer" id="id_customer">
+          <span id="selectedCustomerLabel">No customer selected</span>
+          <button type="button" class="select-btn" onclick="openCustomerModal()">Select</button>
+          <button type="button" class="remove-btn" style="margin-left: 10px;" onclick="removeCustomer()">Remove</button>
+        </p>        
         <p>
           {{ form.discount.label_tag }}
           {{ form.discount }}
@@ -44,7 +51,7 @@
             <tr>
               <th>Inventory Item</th>
               <th>Quantity</th>
-              <th>Sale Price (€)</th>
+              <th>Unit Price (€)</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -52,15 +59,15 @@
             {% for product_form in formset %}
               <tr class="productRow">
                 <td>
-                  <input type="hidden" name="{{ product_form.inventory_item.name }}" id="{{ product_form.inventory_item.id_for_label }}">
+                  {{ product_form.inventory_item.as_hidden }}
                   <span class="inventory-label">No item selected</span>
-                  <button class="toggle-btn" type="button" onclick="openInventoryModal(this)">Select</button>
+                  <button class="select-btn" type="button" onclick="openInventoryModal(this)">Select</button>
                 </td>                
                 <td><p>{{ product_form.quantity }}</p></td>
                 <td><span class="price-display">-</span></td>
                 <td>
                     <p>
-                        <button type="button" class="cancel-btn" onclick="removeRow(this)">Remove</button>
+                        <button type="button" class="remove-btn" onclick="removeRow(this)">Remove</button>
                     </p>
                 </td>
               </tr>
@@ -75,12 +82,12 @@
               <td>
                 <input type="hidden" name="__prefix__-inventory_item" id="id___prefix__-inventory_item">
                 <span class="inventory-label">No item selected</span>
-                <button class="toggle-btn" type="button" onclick="openInventoryModal(this)">Select</button>
+                <button class="select-btn" type="button" onclick="openInventoryModal(this)">Select</button>
               </td>              
               <td><p>{{ formset.empty_form.quantity }}</p></td>
               <td><span class="price-display">-</span></td>
               <td>
-                <button type="button" class="cancel-btn" onclick="removeRow(this)">Remove</button>
+                <button type="button" class="remove-btn" onclick="removeRow(this)">Remove</button>
               </td>
             </tr>
           </table>
@@ -123,14 +130,54 @@
               <td>{{ item.quantity }}</td>
               <td>{{ item.expiry_date }}</td>
               <td> <!-- The button still works even with the errors -->
-                <button class="toggle-btn" type="button" onclick="selectInventory({{ item.id }}, '{{ item.product.name }} (exp: {{ item.expiry_date }})' )">Select</button>
+                <button class="select-btn" type="button" onclick="selectInventory({{ item.id }}, '{{ item.product.name }} (exp: {{ item.expiry_date }})' )">Select</button>
               </td>
             </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
-    </div>    
+    </div> <!-- inventoryModal -->
+
+    <div id="customerModal" class="modal" style="display:none;">
+      <div class="modal-content">
+        <span class="close" onclick="closeCustomerModal()">&times;</span>
+        <h3>Select Customer</h3>
+
+        <form method="GET" class="search-container">
+          <input type="text" id="customerSearchInput" placeholder="Search..." onkeyup="filterCustomers()">
+        </form>
+
+        <table id="customerTable" class="global-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Full Name</th>
+              <th>Birthdate</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>Select</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for customer in customers %}
+            <tr>
+              <td>{{ customer.id }}</td>
+              <td>{{ customer.full_name }}</td>
+              <td>{{ customer.birthdate }}</td>
+              <td>{{ customer.phone }}</td>
+              <td>{{ customer.email }}</td>
+              <td>
+                <button class="select-btn" type="button" onclick="selectCustomer({{ customer.id }}, '{{ customer.full_name|escapejs }}', '{{ customer.birthdate }}')">
+                  Select
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div> <!-- customerModal -->
 
     {% if form.errors or formset.errors %}
       <div class="error-messages">
@@ -201,7 +248,7 @@
       });
 
       if (duplicates) {
-        alert("You've selected the same inventory item more than once!");
+        alert("The same inventory item is selected more than once!");
         return false;
       }
       return true;
@@ -231,7 +278,7 @@
           }
 
           $.ajax({
-            url: `/get_inventory_price/${inventoryId}/`,  // This is the endpoint we'll create
+            url: `/get_inventory_price/${inventoryId}/`,
             method: "GET",
             success: function (data) {
               priceDisplay.text(data.price.toFixed(2) + " €");
@@ -247,11 +294,12 @@
       });
     }
 
+    // Inventory Modal Functions
     let currentInventoryField = null;
     
     function openInventoryModal(button) {
       const row = button.closest('tr');
-      currentInventoryField = row.querySelector('input[type="hidden"]');
+      currentInventoryField = row.querySelector('input[name$="inventory_item"]');
       document.getElementById('inventoryModal').style.display = 'block';
     }
     
@@ -262,30 +310,36 @@
     function selectInventory(id, label) {
       if (currentInventoryField) {
         currentInventoryField.value = id;
-        const labelSpan = currentInventoryField.closest('td').querySelector('.inventory-label');
+        const row = currentInventoryField.closest('tr');
+        const labelSpan = row.querySelector('.inventory-label');
         labelSpan.textContent = label;
 
-        // Find the price cell in the same row
-        const row = currentInventoryField.closest('tr');
-        const priceDisplay = row.querySelector('.price-display');
+        // Enable the quantity input
+        const quantityInput = row.querySelector('input[name$="quantity"]');
+        if (quantityInput) {
+          quantityInput.removeAttribute('disabled'); // if an item is selected, enable the quantity input
+        }
 
-        // Fetch and update price
+        // Fetch and update price & available quantity
         fetch(`/get_inventory_price/${id}/`)
           .then(response => response.json())
           .then(data => {
-            if (data.price !== undefined) {
-              priceDisplay.textContent = parseFloat(data.price).toFixed(2) + " €";
-            } else {
-              priceDisplay.textContent = "Error";
+            // Update price
+            const priceDisplay = row.querySelector('.price-display');
+            priceDisplay.textContent = data.price !== undefined ? parseFloat(data.price).toFixed(2) + " €" : "Error";
+
+            // Update quantity max
+            const quantityInput = row.querySelector('input[name$="quantity"]');
+            if (quantityInput && data.available_quantity !== undefined) {
+              quantityInput.setAttribute('max', data.available_quantity);
             }
           })
           .catch(() => {
-            priceDisplay.textContent = "Error";
+            row.querySelector('.price-display').textContent = "Error";
           });
       }
       closeInventoryModal();
     }
-
     
     function filterInventory() {
       const input = document.getElementById('searchInput').value.toLowerCase();
@@ -295,6 +349,57 @@
         row.style.display = row.textContent.toLowerCase().includes(input) ? '' : 'none';
       });
     }
+
+    // Customer Modal Functions
+    let currentCustomerField = null;
+
+    function openCustomerModal() {
+      document.getElementById('customerModal').style.display = 'block';
+    }
+
+    function closeCustomerModal() {
+      document.getElementById('customerModal').style.display = 'none';
+    }
+
+    function selectCustomer(id, fullName, birthdate) {
+      const label = `${fullName} (Birthdate: ${birthdate} - ID: ${id})`;
+      document.getElementById('id_customer').value = id;
+      document.getElementById('selectedCustomerLabel').textContent = label;
+      closeCustomerModal();
+    }
+
+    function filterCustomers() {
+      const input = document.getElementById('customerSearchInput').value.toLowerCase();
+      const rows = document.querySelectorAll('#customerTable tbody tr');
+
+      rows.forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(input) ? '' : 'none';
+      });
+    }
+
+    function removeCustomer() {
+      document.getElementById('id_customer').value = '';
+      document.getElementById('selectedCustomerLabel').textContent = 'No customer selected';
+    }
+
+
+    quantityInput.addEventListener('input', function () {
+      const max = parseFloat(quantityInput.max);
+      const value = parseFloat(quantityInput.value);
+      if (value > max) {
+        alert(`Only ${max} units available.`);
+        quantityInput.value = max;
+      }
+    });
   </script>
-    
+  
+  <style>
+    #selectedCustomerLabel {
+        display: block;
+        text-align: left;
+        margin-top: 5px;
+        width: 100%;
+        align-self: flex-start;
+    }
+  </style>
 {% endblock %}

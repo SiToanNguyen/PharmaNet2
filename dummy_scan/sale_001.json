@@ -9,12 +9,12 @@
   "customer": "John Doe",
   "products": [
     {
-      "inventory_id": 1,
+      "inventory_id": 864,
       "quantity": 2,
       "sale_price": 10.00
     },
     {
-      "inventory_id": 3,
+      "inventory_id": 740,
       "quantity": 1,
       "sale_price": 25.00
     }

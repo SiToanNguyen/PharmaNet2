@@ -3,14 +3,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Pharmacy Management System</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login - PharmaNet</title>
     <style>
         body, html {
             height: 100%;
             margin: 0;
             font-family: Arial, sans-serif;
+            background-color: #1e1e2f; /* gentle dark background */
+            color: #ddd;
         }
 
         .login-wrapper {
@@ -18,59 +20,74 @@
             justify-content: center;
             align-items: center;
             height: 100%;
-            background-color: #f4f4f4;
+            background-color: #1e1e2f;
         }
 
         .form-container {
-            background-color: white;
+            background-color: #2c2c3e; /* slightly lighter dark container */
             padding: 30px;
             border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
             width: 100%;
             max-width: 400px;
             box-sizing: border-box;
+            color: #ddd;
         }
 
         h2 {
             text-align: center;
             margin-bottom: 20px;
+            color: #ececec;
         }
 
         .form-container p {
             margin-bottom: 15px;
         }
 
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+            color: #bbb;
+        }
+
         .form-container input {
-            width: 100%; /* Ensures input fields fill the container */
+            width: 100%;
             padding: 10px;
             margin: 5px 0;
             border-radius: 5px;
-            border: 1px solid #ccc;
+            border: 1px solid #555;
+            background-color: #3a3a4f;
+            color: #eee;
             box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-container input:focus {
+            border-color: #76a9fa;
+            outline: none;
+            background-color: #45455f;
+            color: #fff;
         }
 
         .submit-btn {
-            background-color: #4CAF50;
+            background-color: #5a8dee;
             color: white;
             padding: 10px 20px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             width: 100%;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
         }
 
         .submit-btn:hover {
-            background-color: #45a049;
-        }
-
-        label {
-            font-weight: bold;
-            margin-bottom: 5px;
-            display: block;
+            background-color: #3f6fd1;
         }
 
         .error-message {
-            color: red;
+            color: #ff6b6b;
             margin-bottom: 15px;
             text-align: center;
         }
@@ -79,7 +96,7 @@
 <body>
     <div class="login-wrapper">
         <div class="form-container">
-            <h2>Login</h2>
+            <h2>PharmaNet</h2>
             <form method="post">
                 {% csrf_token %}
                 <p>

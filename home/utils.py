@@ -1,4 +1,5 @@
 # home/utils.py
+import datetime
 from urllib.parse import urlencode
 import logging
 
@@ -7,6 +8,8 @@ from django.db import IntegrityError
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.urls import reverse, NoReverseMatch
+from django.utils.dateparse import parse_date
+from django.utils import timezone
 
 from .models import ActivityLog
 
@@ -48,7 +51,7 @@ def delete_object(request, model, object_id):
             additional_info=f"{model_name} ID: {object_id}"
         )
         
-        messages.success(request, f"The {model_name} '{object_name}' has been deleted.")
+        messages.success(request, f"The {model_name} '{object_name}' deleted.")
         return True  # Return success flag
 
     except model.DoesNotExist:
@@ -88,7 +91,7 @@ def add_object(request, form_class, model, success_url):
                 additional_info=f"{model_name} ID: {instance.id}"
             )
 
-            messages.success(request, f"The {model_name} '{object_name}' has been added.")
+            messages.success(request, f"The {model_name} '{object_name}' added.")
             return redirect(success_url)  # Redirect to the success URL
     else:
         form = form_class()  # Empty form on GET request
@@ -130,7 +133,7 @@ def edit_object(request, form_class, model, object_id, success_url):
                 action=f"edited {model_name} {object_name}",
                 additional_info=f"{model_name} ID: {object_id}"
             )
-            messages.success(request, f"The {model_name} '{object_name}' has been updated.")
+            messages.success(request, f"The {model_name} '{object_name}' updated.")
             return redirect(success_url)  # Redirect to the success URL after saving
     else:
         form = form_class(instance=obj)  # Prepopulate the form with the object's current data
@@ -230,3 +233,14 @@ def paginate_with_query_params(request, queryset, per_page=10, page_param='page'
     query_string = urlencode(querydict)
 
     return page_obj, query_string
+
+def make_aware_datetime(date_str):
+    # Parse date string to date
+    date_obj = parse_date(date_str)
+    if not date_obj:
+        return timezone.now()
+    # Convert date to datetime at midnight
+    dt = datetime.datetime.combine(date_obj, datetime.time.min)
+    # Make it timezone-aware (using current timezone)
+    aware_dt = timezone.make_aware(dt, timezone.get_current_timezone())
+    return aware_dt

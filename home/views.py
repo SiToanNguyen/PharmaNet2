@@ -4,6 +4,9 @@ from datetime import date, timedelta
 from reportlab.pdfgen import canvas
 from io import BytesIO
 from collections import defaultdict
+import logging
+
+logger = logging.getLogger(__name__)
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.models import User
@@ -12,7 +15,7 @@ from django.views.decorators.http import require_POST
 from django.utils.dateparse import parse_date
 from django.utils.timezone import now
 from django.utils import timezone
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.db.models import Sum, F, Value, ExpressionWrapper, DecimalField, ForeignKey, DateTimeField, DateField
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse, HttpResponse
@@ -30,9 +33,10 @@ from .models import (
 from .forms import (
     UserCreationForm, UserEditForm, CustomerForm, DateRangeForm,
     ManufacturerForm, CategoryForm, ProductForm, 
-    PurchaseTransactionForm, PurchasedProductForm, SaleTransactionForm, SoldProductForm
+    PurchaseTransactionForm, PurchasedProductForm, PurchaseScanForm,
+    SaleTransactionForm, SoldProductForm, SaleScanForm
 )
-from .utils import paginate_with_query_params, add_object, edit_object, delete_object, list_objects, log_activity
+from .utils import paginate_with_query_params, add_object, edit_object, delete_object, list_objects, log_activity, make_aware_datetime
 
 # Homepage
 
@@ -312,6 +316,9 @@ def purchase_transaction_list(request):
     # Sort transactions by purchase date (or other fields as needed)
     purchase_transactions = purchase_transactions.order_by('-purchase_date')
 
+    # Scan via Django Form because it handles errors, such as scan the same file multiple time, better than Javascript
+    scan_form = PurchaseScanForm()
+
     page_obj, query_string = paginate_with_query_params(request, purchase_transactions)
 
     return render(request, 'purchase_transaction_list.html', {
@@ -320,6 +327,7 @@ def purchase_transaction_list(request):
         'invoice_number_query': invoice_number_query,
         'manufacturer_name_query': manufacturer_name_query,
         'query_string': query_string,
+        'scan_form': scan_form
     })
 
 def add_purchase_transaction(request):
@@ -331,9 +339,23 @@ def add_purchase_transaction(request):
         form = PurchaseTransactionForm(request.POST)
         formset = PurchasedProductFormSet(request.POST, prefix="products")
 
+        # Set correct queryset for product fields before validation
+        manufacturer_id = request.POST.get("manufacturer")
+        if manufacturer_id:
+            try:
+                manufacturer_id = int(manufacturer_id)
+                product_qs = Product.objects.filter(manufacturer_id=manufacturer_id)
+            except (ValueError, TypeError):
+                product_qs = Product.objects.none()
+        else:
+            product_qs = Product.objects.none()
+
+        for subform in formset:
+            subform.fields['product'].queryset = product_qs
+
+        # Validate the form and formset
         if form.is_valid() and formset.is_valid():
             purchase_transaction = form.save(commit=False)
-            purchase_transaction.purchase_date = timezone.localtime(timezone.now())  
             purchase_transaction.total_cost = 0  # Initialize total cost
 
             purchase_transaction.save()
@@ -366,28 +388,23 @@ def add_purchase_transaction(request):
                 additional_info=f"Invoice #{purchase_transaction.invoice_number}, Manufacturer: {purchase_transaction.manufacturer.name}"
             )
                     
+            messages.success(request, f"Purchase transaction {purchase_transaction.invoice_number} added.")
             return redirect('purchase_transaction_list')
-        else:
-            # Set correct queryset for product fields in formset
-            for subform in formset:
-                if 'manufacturer' in request.POST:
-                    try:
-                        manufacturer_id = int(request.POST.get("manufacturer"))
-                        subform.fields['product'].queryset = Product.objects.filter(manufacturer_id=manufacturer_id)
-                    except (ValueError, TypeError):
-                        subform.fields['product'].queryset = Product.objects.none()
 
-            return render(request, "add_purchase_transaction.html", {
-                "form": form,
-                "formset": formset,
-                "manufacturers": Manufacturer.objects.all(),
-                "errors": form.errors,
-                "formset_errors": formset.errors,
-            })
+        return render(request, "add_purchase_transaction.html", {
+            "form": form,
+            "formset": formset,
+            "manufacturers": Manufacturer.objects.all(),
+            "errors": form.errors,
+            "formset_errors": formset.errors,
+        })
 
-    else:
+    else: # request.method != "POST"
         form = PurchaseTransactionForm()
         formset = PurchasedProductFormSet(queryset=PurchasedProduct.objects.none(), prefix="products")
+        for subform in formset:
+            subform.fields['product'].queryset = Product.objects.none()
+        formset.empty_form.fields['product'].queryset = Product.objects.none()
 
     return render(request, "add_purchase_transaction.html", {
         "form": form,
@@ -406,71 +423,76 @@ def get_products_by_manufacturer(request):
         return JsonResponse(product_data, safe=False)
     return JsonResponse({'error': 'No manufacturer selected'}, status=400)
 
-@csrf_exempt
 @require_POST
 def scan_purchase_transaction(request):
-    try:
-        data = json.loads(request.body)
-
-        # Validate JSON structure
-        required_fields = {"invoice_number", "manufacturer", "purchase_date", "total_cost", "products"}
-        if not required_fields.issubset(data.keys()):
-            return JsonResponse({"success": False, "message": "Missing required fields."})
-
-        # Find manufacturer
+    scan_form = PurchaseScanForm(request.POST, request.FILES)
+    if scan_form.is_valid():
+        json_file = scan_form.cleaned_data['json_file']
         try:
-            manufacturer = Manufacturer.objects.get(name=data["manufacturer"])
-        except Manufacturer.DoesNotExist:
-            return JsonResponse({"success": False, "message": "Manufacturer not found."})
+            data = json.load(json_file)
+            required_fields = {"invoice_number", "manufacturer", "purchase_date", "total_cost", "products"}
+            if not required_fields.issubset(data.keys()):
+                messages.error(request, "Missing required fields in JSON.")
+                return redirect("purchase_transaction_list")
 
-        # Create transaction
-        transaction = PurchaseTransaction.objects.create(
-            invoice_number=data["invoice_number"],
-            manufacturer=manufacturer,
-            purchase_date=parse_date(data["purchase_date"]) or now(),
-            total_cost=data["total_cost"],
-            remarks=data.get("remarks", "")
-        )
+            manufacturer = Manufacturer.objects.filter(name=data["manufacturer"]).first()
+            if not manufacturer:
+                messages.error(request, f"Manufacturer '{data['manufacturer']}' not found.")
+                return redirect("purchase_transaction_list")
 
-        # Add products
-        for item in data["products"]:
-            try:
-                product = Product.objects.get(name=item["product"], manufacturer=manufacturer)
-            except Product.DoesNotExist:
-                transaction.delete()
-                return JsonResponse({"success": False, "message": f"Product not found: {item['product']}"})
+            if PurchaseTransaction.objects.filter(invoice_number=data["invoice_number"]).exists():
+                messages.error(request, f"Invoice number {data['invoice_number']} already exists.")
+                return redirect("purchase_transaction_list")
 
-            PurchasedProduct.objects.create(
-                purchase_transaction=transaction,
-                product=product,
-                batch_number=item.get("batch_number", ""),
-                quantity=item["quantity"],
-                purchase_price=item["purchase_price"],
-                expiry_date=parse_date(item["expiry_date"])
+            transaction = PurchaseTransaction.objects.create(
+                invoice_number=data["invoice_number"],
+                manufacturer=manufacturer,
+                purchase_date=make_aware_datetime(data["purchase_date"]),
+                total_cost=data["total_cost"],
+                remarks=data.get("remarks", "")
             )
 
-        # Update inventory after saving all purchased products
-        for purchased_product in transaction.purchased_products.all():
-            inventory_item, created = Inventory.objects.get_or_create(
-                product=purchased_product.product,
-                expiry_date=purchased_product.expiry_date,
-                defaults={'quantity': purchased_product.quantity}
-            )
-            if not created:
-                inventory_item.quantity += purchased_product.quantity
-                inventory_item.save()
+            for item in data["products"]:
+                product = Product.objects.filter(name=item["product"], manufacturer=manufacturer).first()
+                if not product:
+                    transaction.delete()
+                    messages.error(request, f"Product not found: {item['product']}")
+                    return redirect("purchase_transaction_list")
 
-        if request.user.is_authenticated:
+                PurchasedProduct.objects.create(
+                    purchase_transaction=transaction,
+                    product=product,
+                    batch_number=item.get("batch_number", ""),
+                    quantity=item["quantity"],
+                    purchase_price=item["purchase_price"],
+                    expiry_date=parse_date(item["expiry_date"])
+                )
+
+            for purchased_product in transaction.purchased_products.all():
+                inventory_item, created = Inventory.objects.get_or_create(
+                    product=purchased_product.product,
+                    expiry_date=purchased_product.expiry_date,
+                    defaults={'quantity': purchased_product.quantity}
+                )
+                if not created:
+                    inventory_item.quantity += purchased_product.quantity
+                    inventory_item.save()
+
             log_activity(
                 user=request.user,
                 action="scanned purchase transaction",
-                additional_info=f"Invoice #{transaction.invoice_number}, Manufacturer: {manufacturer.name}"
+                additional_info=f"Invoice #{transaction.invoice_number}, Manufacturer: {transaction.manufacturer.name}"
             )
+            
+            messages.success(request, f"Purchase transaction {transaction.invoice_number} scanned successfully.")
+            return redirect("purchase_transaction_list")
 
-        return JsonResponse({"success": True})
-    
-    except Exception as e:
-        return JsonResponse({"success": False, "message": str(e)})
+        except Exception as e:
+            messages.error(request, f"Error processing JSON: {str(e)}")
+            return redirect("purchase_transaction_list")
+    else:
+        messages.error(request, "Invalid file uploaded.")
+        return redirect("purchase_transaction_list")
 
 @require_POST
 def delete_purchase_transaction(request, transaction_id):
@@ -508,7 +530,7 @@ def delete_purchase_transaction(request, transaction_id):
         additional_info=f"Invoice #{transaction.invoice_number}, Manufacturer: {transaction.manufacturer.name}"
     )
 
-    messages.success(request, "Purchase transaction deleted and inventory updated.")
+    messages.success(request, f"Purchase transaction {transaction.invoice_number} deleted and inventory updated.")
     return redirect('purchase_transaction_list')
 
 # Customer management
@@ -561,6 +583,9 @@ def sale_transaction_list(request):
 
     sale_transactions = sale_transactions.order_by('-transaction_date')
 
+    # Scan via Django Form because it handles errors, such as scan the same file multiple time, better than Javascript
+    scan_form = SaleScanForm()
+
     page_obj, query_string = paginate_with_query_params(request, sale_transactions)
 
     return render(request, 'sale_transaction_list.html', {
@@ -569,6 +594,7 @@ def sale_transaction_list(request):
         'transaction_number_query': transaction_number_query,
         'customer_name_query': customer_name_query,
         'query_string': query_string,
+        'scan_form': scan_form
     })
 
 def add_sale_transaction(request):
@@ -617,7 +643,7 @@ def add_sale_transaction(request):
                         additional_info=f"Transaction #{sale_transaction.transaction_number}"
                     )
 
-                    messages.success(request, "Sale transaction successfully recorded.")
+                    messages.success(request, f"Sale transaction {sale_transaction.transaction_number} added.")
                     return redirect('sale_transaction_list')
 
             except Exception as e:
@@ -626,7 +652,7 @@ def add_sale_transaction(request):
                     "form": form,
                     "formset": formset,
                     "customers": Customer.objects.all(),
-                    "inventory_items": Inventory.objects.select_related('product', 'product__manufacturer').all(),
+                    "inventory_items": Inventory.objects.select_related('product', 'product__manufacturer').filter(quantity__gt=0),
                     "errors": form.errors,
                     "formset_errors": formset.errors,
                     "success_url": reverse("sale_transaction_list"),
@@ -636,7 +662,7 @@ def add_sale_transaction(request):
             "form": form,
             "formset": formset,
             "customers": Customer.objects.all(),
-            "inventory_items": Inventory.objects.select_related('product', 'product__manufacturer').all(),
+            "inventory_items": Inventory.objects.select_related('product', 'product__manufacturer').filter(quantity__gt=0),
             "errors": form.errors,
             "formset_errors": formset.errors,            
             "success_url": reverse("sale_transaction_list"),
@@ -650,7 +676,7 @@ def add_sale_transaction(request):
         "form": form,
         "formset": formset,
         "customers": Customer.objects.all(),
-        "inventory_items": Inventory.objects.select_related('product', 'product__manufacturer').all(),
+        "inventory_items": Inventory.objects.select_related('product', 'product__manufacturer').filter(quantity__gt=0),
         "errors": form.errors,
         "formset_errors": formset.errors,
         "success_url": reverse("sale_transaction_list"),
@@ -658,78 +684,94 @@ def add_sale_transaction(request):
 
 def get_inventory_price(request, inventory_id):
     try:
-        inventory = Inventory.objects.get(id=inventory_id)
-        price = inventory.product.sale_price
-        return JsonResponse({'price': float(price)})
+        item = Inventory.objects.get(id=inventory_id)
+        return JsonResponse({
+            'price': item.product.sale_price,
+            'available_quantity': item.quantity
+        })
     except Inventory.DoesNotExist:
         return JsonResponse({'error': 'Not found'}, status=404)
 
-@csrf_exempt
 @require_POST
 def scan_sale_transaction(request):
-    try:
-        data = json.loads(request.body)
+    scan_form = SaleScanForm(request.POST, request.FILES)
+    if scan_form.is_valid():
+        json_file = scan_form.cleaned_data['json_file']
+        try:
+            data = json.load(json_file)
+            required_fields = {"transaction_number", "transaction_date", "price", "discount", "cash_received", "payment_method", "products"}
+            if not required_fields.issubset(data.keys()):
+                messages.error(request, "Missing required fields in JSON.")
+                return redirect("sale_transaction_list")
 
-        required_fields = {"transaction_number", "transaction_date", "price", "discount", "cash_received", "payment_method", "products"}
-        if not required_fields.issubset(data.keys()):
-            return JsonResponse({"success": False, "message": "Missing required fields."})
+            # Check if transaction number already exists
+            if SaleTransaction.objects.filter(transaction_number=data["transaction_number"]).exists():
+                messages.error(request, f"Transaction number {data['transaction_number']} already exists.")
+                return redirect("sale_transaction_list")
 
-        # Optional: customer
-        customer = None
-        if data.get("customer"):
-            customer_name = data["customer"].strip()
-            customer, created = Customer.objects.get_or_create(full_name=customer_name)
-    
-            if created and request.user.is_authenticated:
-                log_activity(
-                    user=request.user,
-                    action="added customer via scan",
-                    additional_info=f"Customer '{customer.full_name}' added during scanned sale transaction"
-                )
+            # Optional: customer
+            customer = None
+            if data.get("customer"):
+                customer_name = data["customer"].strip()
+                customer, created = Customer.objects.get_or_create(full_name=customer_name)
+                if created and request.user.is_authenticated:
+                    log_activity(
+                        user=request.user,
+                        action="added customer via scan",
+                        additional_info=f"Customer '{customer.full_name}' added during scanned sale transaction"
+                    )
 
-        # Create transaction
-        transaction = SaleTransaction.objects.create(
-            transaction_number=data["transaction_number"],
-            customer=customer,
-            transaction_date=parse_date(data["transaction_date"]) or now(),
-            price=data["price"],
-            discount=data["discount"],
-            cash_received=data["cash_received"],
-            payment_method=data["payment_method"],
-            remarks=data.get("remarks", ""),
-            created_by=request.user if request.user.is_authenticated else None
-        )
-
-        # Add sold products
-        for item in data["products"]:
-            inventory = Inventory.objects.get(id=item["inventory_id"])
-            if inventory.quantity < item["quantity"]:
-                transaction.delete()
-                return JsonResponse({"success": False, "message": f"Not enough stock for {inventory.product.name}."})
-
-            SoldProduct.objects.create(
-                sale_transaction=transaction,
-                inventory_item=inventory,
-                quantity=item["quantity"],
-                sale_price=item.get("sale_price", inventory.product.sale_price)
+            transaction = SaleTransaction.objects.create(
+                transaction_number=data["transaction_number"],
+                customer=customer,
+                transaction_date=parse_date(data["transaction_date"]) or now(),
+                price=data["price"],
+                discount=data["discount"],
+                cash_received=data["cash_received"],
+                payment_method=data["payment_method"],
+                remarks=data.get("remarks", ""),
+                created_by=request.user if request.user.is_authenticated else None
             )
 
-            inventory.quantity -= item["quantity"]
-            inventory.save()
+            for item in data["products"]:
+                try:
+                    inventory = Inventory.objects.get(id=item["inventory_id"])
+                except Inventory.DoesNotExist:
+                    transaction.delete()
+                    messages.error(request, f"Inventory item with ID {item['inventory_id']} not found.")
+                    return redirect("sale_transaction_list")
 
-        if request.user.is_authenticated:
+                if inventory.quantity < item["quantity"]:
+                    transaction.delete()
+                    messages.error(request, f"Not enough stock for {inventory.product.name}.")
+                    return redirect("sale_transaction_list")
+
+                SoldProduct.objects.create(
+                    sale_transaction=transaction,
+                    inventory_item=inventory,
+                    quantity=item["quantity"],
+                    sale_price=item.get("sale_price", inventory.product.sale_price)
+                )
+
+                inventory.quantity -= item["quantity"]
+                inventory.save()
+
             log_activity(
                 user=request.user,
                 action="scanned sale transaction",
                 additional_info=f"Transaction #{transaction.transaction_number}"
             )
 
-        return JsonResponse({"success": True})
+            messages.success(request, f"Sale transaction {transaction.transaction_number} scanned successfully.")
+            return redirect("sale_transaction_list")
 
-    except Inventory.DoesNotExist:
-        return JsonResponse({"success": False, "message": "Inventory item not found."})
-    except Exception as e:
-        return JsonResponse({"success": False, "message": str(e)})
+        except Exception as e:
+            messages.error(request, f"Error processing JSON: {str(e)}")
+            return redirect("sale_transaction_list")
+
+    else:
+        messages.error(request, "Invalid file uploaded.")
+        return redirect("sale_transaction_list")
 
 @require_POST
 def delete_sale_transaction(request, transaction_id):
@@ -756,7 +798,7 @@ def delete_sale_transaction(request, transaction_id):
         additional_info=f"Transaction #{transaction.transaction_number}"
     )
 
-    messages.success(request, "Sale transaction deleted and inventory updated.")
+    messages.success(request, f"Sale transaction {transaction.transaction_number} deleted and inventory updated.")
     return redirect('sale_transaction_list')
 
 def financial_summary(request):

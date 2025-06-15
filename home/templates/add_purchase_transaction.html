@@ -39,13 +39,13 @@
 
         {{ formset.management_form }}
 
-        <table id="productsTable">
+        <table id="productsTable" class="global-table">
           <thead>
             <tr>
               <th>Product</th>
               <th>Batch Number</th>
               <th>Quantity</th>
-              <th>Purchase Price (€)</th>
+              <th>Unit Price (€)</th>
               <th>Expiry Date</th>
               <th>Actions</th>
             </tr>
@@ -60,7 +60,7 @@
               <td><p>{{ product_form.expiry_date }}</p></td>
               <td>
                   <p>
-                      <button type="button" class="cancel-btn" onclick="removeRow(this)">Remove</button>
+                      <button type="button" class="remove-btn" onclick="removeRow(this)">Remove</button>
                   </p>
               </td>
             </tr>
@@ -78,7 +78,7 @@
               <td><p>{{ formset.empty_form.purchase_price.as_widget }}</p></td>
               <td><p>{{ formset.empty_form.expiry_date.as_widget }}</p></td>
               <td>
-                <button type="button" class="cancel-btn" onclick="removeRow(this)">Remove</button>
+                <button type="button" class="remove-btn" onclick="removeRow(this)">Remove</button>
               </td>
             </tr>
           </table>
