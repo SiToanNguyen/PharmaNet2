@@ -4,17 +4,17 @@
   "price": 50.00,
   "discount": 5.00,
   "cash_received": 50.00,
-  "payment_method": "CASH",
+  "payment_method": "Cash",
   "remarks": "Scanned",
   "customer": "John Doe",
   "products": [
     {
-      "inventory_id": 864,
+      "inventory_id": 118,
       "quantity": 2,
       "sale_price": 10.00
     },
     {
-      "inventory_id": 740,
+      "inventory_id": 107,
       "quantity": 1,
       "sale_price": 25.00
     }

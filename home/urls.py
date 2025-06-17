@@ -57,4 +57,5 @@ urlpatterns = [
     path('financial-summary/pdf/', views.export_financial_summary_pdf, name='export_financial_summary_pdf'),
 
     path('api/get_object_details/<str:model_name>/<int:pk>/', views.get_object_details, name='get_object_details'),
+    path("api/get_related_list/<str:related_model_name>/<str:parent_model_name>/<int:parent_id>/", views.get_related_list, name="get_related_list"),
 ]

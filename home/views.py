@@ -124,7 +124,8 @@ def user_list(request):
             'last_login': 'Last Login'
         },
         add=True,
-        actions=True
+        edit=True, 
+        delete=True
     )
 
 def add_user(request):
@@ -161,7 +162,8 @@ def manufacturer_list(request):
             'address': 'address'
         },
         add=True,
-        actions=True
+        edit=True, 
+        delete=True
     )
 
 def add_manufacturer(request):
@@ -197,7 +199,8 @@ def category_list(request):
             'name': 'name'
         },
         add=True,
-        actions=True
+        edit=True, 
+        delete=True
     )
 
 def add_category(request):
@@ -242,7 +245,8 @@ def product_list(request):
             'stock': 'Stock'
         },
         add=True,
-        actions=True,
+        edit=True, 
+        delete=True,
         extra_context={'object_list': products_with_stock}
     )
 
@@ -300,35 +304,56 @@ def inventory_list(request):
 
 # Purchase Transactions management
 def purchase_transaction_list(request):
-    # Get search parameters from the GET request
+    transactions = PurchaseTransaction.objects.prefetch_related('purchased_products').all()
+
     invoice_number_query = request.GET.get('invoice_number', '').strip()
     manufacturer_name_query = request.GET.get('manufacturer_name', '').strip()
-    
-    # Filter purchase transactions based on search parameters
-    # purchase_transactions = PurchaseTransaction.objects.all()
-    purchase_transactions = PurchaseTransaction.objects.prefetch_related('purchased_products').all()
 
     if invoice_number_query:
-        purchase_transactions = purchase_transactions.filter(invoice_number__icontains=invoice_number_query)
+        transactions = transactions.filter(invoice_number__icontains=invoice_number_query)
     if manufacturer_name_query:
-        purchase_transactions = purchase_transactions.filter(manufacturer__name__icontains=manufacturer_name_query)
-    
-    # Sort transactions by purchase date (or other fields as needed)
-    purchase_transactions = purchase_transactions.order_by('-purchase_date')
+        transactions = transactions.filter(manufacturer__name__icontains=manufacturer_name_query)
 
-    # Scan via Django Form because it handles errors, such as scan the same file multiple time, better than Javascript
+    transactions = transactions.order_by('-purchase_date')
+
     scan_form = PurchaseScanForm()
 
-    page_obj, query_string = paginate_with_query_params(request, purchase_transactions)
-
-    return render(request, 'purchase_transaction_list.html', {
-        'purchase_transactions': page_obj,
-        'page_obj': page_obj,
-        'invoice_number_query': invoice_number_query,
-        'manufacturer_name_query': manufacturer_name_query,
-        'query_string': query_string,
-        'scan_form': scan_form
-    })
+    return list_objects(
+        request,
+        model=PurchaseTransaction,
+        columns={
+            'invoice_number': 'Invoice #',
+            'manufacturer': 'Manufacturer',
+            'purchase_date': 'Purchase Date',
+            'total_cost': 'Total Cost (€)',
+        },
+        search_fields={
+            'invoice_number': 'invoice_number',
+            'manufacturer_name': 'manufacturer__name',
+        },
+        sort_fields={
+            'purchase_date': 'Purchase Date',
+            'total_cost': 'Total Cost',
+        },
+        add=True,
+        delete=True,
+        extra_context={
+            'title': 'Purchase Transaction',
+            'object_list': transactions,
+            'scan_form': scan_form,
+            'scan_view_name': 'scan_purchase_transaction',
+        },
+        related_model=PurchasedProduct,
+        related_field_name='purchase_transaction',
+        related_title='Purchased Products',
+        related_fields={
+            'product': 'Product',
+            'quantity': 'Quantity',
+            'purchase_price': 'Purchase Price (€)',
+            'batch_number': 'Batch #',
+            'expiry_date': 'Expiry Date',
+        }
+    )
 
 def add_purchase_transaction(request):
     PurchasedProductFormSet = modelformset_factory(
@@ -543,7 +568,8 @@ def customer_list(request):
             'name': 'full_name'
         },
         add=True,
-        actions=True
+        edit=True, 
+        delete=True
     )
 
 def add_customer(request):
@@ -571,31 +597,58 @@ def delete_customer(request, customer_id):
 
 # Sale Transaction management
 def sale_transaction_list(request):
+    transactions = SaleTransaction.objects.prefetch_related('sold_products').all()
+
     transaction_number_query = request.GET.get('transaction_number', '').strip()
     customer_name_query = request.GET.get('customer_name', '').strip()
 
-    sale_transactions = SaleTransaction.objects.prefetch_related('sold_products').all()
-
     if transaction_number_query:
-        sale_transactions = sale_transactions.filter(transaction_number__icontains=transaction_number_query)
+        transactions = transactions.filter(transaction_number__icontains=transaction_number_query)
     if customer_name_query:
-        sale_transactions = sale_transactions.filter(customer__full_name__icontains=customer_name_query)
+        transactions = transactions.filter(customer__full_name__icontains=customer_name_query)
 
-    sale_transactions = sale_transactions.order_by('-transaction_date')
+    transactions = transactions.order_by('-transaction_date')
 
-    # Scan via Django Form because it handles errors, such as scan the same file multiple time, better than Javascript
     scan_form = SaleScanForm()
 
-    page_obj, query_string = paginate_with_query_params(request, sale_transactions)
-
-    return render(request, 'sale_transaction_list.html', {
-        'sale_transactions': page_obj,
-        'page_obj': page_obj,
-        'transaction_number_query': transaction_number_query,
-        'customer_name_query': customer_name_query,
-        'query_string': query_string,
-        'scan_form': scan_form
-    })
+    return list_objects(
+        request,
+        model=SaleTransaction,
+        columns={
+            'transaction_number': 'Transaction #',
+            'customer': 'Customer',
+            'transaction_date': 'Date',
+            'price': 'Price (€)',
+            'discount': 'Discount (€)',
+            'cash_received': 'Cash (€)',
+            'payment_method': 'Payment Method',
+        },
+        search_fields={
+            'transaction_number': 'transaction_number',
+            'customer_name': 'customer__full_name',
+        },
+        sort_fields={
+            'transaction_date': 'Date',
+            'price': 'Price',
+            'discount': 'Discount',
+        },
+        add=True,
+        delete=True,
+        extra_context={
+            'title': 'Sale Transaction',
+            'object_list': transactions,
+            'scan_form': scan_form,
+            'scan_view_name': 'scan_sale_transaction',
+        },
+        related_model=SoldProduct,
+        related_field_name='sale_transaction',
+        related_title='Sold Products',
+        related_fields={
+            'inventory_item': 'Inventory Item',
+            'quantity': 'Quantity',
+            'sale_price': 'Sale Price (€)',
+        }
+    )
 
 def add_sale_transaction(request):
     SoldProductFormSet = modelformset_factory(
@@ -724,7 +777,8 @@ def scan_sale_transaction(request):
             transaction = SaleTransaction.objects.create(
                 transaction_number=data["transaction_number"],
                 customer=customer,
-                transaction_date=parse_date(data["transaction_date"]) or now(),
+                # transaction_date=parse_date(data["transaction_date"]) or now(),
+                transaction_date=make_aware_datetime(data["transaction_date"]),
                 price=data["price"],
                 discount=data["discount"],
                 cash_received=data["cash_received"],
@@ -1079,7 +1133,6 @@ def draw_page_number(canvas_obj, page_number):
     width = canvas_obj._pagesize[0]
     canvas_obj.drawRightString(width - 40, 20, text)
 
-
 def get_object_details(request, model_name, pk):
     # Normalize model name: "activity log" -> "ActivityLog"
     normalized_name = ''.join(word.capitalize() for word in model_name.split())
@@ -1127,9 +1180,62 @@ def get_object_details(request, model_name, pk):
 
             data[label] = display_value
 
+        # === Include related objects if configured ===
+        related_model_name = request.GET.get("related_model")
+        related_field_name = request.GET.get("related_field")
+        related_fields = request.GET.getlist("related_fields")
+
+        if related_model_name and related_field_name:
+            try:
+                RelatedModel = apps.get_model("home", related_model_name)
+                related_objects = RelatedModel.objects.filter(**{related_field_name: obj})
+                related_data = []
+
+                for item in related_objects:
+                    item_data = {}
+                    for field_name in related_fields:
+                        field_value = getattr(item, field_name, "")
+                        item_data[field_name.replace("_", " ").title()] = str(field_value)
+                    related_data.append(item_data)
+
+                data["_related_list"] = related_data
+
+            except LookupError:
+                data["_related_list_error"] = f"Related model {related_model_name} not found."
+
         return JsonResponse(data)
     
     except model.DoesNotExist:
         return JsonResponse({'error': 'Object not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    
+def get_related_list(request, related_model_name, parent_model_name, parent_id):
+    try:
+        # Capitalize model names
+        RelatedModel = apps.get_model('home', related_model_name.capitalize())
+        ParentModel = apps.get_model('home', parent_model_name.capitalize())
+    except LookupError as e:
+        return JsonResponse({'error': str(e)}, status=404)
+
+    # Find the ForeignKey in RelatedModel pointing to ParentModel
+    try:
+        fk_field_name = None
+        for field in RelatedModel._meta.fields:
+            if isinstance(field, ForeignKey) and field.related_model == ParentModel:
+                fk_field_name = field.name
+                break
+
+        if not fk_field_name:
+            return JsonResponse({'error': f'No ForeignKey from {related_model_name} to {parent_model_name}'}, status=400)
+
+        # Filter related objects by FK to parent
+        related_objects = RelatedModel.objects.filter(**{f"{fk_field_name}__id": parent_id})
+        data = [
+            {field.name: str(getattr(obj, field.name)) for field in RelatedModel._meta.fields}
+            for obj in related_objects
+        ]
+        return JsonResponse(data, safe=False)
+
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)

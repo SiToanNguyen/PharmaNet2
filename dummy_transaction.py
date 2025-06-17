@@ -21,7 +21,7 @@ P = 2  # Purchase transactions per manufacturer
 S = 1000  # Total sale transactions
 
 def get_random_date_within_range(start_date, end_date):
-    """Returns a random timezone-aware datetime between start_date and end_date."""
+    # Returns a random timezone-aware datetime between start_date and end_date.
     delta_days = (end_date - start_date).days
     random_days = random.randint(0, delta_days)
     random_date = start_date + timedelta(days=random_days)
@@ -104,7 +104,7 @@ def create_sale_transactions():
             price=0,
             discount=random.choice([Decimal('0.00'), Decimal('2.50'), Decimal('5.00')]),
             cash_received=0,  # filled after
-            payment_method=random.choice(["CASH", "CARD", "INSURANCE"]),
+            payment_method=random.choice(["Cash", "Card", "Insurance"]),
             transaction_date=transaction_date  # Setting the random date here
         )
 

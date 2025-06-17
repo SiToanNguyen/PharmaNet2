@@ -4,8 +4,21 @@
 {% block content %}
     <div class="list-container">
         {% if add %}
-            <a href="/{{ title|pluralize|lower }}/add" class="add-item-btn top-left-btn">Add New {{ title|format_field }}</a>
+            <a href="/{{ title|pluralize|slug_underscore }}/add" class="add-item-btn top-left-btn">Add New {{ title|format_field }}</a>
         {% endif %}
+
+        {% if scan_form %}
+            <form method="post"
+                    action="{% url scan_view_name %}"
+                    enctype="multipart/form-data"
+                    style="display: inline-block; margin-right: 10px;"
+                    id="scan-form">
+                {% csrf_token %}
+                {{ scan_form.json_file }}
+                <button type="button" id="scan-btn" class="add-item-btn top-left-btn">Scan</button>
+            </form>
+        {% endif %}
+
 
         <h2 class="list-title">{{ title|format_field }} List</h2>
 
@@ -42,8 +55,8 @@
                         {% endwith %}
                     </th>
                     {% endfor %}
-                    {% if actions %}
-                    <th>Actions</th>
+                    {% if action %}
+                    <th>Action</th>
                     {% endif %}
                 </tr>
             </thead>
@@ -57,7 +70,7 @@
                                     <a href="#" class="modal-link" 
                                         data-object="{{ obj|get_attr:column|uk_date }}" 
                                         data-id="{{ obj.id }}" 
-                                        data-model="{{ title|lower }}">
+                                        data-model="{{ model_name }}">
                                         {{ obj|get_attr:column }}
                                     </a>
                                 {% elif column == "stock" %}
@@ -68,13 +81,26 @@
                             </td>
                         {% endfor %}
 
-                        {% if actions %}
+                        {% if action %}
                             <td>
-                                <a href="/{{ title|pluralize|lower }}/edit/{{ obj.id }}/">Edit</a> |
-                                <a href="#" class="delete-btn" data-id="{{ obj.id }}">Delete</a>
-                                <form id="delete-form-{{ obj.id }}" action="/{{ title|pluralize|lower }}/delete/{{ obj.id }}/" method="post" style="display:none;">
-                                    {% csrf_token %}
-                                </form>
+                                <div class="action-buttons">
+                                    {% if edit %}
+                                    <button type="button" class="select-btn" onclick="window.location.href='/{{ title|pluralize|lower }}/edit/{{ obj.id }}/'">Edit</button>
+                                    {% endif %}
+                                    {% if delete %}
+                                    <form method="POST" action="/{{ title|pluralize|slug_underscore }}/delete/{{ obj.id }}/">
+                                        {% csrf_token %}
+                                        <button 
+                                            type="submit" 
+                                            class="delete-btn" 
+                                            data-id="{{ obj.id }}" 
+                                            data-name="{{ obj|get_attr:columns.0 }}" 
+                                            data-title="{{ title|format_field }}">
+                                            Delete
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
                             </td>
                         {% endif %}
                     </tr>
@@ -105,32 +131,38 @@
         <div id="detailModal" class="modal" style="display:none;">
             <div class="modal-content">
                 <span class="close">&times;</span>
-                <h2><span id="modal-model-name"></span> Details</h2>
+                <h2>{{ model_verbose_name }} Details</h2>
                 <div id="modal-body">
                 <!-- Populated dynamically -->
                 </div>
             </div>
         </div>
+        {% if related_fields %}
+        {{ related_fields|json_script:"related-fields-data" }}
+        {% endif %}
 
     </div> <!-- div class="list-container" -->
 
-    {% if actions %}
+    {% if delete %}
     <script>
-        document.querySelectorAll('.delete-btn').forEach(function(button) {
-            button.addEventListener('click', function(event) {
-                event.preventDefault();
-                const objId = this.getAttribute('data-id');
-                const confirmDelete = confirm('Are you sure to delete this data?');
-                if (confirmDelete) {
-                    const form = document.getElementById('delete-form-' + objId);
-                    if (form) {
-                        form.submit();  // Use POST and reloads the same page
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.delete-btn').forEach(function(button) {
+                button.addEventListener('click', function(event) {
+                    event.preventDefault();
+
+                    const form = this.closest('form');
+                    const objId = this.getAttribute('data-id');
+                    const objName = this.getAttribute('data-name');
+                    const objTitle = this.getAttribute('data-title');
+
+                    const confirmDelete = confirm(`Are you sure to delete the ${objTitle} "${objName}" (ID: ${objId})?`);
+                    if (confirmDelete) {
+                        form.submit();
                     }
-                }
+                });
             });
         });
     </script>
-
     {% endif %}
 
     <script>
@@ -154,14 +186,12 @@
                 link.addEventListener('click', function (e) {
                     e.preventDefault();
                     const objId = this.getAttribute("data-id");
-
-                    // Optional: Ajax call to fetch details by ID
                     const modelName = this.getAttribute("data-model");
-                    document.getElementById("modal-model-name").textContent = modelName.charAt(0).toUpperCase() + modelName.slice(1);
+
                     fetch(`/api/get_object_details/${modelName}/${objId}/`)
                         .then(response => response.json())
                         .then(data => {
-                            let html = "";
+                            let html = `<fieldset><legend>Main Details</legend>`;
                             function formatFieldLabel(fieldName) {
                                 return fieldName
                                     .replace(/_/g, ' ')
@@ -170,20 +200,78 @@
                             }
 
                             for (const [key, value] of Object.entries(data)) {
-                                const label = formatFieldLabel(key);
-                                const formattedValue = /\d{4}-\d{2}-\d{2}/.test(value) ? formatDate(value) : (value ?? '');
-
-                                html += `<p><strong>${label}:</strong> ${formattedValue}</p>`;
+                                if (key !== "_related_list") {
+                                    const label = formatFieldLabel(key);
+                                    const formattedValue = /\d{4}-\d{2}-\d{2}/.test(value) ? formatDate(value) : (value ?? '');
+                                    html += `<p><strong>${label}:</strong> ${formattedValue}</p>`;
+                                }
                             }
+                            html += `</fieldset>`;
+                            const relatedFieldsElement = document.getElementById('related-fields-data');
+                            if (relatedFieldsElement) {
+                                const relatedFields = JSON.parse(relatedFieldsElement.textContent);
+                                const relatedModel = "{{ related_model_name }}";
+                                const relatedField = "{{ related_field_name }}";
+                                const relatedTitle = "{{ related_title }}";
 
-                            modalBody.innerHTML = html;
-                            modal.style.display = "flex";
-                        })
-                });
-            });
+                                if (relatedModel && relatedField && relatedTitle && relatedFields) {
+                                    fetch(`/api/get_related_list/${relatedModel}/${modelName}/${objId}/`)
+                                        .then(resp => resp.json())
+                                        .then(list => {
+                                            if (list.length > 0) {
+                                                html += `<h3>${relatedTitle}</h3>`;
+                                                html += `<table class="global-table"><thead><tr>`;
+                                                for (const key in relatedFields) {
+                                                    html += `<th>${relatedFields[key]}</th>`;
+                                                }
+                                                html += `</tr></thead><tbody>`;
+                                                list.forEach(item => {
+                                                    html += `<tr>`;
+                                                    for (const key in relatedFields) {
+                                                        html += `<td>${item[key] || ''}</td>`;
+                                                    }
+                                                    html += `</tr>`;
+                                                });
+                                                html += `</tbody></table>`;
+                                            }
+
+                                            modalBody.innerHTML = html;
+                                            modal.style.display = "flex";
+                                        });
+                                } else {
+                                    modalBody.innerHTML = html;
+                                    modal.style.display = "flex";
+                                }
+                            } else {
+                                modalBody.innerHTML = html;
+                                modal.style.display = "flex";
+                            }
+                        }); // End of fetch
+                }); // End of link click handler
+            }); // End of modal link click handler
 
             closeBtn.onclick = () => modal.style.display = "none";
             window.onclick = e => { if (e.target == modal) modal.style.display = "none"; };
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const fileInput = document.querySelector('#scan-form input[type="file"]');
+            const scanBtn = document.getElementById('scan-btn');
+            const form = document.getElementById('scan-form');
+
+            if (fileInput && scanBtn && form) {
+            fileInput.style.display = 'none';  // Hide the input
+
+            scanBtn.addEventListener('click', () => {
+                fileInput.click();  // Open file picker
+            });
+
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length > 0) {
+                form.submit();  // Auto-submit on file select
+                }
+            });
+            }
         });
     </script>
 

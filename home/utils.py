@@ -36,7 +36,6 @@ def delete_object(request, model, object_id):
     :param request: The HTTP request object.
     :param model: The model class (e.g., User, Manufacturer, Product).
     :param object_id: The ID of the object to delete.
-    :return: Boolean indicating success or failure.
     """
     model_name = model._meta.verbose_name
     try:
@@ -75,7 +74,6 @@ def add_object(request, form_class, model, success_url):
     :param form_class: The form class to be used
     :param model: The model class (e.g., User, Manufacturer, Product)
     :param success_url: The URL to redirect to after success (e.g., 'user_list')
-    :return: Rendered response with form or redirection after success
     """
     model_name = model._meta.verbose_name
     if request.method == 'POST':
@@ -117,7 +115,6 @@ def edit_object(request, form_class, model, object_id, success_url):
     :param model: The model class (e.g., User, Manufacturer, Product)
     :param object_id: The ID of the object to edit
     :param success_url: The URL to redirect to after success (e.g., 'user_list')
-    :return: Rendered response with form or redirection after success
     """
     model_name = model._meta.verbose_name
     obj = get_object_or_404(model, id=object_id)  # Fetch the object by ID
@@ -150,19 +147,20 @@ def edit_object(request, form_class, model, object_id, success_url):
         'success_url': resolved_success_url,
     })
 
-def list_objects(request, model, columns=None, search_fields=None, sort_fields=None, extra_context=None, add=False, actions=False):
+def list_objects(request, model, columns=None, search_fields=None, sort_fields=None, extra_context=None, add=False, edit=False, delete=False, 
+                 related_model=None, related_field_name=None, related_title=None, related_fields=None):
     """
     Generic function to display a paginated and searchable list of objects.
 
     :param request: HTTP request object.
     :param model: The model class (e.g., User, Manufacturer, Product).
-    :param columns: A list or a dictionary for column names. Dictionary values as alternative names.
+    :param columns: Column names, can be either a list or a dictionary. Use dictionary values for alternative names.
     :param search_fields: A dictionary where keys are request GET parameters and values are model fields to filter by.
-    :param sort_field: A list or a dictionary for sort option names. Dictionary values as alternative names.
+    :param sort_field: Sort option names, can be either a list or a dictionary. Use dictionary values for alternative names.
     :param extra_context: Any additional context data needed in the template.
-    :param add: Whether to include Add action in the template.
-    :param actions: Whether to include Edit/Delete actions in the template.
-    :return: Rendered response with paginated and filtered object list.
+    :param add: Whether to include Add button in the template.
+    :param edit: Whether to include Edit button in the template.
+    :param delete: Whether to include Delete button in the template.
     """
     # Use the pre-fetched object_list if provided
     objects = extra_context.get('object_list') if extra_context and 'object_list' in extra_context else model.objects.all()
@@ -202,17 +200,25 @@ def list_objects(request, model, columns=None, search_fields=None, sort_fields=N
 
     # Data provided to the template
     context = {
-        'title': extra_context.get('title', model._meta.verbose_name.capitalize()) if extra_context else model._meta.verbose_name.capitalize(),
+        'title': extra_context.get('title', model._meta.verbose_name.title()) if extra_context else model._meta.verbose_name.title(), 
+        'model_verbose_name': model._meta.verbose_name.title(),
         'model_name': model._meta.model_name,
         'page_obj': page_obj,
-        'columns': column_keys,         # Used for iteration
-        'column_labels': column_labels, # Used for display
+        'columns': column_keys,
+        'column_labels': column_labels,
         'search_queries': {param: request.GET.get(param, '') for param in search_fields} if search_fields else {},
         'sort_queries': sort_fields,
         'sort_by': sort_by,
         'add': add, # Determines whether to show Add button
-        'actions': actions,  # Determines whether to show Edit/Delete buttons
+        'edit': edit,  # Determines whether to show Edit button
+        'delete': delete,  # Determines whether to show Delete button
+        'action': edit or delete, # Hides actions column if none of the buttons in the column are enabled
         'query_string': query_string,  # Pass the query string for pagination links
+        'related_model_name': related_model._meta.model_name if related_model else None,
+        'related_field_name': related_field_name,
+        'related_title': related_title,
+        'related_fields': related_fields,
+        'scan_view_name': f"scan_{model._meta.model_name}",
     }
 
     # Merge extra context if provided

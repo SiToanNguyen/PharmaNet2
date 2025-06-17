@@ -153,8 +153,8 @@ class SaleTransaction(models.Model):
 
     payment_method = models.CharField(
         max_length=20,
-        choices=[('CASH', 'Cash'), ('CARD', 'Card'), ('INSURANCE', 'Insurance')],
-        default='CASH'
+        choices=[('Cash', 'Cash'), ('Card', 'Card'), ('Insurance', 'Insurance')],
+        default='Cash'
     )
     
     remarks = models.TextField(blank=True, null=True)
