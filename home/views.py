@@ -16,7 +16,7 @@ from django.utils.dateparse import parse_date
 from django.utils.timezone import now
 from django.utils import timezone
 from django.db import transaction, IntegrityError
-from django.db.models import Sum, F, Value, ExpressionWrapper, DecimalField, ForeignKey, DateTimeField, DateField
+from django.db.models import Sum, F, Value, ExpressionWrapper, DecimalField, ForeignKey, DateTimeField, DateField, ManyToManyField
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse, HttpResponse
 from django.forms import modelformset_factory
@@ -28,13 +28,15 @@ from django.apps import apps
 from .models import (
     ActivityLog, Customer, 
     Manufacturer, Category, Product, Inventory, 
-    PurchaseTransaction, PurchasedProduct, SaleTransaction, SoldProduct
+    PurchaseTransaction, PurchasedProduct, SaleTransaction, SoldProduct,
+    Discount
 )
 from .forms import (
     UserCreationForm, UserEditForm, CustomerForm, DateRangeForm,
     ManufacturerForm, CategoryForm, ProductForm, 
     PurchaseTransactionForm, PurchasedProductForm, PurchaseScanForm,
-    SaleTransactionForm, SoldProductForm, SaleScanForm
+    SaleTransactionForm, SoldProductForm, SaleScanForm,
+    DiscountForm
 )
 from .utils import paginate_with_query_params, add_object, edit_object, delete_object, list_objects, log_activity, make_aware_datetime
 
@@ -665,7 +667,9 @@ def add_sale_transaction(request):
                     sale_transaction = form.save(commit=False)
                     sale_transaction.transaction_date = timezone.localtime(timezone.now())
                     sale_transaction.created_by = request.user
-                    sale_transaction.price = 0  # will be calculated below
+                    sale_transaction.price = 0  # sum of all SoldProduct total_price
+                    sale_transaction.total = 0  # total after discount
+
                     sale_transaction.save()
 
                     # Handle sold products
@@ -673,14 +677,27 @@ def add_sale_transaction(request):
                         if sold_form.cleaned_data and not sold_form.cleaned_data.get('DELETE', False):
                             sold_product = sold_form.save(commit=False)
                             sold_product.sale_transaction = sale_transaction
-                            sold_product.sale_price = sold_product.inventory_item.product.sale_price
+                            product = sold_product.inventory_item.product
+                            sale_date = sale_transaction.transaction_date.date()
+
+                            # Check for valid discount
+                            discount_qs = product.discounts.filter(from_date__lte=sale_date, to_date__gte=sale_date)
+                            if discount_qs.exists():
+                                discount = discount_qs.first()  # Take the first valid discount
+                                discounted_price = product.sale_price * (1 - discount.percentage / 100)
+                                sold_product.sale_price = round(discounted_price, 2)
+                            else:
+                                sold_product.sale_price = product.sale_price
+
                             sold_product.save()
 
                             # Calculate total price
                             sale_transaction.price += sold_product.total_price or 0
+                            sale_transaction.total = sale_transaction.price - sale_transaction.discount
 
                             # Subtract quantity from Inventory
-                            inventory_qs = sold_product.inventory_item
+                            # Prevent multiple threads from overselling the same inventory item by making sure only one thread can touch that inventory row at a time.
+                            inventory_qs = Inventory.objects.select_for_update().get(id=sold_product.inventory_item.id)
 
                             if inventory_qs.quantity < sold_product.quantity:
                                 raise Exception(f"Not enough stock for {inventory_qs.product.name} (only {inventory_qs.quantity} available)")
@@ -777,10 +794,10 @@ def scan_sale_transaction(request):
             transaction = SaleTransaction.objects.create(
                 transaction_number=data["transaction_number"],
                 customer=customer,
-                # transaction_date=parse_date(data["transaction_date"]) or now(),
                 transaction_date=make_aware_datetime(data["transaction_date"]),
                 price=data["price"],
                 discount=data["discount"],
+                total=data["price"] - data["discount"],
                 cash_received=data["cash_received"],
                 payment_method=data["payment_method"],
                 remarks=data.get("remarks", ""),
@@ -1138,7 +1155,6 @@ def get_object_details(request, model_name, pk):
     normalized_name = ''.join(word.capitalize() for word in model_name.split())
 
     try:
-        # Special case: if user model requested, get it from auth app
         if normalized_name.lower() == 'user':
             model = apps.get_model('auth', 'User')
             exclude_fields = ['password']
@@ -1158,7 +1174,6 @@ def get_object_details(request, model_name, pk):
 
             value = getattr(obj, field.name)
 
-            # Format value based on field type
             if isinstance(field, ForeignKey):
                 display_value = str(value) if value else None
             elif isinstance(field, DateTimeField):
@@ -1173,14 +1188,13 @@ def get_object_details(request, model_name, pk):
             else:
                 display_value = value
 
-            # Format field label
             label = field.verbose_name.title()
             if label == "Id":
                 label = "ID"
 
             data[label] = display_value
 
-        # === Include related objects if configured ===
+        # === Related list support ===
         related_model_name = request.GET.get("related_model")
         related_field_name = request.GET.get("related_field")
         related_fields = request.GET.getlist("related_fields")
@@ -1188,9 +1202,16 @@ def get_object_details(request, model_name, pk):
         if related_model_name and related_field_name:
             try:
                 RelatedModel = apps.get_model("home", related_model_name)
-                related_objects = RelatedModel.objects.filter(**{related_field_name: obj})
-                related_data = []
 
+                # Determine if M2M or FK
+                field = RelatedModel._meta.get_field(related_field_name)
+
+                if isinstance(field, ManyToManyField):
+                    related_objects = getattr(obj, related_field_name).all()
+                else:  # Assume FK
+                    related_objects = RelatedModel.objects.filter(**{f"{related_field_name}__id": obj.id})
+
+                related_data = []
                 for item in related_objects:
                     item_data = {}
                     for field_name in related_fields:
@@ -1202,35 +1223,52 @@ def get_object_details(request, model_name, pk):
 
             except LookupError:
                 data["_related_list_error"] = f"Related model {related_model_name} not found."
+            except Exception as e:
+                data["_related_list_error"] = str(e)
 
         return JsonResponse(data)
-    
+
     except model.DoesNotExist:
         return JsonResponse({'error': 'Object not found'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
     
 def get_related_list(request, related_model_name, parent_model_name, parent_id):
+    from django.apps import apps
+    from django.http import JsonResponse
+    from django.db.models import ForeignKey, ManyToManyField
+
     try:
-        # Capitalize model names
         RelatedModel = apps.get_model('home', related_model_name.capitalize())
         ParentModel = apps.get_model('home', parent_model_name.capitalize())
     except LookupError as e:
         return JsonResponse({'error': str(e)}, status=404)
 
-    # Find the ForeignKey in RelatedModel pointing to ParentModel
     try:
+        # Try to find a ForeignKey from RelatedModel → ParentModel
         fk_field_name = None
         for field in RelatedModel._meta.fields:
             if isinstance(field, ForeignKey) and field.related_model == ParentModel:
                 fk_field_name = field.name
                 break
 
-        if not fk_field_name:
-            return JsonResponse({'error': f'No ForeignKey from {related_model_name} to {parent_model_name}'}, status=400)
+        if fk_field_name:
+            # ForeignKey relationship (normal case)
+            related_objects = RelatedModel.objects.filter(**{f"{fk_field_name}__id": parent_id})
+        else:
+            # Try reverse ManyToManyField: ParentModel has a M2M to RelatedModel
+            parent_obj = ParentModel.objects.get(id=parent_id)
 
-        # Filter related objects by FK to parent
-        related_objects = RelatedModel.objects.filter(**{f"{fk_field_name}__id": parent_id})
+            found = False
+            for field in ParentModel._meta.many_to_many:
+                if field.related_model == RelatedModel:
+                    related_objects = getattr(parent_obj, field.name).all()
+                    found = True
+                    break
+
+            if not found:
+                return JsonResponse({'error': f'No FK or reverse M2M between {parent_model_name} and {related_model_name}'}, status=400)
+
         data = [
             {field.name: str(getattr(obj, field.name)) for field in RelatedModel._meta.fields}
             for obj in related_objects
@@ -1239,3 +1277,64 @@ def get_related_list(request, related_model_name, parent_model_name, parent_id):
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+# Discount management
+def discount_list(request):
+    return list_objects(
+        request,
+        model=Discount,
+        columns=['name', 'percentage', 'from_date', 'to_date'],
+        search_fields={
+            'name': 'name'
+        },
+        add=True,
+        edit=True,
+        delete=True,
+        related_model=Product,
+        related_field_name='discounts',  # many-to-many reverse accessor
+        related_title='Discounted Products',
+        related_fields={
+            'name': 'Product Name',
+            'category': 'Category',
+            'manufacturer': 'Manufacturer',
+            'sale_price': 'Sale Price (€)',
+        }
+    )
+
+def add_discount(request):
+    return add_object(
+        request=request,
+        form_class=DiscountForm,
+        model=Discount,
+        success_url='discount_list'
+    )
+
+def edit_discount(request, discount_id):
+    return edit_object(
+        request=request,
+        form_class=DiscountForm,
+        model=Discount,
+        object_id=discount_id,
+        success_url='discount_list'
+    )
+
+@require_POST
+def delete_discount(request, discount_id):
+    if delete_object(request, Discount, discount_id):
+        return redirect('discount_list')
+    return redirect('discount_list')
+
+# Public Product List
+def public_product_list(request):
+    products = Product.objects.select_related("category", "manufacturer").all()
+    data = [
+        {
+            "name": p.name,
+            "category": p.category.name,
+            "manufacturer": p.manufacturer.name,
+            "price": str(p.sale_price),
+            "description": p.description,
+        }
+        for p in products
+    ]
+    return JsonResponse(data, safe=False)

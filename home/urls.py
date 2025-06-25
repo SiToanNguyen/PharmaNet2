@@ -58,4 +58,11 @@ urlpatterns = [
 
     path('api/get_object_details/<str:model_name>/<int:pk>/', views.get_object_details, name='get_object_details'),
     path("api/get_related_list/<str:related_model_name>/<str:parent_model_name>/<int:parent_id>/", views.get_related_list, name="get_related_list"),
+
+    path('discounts/', views.discount_list, name='discount_list'),
+    path('discounts/add/', views.add_discount, name='add_discount'),
+    path('discounts/edit/<int:discount_id>/', views.edit_discount, name='edit_discount'),
+    path('discounts/delete/<int:discount_id>/', views.delete_discount, name='delete_discount'),
+
+    path("public-api/products/", views.public_product_list, name="public_product_list"),
 ]

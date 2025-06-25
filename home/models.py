@@ -144,6 +144,7 @@ class SaleTransaction(models.Model):
     
     # Prices and payments
     price = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)  # Total before discount
+    total = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)  # Final total = price - discount
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, blank=True)
     cash_received = models.DecimalField(max_digits=15, decimal_places=2, default=0.00, blank=True)
 
@@ -190,3 +191,18 @@ class SoldProduct(models.Model):
 
     def __str__(self):
         return f"{self.inventory_item.product.name} - {self.quantity} units @ {self.sale_price}€"
+
+# Discount management
+class Discount(models.Model):
+    name = models.CharField(max_length=100)
+    products = models.ManyToManyField(Product, related_name='discounts')
+    percentage = models.DecimalField(max_digits=5, decimal_places=2, help_text="Enter percentage, e.g. 10.00 for 10%")
+    from_date = models.DateField()
+    to_date = models.DateField()
+
+    def __str__(self):
+        return f"{self.name} ({self.percentage}% from {self.from_date} to {self.to_date})"
+
+    def is_active(self, date=None):
+        date = date or timezone.now().date()
+        return self.from_date <= date <= self.to_date

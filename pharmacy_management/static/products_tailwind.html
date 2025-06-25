@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="aqua">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pharmacy Products (Tailwind + DaisyUI)</title>
+
+  <!-- ✅ Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {},
+      },
+    };
+  </script>
+
+  <!-- ✅ DaisyUI Theme CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.10.2/dist/full.css" rel="stylesheet" type="text/css" />
+
+  <!-- ✅ DaisyUI config without "emerald" -->
+  <script>
+    window.daisyui = { themes: ["aqua", "forest", "cupcake", "synthwave", "retro", "cyberpunk"] };
+  </script>
+
+  <link rel="icon" href="data:;base64,iVBORw0KGgo=" />
+
+  <style>
+    body {
+      padding-top: 4.5rem; /* space for fixed navbar */
+    }
+  </style>
+</head>
+<body class="bg-base-100 text-base-content">
+
+  <nav class="fixed top-0 left-0 right-0 bg-base-200 shadow-md z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        
+        <!-- Title -->
+        <div class="flex-shrink-0">
+          <h1 class="text-2xl font-bold">Available Products</h1>
+        </div>
+
+        <!-- Search & Theme select -->
+        <div class="flex items-center space-x-4">
+          <input
+            type="text"
+            id="search-input"
+            placeholder="Search products..."
+            class="input input-bordered w-60"
+            aria-label="Search products"
+          />
+          <select
+            id="theme-select"
+            class="select select-bordered w-48"
+            aria-label="Select theme"
+          >
+            <option disabled>--- Choose Theme ---</option>
+            <option value="aqua" selected>Aqua</option>
+            <option value="forest">Forest</option>
+            <option value="cupcake">Cupcake</option>
+            <option value="synthwave">Synthwave</option>
+            <option value="retro">Retro</option>
+            <option value="cyberpunk">Cyberpunk</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+    <div id="product-list" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"></div>
+  </main>
+
+  <script>
+    let allProducts = [];
+
+    // Theme switcher
+    document.getElementById('theme-select').addEventListener('change', (e) => {
+      document.documentElement.setAttribute('data-theme', e.target.value);
+    });
+
+    // Render products
+    function renderProducts(products) {
+      const container = document.getElementById("product-list");
+      container.innerHTML = "";
+
+      if (!products.length) {
+        container.innerHTML = `<div class="col-span-full alert alert-warning">No matching products found.</div>`;
+        return;
+      }
+
+      products.forEach(p => {
+        const card = document.createElement("div");
+        card.className = "card bg-base-200 shadow-xl";
+        card.innerHTML = `
+          <div class="card-body">
+            <h2 class="card-title">${p.name}</h2>
+            <p><strong>Category:</strong> ${p.category}</p>
+            <p><strong>Manufacturer:</strong> ${p.manufacturer}</p>
+            <p><strong>Price:</strong> €${Number(p.price).toFixed(2)}</p>
+            <p>${p.description || ""}</p>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Search filter
+    document.getElementById("search-input").addEventListener("input", (e) => {
+      const keyword = e.target.value.toLowerCase();
+      const filtered = allProducts.filter(p =>
+        (p.name + p.category + p.manufacturer + (p.description || ""))
+          .toLowerCase()
+          .includes(keyword)
+      );
+      renderProducts(filtered);
+    });
+
+    // Fetch products
+    async function loadProducts() {
+      try {
+        const res = await fetch("/public-api/products/");
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        allProducts = await res.json();
+        renderProducts(allProducts);
+      } catch (err) {
+        console.error("Failed to load products", err);
+        document.getElementById("product-list").innerHTML = `
+          <div class="alert alert-error">Could not load products.</div>`;
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", loadProducts);
+  </script>
+</body>
+</html>

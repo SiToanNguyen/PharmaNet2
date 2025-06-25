@@ -131,7 +131,7 @@
         <div id="detailModal" class="modal" style="display:none;">
             <div class="modal-content">
                 <span class="close">&times;</span>
-                <h2>{{ model_verbose_name }} Details</h2>
+                <h2>{{ model_verbose_name }} Information</h2>
                 <div id="modal-body">
                 <!-- Populated dynamically -->
                 </div>
@@ -191,7 +191,7 @@
                     fetch(`/api/get_object_details/${modelName}/${objId}/`)
                         .then(response => response.json())
                         .then(data => {
-                            let html = `<fieldset><legend>Main Details</legend>`;
+                            let html = `<fieldset><legend>Details</legend>`;
                             function formatFieldLabel(fieldName) {
                                 return fieldName
                                     .replace(/_/g, ' ')

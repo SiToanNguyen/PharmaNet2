@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="quartz">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pharmacy Products (Bootstrap + Bootswatch)</title>
+
+  <!-- Bootstrap 5 CSS -->
+  <link
+    id="bootstrap-css"
+    href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.2/dist/quartz/bootstrap.min.css"
+    rel="stylesheet"
+  />
+
+  <!-- Bootswatch Themes CSS URLs -->
+  <script>
+    const themes = {
+      quartz: "https://cdn.jsdelivr.net/npm/bootswatch@5.3.2/dist/quartz/bootstrap.min.css",
+      slate: "https://cdn.jsdelivr.net/npm/bootswatch@5.3.2/dist/slate/bootstrap.min.css",
+      cerulean: "https://cdn.jsdelivr.net/npm/bootswatch@5.3.2/dist/cerulean/bootstrap.min.css",
+      solar: "https://cdn.jsdelivr.net/npm/bootswatch@5.3.2/dist/solar/bootstrap.min.css",
+      journal: "https://cdn.jsdelivr.net/npm/bootswatch@5.3.2/dist/journal/bootstrap.min.css",
+      minty: "https://cdn.jsdelivr.net/npm/bootswatch@5.3.2/dist/minty/bootstrap.min.css",
+      morph: "https://cdn.jsdelivr.net/npm/bootswatch@5.3.2/dist/morph/bootstrap.min.css",
+      united: "https://cdn.jsdelivr.net/npm/bootswatch@5.3.2/dist/united/bootstrap.min.css"
+    };
+
+    // Function to switch Bootstrap CSS theme dynamically
+    function switchTheme(themeName) {
+      const cssLink = document.getElementById("bootstrap-css");
+      cssLink.href = themes[themeName] || themes.quartz;
+      document.documentElement.setAttribute('data-bs-theme', themeName);
+    }
+
+    // Set default theme on initial load
+    document.addEventListener("DOMContentLoaded", () => {
+      const themeSelect = document.getElementById("theme-switcher");
+      themeSelect.value = "quartz";
+      switchTheme("quartz");
+    });
+  </script>
+
+  <style>
+    body {
+      padding-top: 80px; /* space for fixed navbar */
+    }
+    .theme-switcher {
+      max-width: 220px;
+    }
+    #search-input {
+      max-width: 300px;
+    }
+    .form-control,
+    .form-select {
+      background-color: var(--bs-body-bg);
+      color: var(--bs-body-color);
+      border-color: var(--bs-border-color);
+    }
+
+    .form-control::placeholder {
+      color: var(--bs-secondary-color);
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg fixed-top navbar-light bg-light shadow-sm">
+    <div class="container"> <!-- changed from container-fluid -->
+      <a class="navbar-brand fw-bold" href="#">Available Products</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" 
+        aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <form class="d-flex ms-auto me-3" role="search" onsubmit="return false;">
+          <input
+            type="search"
+            id="search-input"
+            class="form-control"
+            placeholder="Search products..."
+            aria-label="Search products"
+          />
+        </form>
+
+        <select id="theme-switcher" class="form-select theme-switcher" aria-label="Select theme">
+          <option disabled>--- Choose Theme ---</option>
+          <option value="quartz">Quartz</option>
+          <option value="slate">Slate</option>
+          <option value="cerulean">Cerulean</option>
+          <option value="solar">Solar</option>
+          <option value="journal">Journal</option>
+          <option value="minty">Minty</option>
+          <option value="morph">Morph</option>
+          <option value="united">United</option>
+        </select>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <div id="product-list" class="row g-4"></div>
+  </div>
+
+  <script>
+    let allProducts = [];
+
+    // Listen to theme select changes
+    document.getElementById("theme-switcher").addEventListener("change", (e) => {
+      switchTheme(e.target.value);
+    });
+
+    // Filter and display products based on search input
+    function filterProducts(searchTerm) {
+      const container = document.getElementById("product-list");
+      container.innerHTML = "";
+      const filtered = allProducts.filter(p => {
+        const search = searchTerm.toLowerCase();
+        return (
+          p.name.toLowerCase().includes(search) ||
+          p.category.toLowerCase().includes(search) ||
+          p.manufacturer.toLowerCase().includes(search) ||
+          (p.description && p.description.toLowerCase().includes(search))
+        );
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="alert alert-warning">No products found.</div>`;
+        return;
+      }
+
+      filtered.forEach((p) => {
+        const card = document.createElement("div");
+        card.className = "col-md-6 col-lg-4";
+        card.innerHTML = `
+          <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex flex-column">
+              <h5 class="card-title">${p.name}</h5>
+              <p class="card-text"><strong>Category:</strong> ${p.category}</p>
+              <p class="card-text"><strong>Manufacturer:</strong> ${p.manufacturer}</p>
+              <p class="card-text"><strong>Price:</strong> €${Number(p.price).toFixed(2)}</p>
+              <p class="card-text">${p.description || ""}</p>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    async function loadProducts() {
+      try {
+        const res = await fetch("/public-api/products/");
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        allProducts = await res.json();
+        filterProducts("");
+      } catch (err) {
+        console.error("Failed to load products", err);
+        document.getElementById("product-list").innerHTML = `
+          <div class="alert alert-danger">Could not load products.</div>`;
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadProducts();
+
+      const searchInput = document.getElementById("search-input");
+      searchInput.addEventListener("input", () => {
+        filterProducts(searchInput.value);
+      });
+    });
+  </script>
+
+  <!-- Bootstrap 5 JS Bundle (includes Popper) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -3,7 +3,9 @@ from django import forms
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from .models import Manufacturer, Category, Product, Inventory, PurchaseTransaction, PurchasedProduct, Customer, SaleTransaction, SoldProduct
+from .models import (
+    Manufacturer, Category, Product, Inventory, PurchaseTransaction, PurchasedProduct, 
+    Customer, SaleTransaction, SoldProduct, Discount)
 from .validators import validate_phone_number
 
 # User management
@@ -256,3 +258,20 @@ class SaleScanForm(forms.Form):
 class DateRangeForm(forms.Form):
     from_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
     to_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+
+# Discount management
+class DiscountForm(forms.ModelForm):
+    class Meta:
+        model = Discount
+        fields = ['name', 'products', 'percentage', 'from_date', 'to_date']
+        widgets = {
+            'products': forms.CheckboxSelectMultiple(),
+            'from_date': forms.DateInput(attrs={'type': 'date'}),
+            'to_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data.get('from_date') > cleaned_data.get('to_date'):
+            raise forms.ValidationError("From date must be before To date.")
+        return cleaned_data
