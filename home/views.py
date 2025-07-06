@@ -2,8 +2,10 @@
 import json
 from datetime import date, timedelta
 from reportlab.pdfgen import canvas
+from reportlab.lib import colors
 from io import BytesIO
 from collections import defaultdict
+from decimal import Decimal
 import logging
 
 logger = logging.getLogger(__name__)
@@ -15,7 +17,7 @@ from django.views.decorators.http import require_POST
 from django.utils.dateparse import parse_date
 from django.utils.timezone import now
 from django.utils import timezone
-from django.db import transaction, IntegrityError
+from django.db import transaction
 from django.db.models import Sum, F, Value, ExpressionWrapper, DecimalField, ForeignKey, DateTimeField, DateField, ManyToManyField
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse, HttpResponse
@@ -39,6 +41,7 @@ from .forms import (
     DiscountForm
 )
 from .utils import paginate_with_query_params, add_object, edit_object, delete_object, list_objects, log_activity, make_aware_datetime
+from .decorators import superuser_required, superuser_required_403
 
 # Homepage
 
@@ -130,6 +133,7 @@ def user_list(request):
         delete=True
     )
 
+@superuser_required_403
 def add_user(request):
     return add_object(
         request=request,
@@ -138,6 +142,7 @@ def add_user(request):
         success_url='user_list'
     )
 
+@superuser_required_403
 def edit_user(request, user_id):
     return edit_object(
         request=request,
@@ -148,6 +153,7 @@ def edit_user(request, user_id):
     )
 
 @require_POST
+@superuser_required_403
 def delete_user(request, user_id):
     if delete_object(request, User, user_id):
         return redirect('user_list')
@@ -622,6 +628,7 @@ def sale_transaction_list(request):
             'transaction_date': 'Date',
             'price': 'Price (€)',
             'discount': 'Discount (€)',
+            'total': 'Total (€)',
             'cash_received': 'Cash (€)',
             'payment_method': 'Payment Method',
         },
@@ -683,8 +690,9 @@ def add_sale_transaction(request):
                             # Check for valid discount
                             discount_qs = product.discounts.filter(from_date__lte=sale_date, to_date__gte=sale_date)
                             if discount_qs.exists():
-                                discount = discount_qs.first()  # Take the first valid discount
-                                discounted_price = product.sale_price * (1 - discount.percentage / 100)
+                                total_percentage = sum([d.percentage for d in discount_qs])
+                                total_percentage = min(total_percentage, Decimal('100.00'))
+                                discounted_price = product.sale_price * (Decimal('1.00') - total_percentage / Decimal('100.00'))
                                 sold_product.sale_price = round(discounted_price, 2)
                             else:
                                 sold_product.sale_price = product.sale_price
@@ -875,6 +883,7 @@ def delete_sale_transaction(request, transaction_id):
 def financial_summary(request):
     total_purchase = 0
     total_sales = 0
+    total_discount = 0
     profit = 0
     form = DateRangeForm(request.GET or None)
 
@@ -888,14 +897,16 @@ def financial_summary(request):
         sales = SaleTransaction.objects.filter(transaction_date__date__range=(from_date, to_date))
 
         total_purchase = purchases.aggregate(Sum('total_cost'))['total_cost__sum'] or 0
-        total_sales = sales.aggregate(Sum('price'))['price__sum'] or 0
+        total_sales = sales.aggregate(Sum('total'))['total__sum'] or 0
         profit = total_sales - total_purchase
+        total_discount = sales.aggregate(Sum('discount'))['discount__sum'] or 0
 
         product_summary = defaultdict(lambda: {
             'purchased_quantity': 0,
             'total_spent': 0,
             'sold_quantity': 0,
-            'total_earned': 0
+            'total_earned': 0,
+            'total_discount': 0
         })
 
         # Purchased Products
@@ -978,6 +989,7 @@ def financial_summary(request):
         'form': form,
         'total_purchase': total_purchase,
         'total_sales': total_sales,
+        'total_discount': total_discount,
         'profit': profit,
         'product_summary': product_summary,
     }
@@ -995,11 +1007,17 @@ def export_financial_summary_pdf(request):
     from_date = form.cleaned_data['from_date']
     to_date = form.cleaned_data['to_date']
 
+    total_purchase = 0
+    total_sales = 0
+    total_discount = 0
+    profit = 0
+
     purchases = PurchaseTransaction.objects.filter(purchase_date__date__range=(from_date, to_date))
     sales = SaleTransaction.objects.filter(transaction_date__date__range=(from_date, to_date))
 
     total_purchase = purchases.aggregate(Sum('total_cost'))['total_cost__sum'] or 0
-    total_sales = sales.aggregate(Sum('price'))['price__sum'] or 0
+    total_sales = sales.aggregate(Sum('total'))['total__sum'] or 0
+    total_discount = sales.aggregate(Sum('discount'))['discount__sum'] or 0
     profit = total_sales - total_purchase
 
     # Product summary calculation
@@ -1073,17 +1091,32 @@ def export_financial_summary_pdf(request):
     # Generate PDF
     buffer = BytesIO()
     p = canvas.Canvas(buffer)
-    p.setFont("Helvetica-Bold", 14)
-    p.drawString(100, 800, "Financial Summary Report")
-    p.setFont("Helvetica", 12)
+    header_y = 800
+    line_height = 20
 
-    p.drawString(100, 770, f"Date Range: {from_date.strftime('%B %d, %Y')} to {to_date.strftime('%B %d, %Y')}")
-    p.drawString(100, 750, f"Total Purchase Cost: € {total_purchase:,.2f}")
-    p.drawString(100, 730, f"Total Sales Revenue: € {total_sales:,.2f}")
-    p.drawString(100, 710, f"Estimated Profit: € {profit:,.2f}")
+    p.setFont("Helvetica-Bold", 14)
+    p.drawString(100, header_y, "Financial Summary Report")
+    header_y -= line_height
+
+    p.setFont("Helvetica", 12)
+    p.drawString(100, header_y, f"Date Range: {from_date.strftime('%B %d, %Y')} to {to_date.strftime('%B %d, %Y')}")
+    header_y -= line_height
+
+    p.drawString(100, header_y, f"Total Purchase Cost: € {total_purchase:,.2f}")
+    header_y -= line_height
+
+    p.drawString(100, header_y, f"Total Sales Revenue: € {total_sales:,.2f}")
+    header_y -= line_height
+
+    p.drawString(100, header_y, f"Estimated Profit: € {profit:,.2f}")
+    header_y -= line_height
+
+    p.drawString(100, header_y, f"Total Discount: € {total_discount:,.2f}")
+    header_y -= line_height
+
 
     # Product summary table
-    y = 680
+    y = header_y - 20
     p.setFont("Helvetica-Bold", 12)
     p.drawString(40, y, "Product Summary:")
     y -= 20
@@ -1097,6 +1130,7 @@ def export_financial_summary_pdf(request):
     x_earned = 430
     x_profit = 500
     col_width = 50  # for centering numbers
+    row_height = 15
 
     # Draw headers
     p.drawString(x_name, y, "Name")
@@ -1109,6 +1143,7 @@ def export_financial_summary_pdf(request):
 
     p.setFont("Helvetica", 10)
     page_num = 1
+    row_index = 1  # For zebra striping
     for item in product_summary:
         if y < 60:
             # Draw page number before moving to next page
@@ -1126,6 +1161,12 @@ def export_financial_summary_pdf(request):
             y -= 15
             p.setFont("Helvetica", 10)
 
+        # Zebra stripe for even-numbered rows
+        if row_index % 2 == 0:
+            p.setFillColor(colors.lightgrey)
+            p.rect(x_name - 2, y - 2, 540, row_height, fill=1, stroke=0)
+            p.setFillColor(colors.black)  # Reset to default text color
+        
         # Name left-aligned, numbers centered in their columns
         p.drawString(x_name, y, str(item['name'])[:32])
         p.drawCentredString(x_bought + col_width // 2, y, str(item['purchased_quantity']))
@@ -1133,7 +1174,9 @@ def export_financial_summary_pdf(request):
         p.drawCentredString(x_spent + col_width // 2, y, f"{item['total_spent']:,.2f}")
         p.drawCentredString(x_earned + col_width // 2, y, f"{item['total_earned']:,.2f}")
         p.drawCentredString(x_profit + col_width // 2, y, f"{item['profit']:,.2f}")
-        y -= 15
+
+        y -= row_height
+        row_index += 1
 
     # Draw page number on the last page
     draw_page_number(p, page_num)

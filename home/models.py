@@ -144,8 +144,8 @@ class SaleTransaction(models.Model):
     
     # Prices and payments
     price = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)  # Total before discount
-    total = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)  # Final total = price - discount
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, blank=True)
+    total = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)  # Final total = price - discount
     cash_received = models.DecimalField(max_digits=15, decimal_places=2, default=0.00, blank=True)
 
     @property

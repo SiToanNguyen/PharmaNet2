@@ -17,6 +17,7 @@
                 <li><strong>Total Purchase Cost:</strong> {{ total_purchase|floatformat:2|intcomma }} €</li>
                 <li><strong>Total Sales Revenue:</strong> {{ total_sales|floatformat:2|intcomma }} €</li>
                 <li><strong>Estimated Profit:</strong> {{ profit|floatformat:2|intcomma }} €</li>
+                <li><strong>Total Discount:</strong> {{ total_discount|floatformat:2|intcomma }} €</li>
             </ul>
 
             {% if product_summary %}
@@ -25,10 +26,10 @@
                 <thead>
                     <tr>
                         <th>Product</th>
-                        <th>Purchased Quantity</th>
-                        <th>Sold Quantity</th>
-                        <th>Total Spent (€)</th>
-                        <th>Total Earned (€)</th>
+                        <th>Purchased #</th>
+                        <th>Sold #</th>
+                        <th>Spent (€)</th>
+                        <th>Earned (€)</th>
                         <th>Profit (€)</th>
                     </tr>
                 </thead>
