@@ -10,6 +10,9 @@ from django.core.paginator import Paginator
 from django.urls import reverse, NoReverseMatch
 from django.utils.dateparse import parse_date
 from django.utils import timezone
+from django.utils.timezone import localtime
+from django.http import HttpResponse
+from django.template.loader import render_to_string
 
 from .models import ActivityLog
 
@@ -250,3 +253,14 @@ def make_aware_datetime(date_str):
     # Make it timezone-aware (using current timezone)
     aware_dt = timezone.make_aware(dt, timezone.get_current_timezone())
     return aware_dt
+
+def format_value(value):
+    print("DEBUG format_value:", value, type(value))
+    if isinstance(value, datetime.datetime):
+        dt = localtime(value)
+        time_str = dt.strftime('%I:%M %p').lstrip('0').lower()
+        time_str = time_str.replace('am', 'a.m.').replace('pm', 'p.m.')
+        return dt.strftime('%d %b %Y') + ', ' + time_str
+    elif isinstance(value, datetime.date):
+        return value.strftime('%d %b %Y')
+    return str(value)

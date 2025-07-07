@@ -40,7 +40,7 @@ from .forms import (
     SaleTransactionForm, SoldProductForm, SaleScanForm,
     DiscountForm
 )
-from .utils import paginate_with_query_params, add_object, edit_object, delete_object, list_objects, log_activity, make_aware_datetime
+from .utils import paginate_with_query_params, add_object, edit_object, delete_object, list_objects, log_activity, make_aware_datetime, format_value
 from .decorators import superuser_required, superuser_required_403
 
 # Homepage
@@ -130,7 +130,15 @@ def user_list(request):
         },
         add=True,
         edit=True, 
-        delete=True
+        delete=True,
+        related_model=ActivityLog,
+        related_field_name='user',
+        related_title='Activity Log',
+        related_fields={
+            'timestamp': 'Timestamp',
+            'action': 'Action',
+            'additional_info': 'Additional Info',
+        }
     )
 
 @superuser_required_403
@@ -171,7 +179,15 @@ def manufacturer_list(request):
         },
         add=True,
         edit=True, 
-        delete=True
+        delete=True,
+        related_model=PurchaseTransaction,
+        related_field_name='manufacturer',
+        related_title='Purchase Transactions',
+        related_fields={
+            'invoice_number': 'Invoice',
+            'purchase_date': 'Date',
+            'total_cost': 'Total (€)',
+        }
     )
 
 def add_manufacturer(request):
@@ -255,7 +271,14 @@ def product_list(request):
         add=True,
         edit=True, 
         delete=True,
-        extra_context={'object_list': products_with_stock}
+        extra_context={'object_list': products_with_stock},
+        related_model=Inventory,
+        related_field_name='product',
+        related_title='Inventory',
+        related_fields={
+            'quantity': 'Quantity',
+            'expiry_date': 'Expiry Date',
+        }
     )
 
 def add_product(request):
@@ -577,7 +600,19 @@ def customer_list(request):
         },
         add=True,
         edit=True, 
-        delete=True
+        delete=True,
+        related_model=SaleTransaction,
+        related_field_name='customer',
+        related_title='Sale Transactions',
+        related_fields={
+            'transaction_number': 'Transaction #',
+            'transaction_date': 'Date',
+            'price': 'Price (€)',
+            'discount': 'Discount (€)',
+            'total': 'Total (€)',
+            'cash_received': 'Cash Received (€)',
+            'payment_method': 'Payment Method',
+        }
     )
 
 def add_customer(request):
@@ -1258,8 +1293,11 @@ def get_object_details(request, model_name, pk):
                 for item in related_objects:
                     item_data = {}
                     for field_name in related_fields:
-                        field_value = getattr(item, field_name, "")
-                        item_data[field_name.replace("_", " ").title()] = str(field_value)
+                        raw_value = getattr(item, field_name, None)
+                        print("Calling format_value for:", field_name, raw_value, type(raw_value))
+                        display_value = format_value(raw_value)
+                        item_data[field_name.replace("_", " ").title()] = display_value
+
                     related_data.append(item_data)
 
                 data["_related_list"] = related_data
@@ -1277,13 +1315,17 @@ def get_object_details(request, model_name, pk):
         return JsonResponse({'error': str(e)}, status=500)
     
 def get_related_list(request, related_model_name, parent_model_name, parent_id):
-    from django.apps import apps
-    from django.http import JsonResponse
-    from django.db.models import ForeignKey, ManyToManyField
-
     try:
-        RelatedModel = apps.get_model('home', related_model_name.capitalize())
-        ParentModel = apps.get_model('home', parent_model_name.capitalize())
+        # Special case for the Django default User model
+        if related_model_name.lower() == 'user':
+            RelatedModel = apps.get_model('auth', 'User')
+        else:
+            RelatedModel = apps.get_model('home', related_model_name.capitalize())
+
+        if parent_model_name.lower() == 'user':
+            ParentModel = apps.get_model('auth', 'User')
+        else:
+            ParentModel = apps.get_model('home', parent_model_name.capitalize())
     except LookupError as e:
         return JsonResponse({'error': str(e)}, status=404)
 
@@ -1312,10 +1354,24 @@ def get_related_list(request, related_model_name, parent_model_name, parent_id):
             if not found:
                 return JsonResponse({'error': f'No FK or reverse M2M between {parent_model_name} and {related_model_name}'}, status=400)
 
-        data = [
-            {field.name: str(getattr(obj, field.name)) for field in RelatedModel._meta.fields}
-            for obj in related_objects
-        ]
+        page_obj, query_string = paginate_with_query_params(request, related_objects)
+        
+        data = {
+            'results': [
+                {field.name: str(getattr(obj, field.name)) for field in RelatedModel._meta.fields}
+                for obj in page_obj
+            ],
+            'pagination': {
+                'has_previous': page_obj.has_previous(),
+                'has_next': page_obj.has_next(),
+                'current_page': page_obj.number,
+                'total_pages': page_obj.paginator.num_pages,
+                'total_items': page_obj.paginator.count,
+                'previous_page_number': page_obj.previous_page_number() if page_obj.has_previous() else None,
+                'next_page_number': page_obj.next_page_number() if page_obj.has_next() else None,
+            },
+            'query_string': query_string,
+        }
         return JsonResponse(data, safe=False)
 
     except Exception as e:

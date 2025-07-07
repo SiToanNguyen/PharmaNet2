@@ -177,6 +177,70 @@
             }).format(date);
         }
 
+        function loadRelatedList(modelName, relatedModel, relatedField, relatedTitle, relatedFields, objId, page = 1) {
+            fetch(`/api/get_related_list/${relatedModel}/${modelName}/${objId}/?page=${page}`)
+                .then(resp => resp.json())
+                .then(data => {
+                    let html = `<h3>${relatedTitle}</h3>`;
+
+                    if (data.results.length > 0) {
+                        html += `<table class="global-table"><thead><tr>`;
+                        for (const key in relatedFields) {
+                            html += `<th>${relatedFields[key]}</th>`;
+                        }
+                        html += `</tr></thead><tbody>`;
+
+                        data.results.forEach(item => {
+                            html += `<tr>`;
+                            for (const key in relatedFields) {
+                                html += `<td>${item[key] || ''}</td>`;
+                            }
+                            html += `</tr>`;
+                        });
+
+                        html += `</tbody></table>`;
+
+                        // Pagination controls
+                        const p = data.pagination;
+                        html += `
+                            <div class="pagination">
+                                <span class="step-links">
+                        `;
+
+                        if (p.has_previous) {
+                            html += `<a href="#" class="modal-page-btn" data-page="1">&laquo; First</a>`;
+                            html += `<a href="#" class="modal-page-btn" data-page="${p.previous_page_number}">Previous</a>`;
+                        }
+
+                        html += `<span class="current">Page ${p.current_page} of ${p.total_pages}</span>`;
+
+                        if (p.has_next) {
+                            html += `<a href="#" class="modal-page-btn" data-page="${p.next_page_number}">Next</a>`;
+                            html += `<a href="#" class="modal-page-btn" data-page="${p.total_pages}">Last &raquo;</a>`;
+                        }
+
+                        html += `
+                                </span>
+                            </div>
+                        `;
+                    } else {
+                        html += `<p>No related items found.</p>`;
+                    }
+
+                    const contentBlock = document.getElementById("modal-body");
+                    contentBlock.innerHTML += html;
+
+                    // Add event listeners to pagination buttons
+                    document.querySelectorAll(".modal-page-btn").forEach(btn => {
+                        btn.addEventListener("click", function () {
+                            const newPage = this.getAttribute("data-page");
+                            contentBlock.innerHTML = contentBlock.innerHTML.split('<h3>')[0];  // clear related table only
+                            loadRelatedList(modelName, relatedModel, relatedField, relatedTitle, relatedFields, objId, newPage);
+                        });
+                    });
+                });
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             const modal = document.getElementById("detailModal");
             const modalBody = document.getElementById("modal-body");
@@ -214,33 +278,11 @@
                                 const relatedField = "{{ related_field_name }}";
                                 const relatedTitle = "{{ related_title }}";
 
-                                if (relatedModel && relatedField && relatedTitle && relatedFields) {
-                                    fetch(`/api/get_related_list/${relatedModel}/${modelName}/${objId}/`)
-                                        .then(resp => resp.json())
-                                        .then(list => {
-                                            if (list.length > 0) {
-                                                html += `<h3>${relatedTitle}</h3>`;
-                                                html += `<table class="global-table"><thead><tr>`;
-                                                for (const key in relatedFields) {
-                                                    html += `<th>${relatedFields[key]}</th>`;
-                                                }
-                                                html += `</tr></thead><tbody>`;
-                                                list.forEach(item => {
-                                                    html += `<tr>`;
-                                                    for (const key in relatedFields) {
-                                                        html += `<td>${item[key] || ''}</td>`;
-                                                    }
-                                                    html += `</tr>`;
-                                                });
-                                                html += `</tbody></table>`;
-                                            }
+                                modalBody.innerHTML = html;
+                                modal.style.display = "flex";
 
-                                            modalBody.innerHTML = html;
-                                            modal.style.display = "flex";
-                                        });
-                                } else {
-                                    modalBody.innerHTML = html;
-                                    modal.style.display = "flex";
+                                if (relatedModel && relatedField && relatedTitle && relatedFields) {
+                                    loadRelatedList(modelName, relatedModel, relatedField, relatedTitle, relatedFields, objId, 1);
                                 }
                             } else {
                                 modalBody.innerHTML = html;
