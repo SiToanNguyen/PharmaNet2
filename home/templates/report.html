@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% load humanize %}
+
+{% block content %}
+    <div class="list-container">
+        <div class="tab-container">
+            <a href="?tab=summary" class="tab {% if active_tab == 'summary' %}active{% endif %}">Financial Summary</a>
+            <a href="?tab=chart" class="tab {% if active_tab == 'chart' %}active{% endif %}">Revenue Chart</a>
+        </div>
+        {% if active_tab == 'summary' %}
+            <h2>Financial Summary</h2>
+
+            <form method="get">
+                <input type="hidden" name="tab" value="summary">  {# preserve tab during submission #}
+                {{ form.as_p }}
+                <button class="submit-btn" type="submit" name="generate" value="1">Generate</button>
+            </form>
+
+            {% if form.is_valid %}
+                <h3>Results from {{ form.cleaned_data.from_date }} to {{ form.cleaned_data.to_date }}:</h3>
+                <ul>
+                    <li><strong>Total Purchase Cost:</strong> {{ total_purchase|floatformat:2|intcomma }} €</li>
+                    <li><strong>Total Sales Revenue:</strong> {{ total_sales|floatformat:2|intcomma }} €</li>
+                    <li><strong>Estimated Profit:</strong> {{ profit|floatformat:2|intcomma }} €</li>
+                    <li><strong>Total Discount:</strong> {{ total_discount|floatformat:2|intcomma }} €</li>
+                </ul>
+
+                {% if product_summary %}
+                <h3>Product Summary</h3>
+                <table class="global-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Purchased #</th>
+                            <th>Sold #</th>
+                            <th>Spent (€)</th>
+                            <th>Earned (€)</th>
+                            <th>Profit (€)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in product_summary %}
+                            <tr>
+                                <td>{{ item.name }}</td>
+                                <td>{{ item.purchased_quantity }}</td>
+                                <td>{{ item.sold_quantity }}</td>
+                                <td>{{ item.total_spent|floatformat:2|intcomma }}</td>
+                                <td>{{ item.total_earned|floatformat:2|intcomma }}</td>
+                                <td>{{ item.profit|floatformat:2|intcomma }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}
+
+                <form action="{% url 'export_to_pdf' %}" method="get" style="margin-top: 20px;">
+                    <input type="hidden" name="from_date" value="{{ form.cleaned_data.from_date|date:'Y-m-d' }}">
+                    <input type="hidden" name="to_date" value="{{ form.cleaned_data.to_date|date:'Y-m-d' }}">
+                    <button type="submit" class="submit-btn">Export to PDF</button>
+                </form>
+
+                {% if form.errors %}
+                    <div class="form-errors">
+                        <ul>
+                            {% for field, errors in form.errors.items %}
+                                <li>{{ field }}: {{ errors|join:", " }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+            {% endif %}
+        {% elif active_tab == 'chart' %}
+            <h2>Revenue Chart (Last {{ months }} Months)</h2>
+            <canvas id="revenueChart"></canvas>
+        {% endif %}
+    </div> 
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const chartData = JSON.parse('{{ chart_data|escapejs }}');
+
+    const ctx = document.getElementById("revenueChart");
+    if (!ctx) {
+        console.error("Canvas element not found");
+        return;
+    }
+    const ctx2d = ctx.getContext("2d");
+    if (!ctx2d) {
+        console.error("2D context not available");
+        return;
+    }
+
+    new Chart(ctx2d, {
+        type: "line",
+        data: {
+            labels: chartData.labels,
+            datasets: [
+                {
+                    label: "Total Purchase Cost",
+                    data: chartData.purchase,
+                    borderColor: chartData.colors.purchase,
+                    backgroundColor: chartData.colors.purchase,
+                    fill: false
+                },
+                {
+                    label: "Total Sales Revenue",
+                    data: chartData.sales,
+                    borderColor: chartData.colors.sales,
+                    backgroundColor: chartData.colors.sales,
+                    fill: false
+                },
+                {
+                    label: "Estimated Profit",
+                    data: chartData.profit,
+                    borderColor: chartData.colors.profit,
+                    backgroundColor: chartData.colors.profit,
+                    fill: false
+                }
+            ]
+        }, // Data
+        options: {
+            responsive: true,
+            tension: 0.3,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                annotation: {
+                    annotations: {
+                        zeroLine: {
+                            type: 'line',
+                            yMin: 0,
+                            yMax: 0,
+                            borderColor: 'gray',
+                            borderWidth: 2,
+                            borderDash: [6, 6],
+                            label: {
+                                enabled: true,
+                                position: 'start'
+                            }
+                        }
+                    } // Annotations
+                } // Annotation
+            } // Plugins
+        } // Options
+        }); // Chart
+    }); // document.addEventListener
+</script>
+{% endblock %}

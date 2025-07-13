@@ -10,10 +10,13 @@ import time
 import datetime
 import json
 import os
+import urllib.request
 
 REGION = os.environ["REGION"]
 INSTANCE_ID = os.environ["INSTANCE_ID"]
-PORT = os.environ["PORT"]
+
+DUCKDNS_DOMAIN = os.environ["DUCKDNS_DOMAIN"]
+DUCKDNS_TOKEN = os.environ["DUCKDNS_TOKEN"]
 
 ec2 = boto3.client("ec2", region_name=REGION)
 ssm = boto3.client("ssm", region_name=REGION)
@@ -70,6 +73,15 @@ def check_server_status(instance_id):
         print("Gunicorn is not running. Will start the server.")
         return False
 
+def update_duckdns(domain, token, ip):
+    url = f"https://www.duckdns.org/update?domains={domain}&token={token}&ip={ip}"
+    try:
+        with urllib.request.urlopen(url) as response:
+            body = response.read().decode()
+            print(f"DuckDNS update response: {body}")  # Expect "OK"
+    except Exception as e:
+        print(f"Failed to update DuckDNS: {e}")
+
 def lambda_handler(event, context):
     # Check current EC2 instance state
     response = ec2.describe_instances(InstanceIds=[INSTANCE_ID])
@@ -104,8 +116,10 @@ def lambda_handler(event, context):
     ip = get_public_ip(INSTANCE_ID)
     print(f"EC2's Public IP: {ip}")
 
+    update_duckdns(DUCKDNS_DOMAIN, DUCKDNS_TOKEN, ip)
+
     print("Starting Django server...")
-    duckdns_host = "pharmanet.duckdns.org"
+    duckdns_host = f"{DUCKDNS_DOMAIN}.duckdns.org"
     hosts = {duckdns_host, ip}
     allowed_hosts_value = ",".join(hosts)
     commands = [
@@ -134,9 +148,7 @@ def lambda_handler(event, context):
         Parameters={"commands": commands},
     )
     print("Django server is running.")
-    print("Command sent:", response["Command"]["CommandId"])        
-
-    print(f"Server is available at http://{ip}:{PORT}")
+    print("Command sent:", response["Command"]["CommandId"])
 
     # 5. Set a shutdown timer for the server to stop after 2 hours.    
     print("Shutdown timer updated.")
@@ -148,7 +160,6 @@ def lambda_handler(event, context):
         "body": json.dumps({
             "status": "EC2 instance started and Django server launching.",
             "public_ip": ip,
-            "url": f"http://{ip}:{PORT}",
             "shutdown_at": shutdown_at_str
         })
     }

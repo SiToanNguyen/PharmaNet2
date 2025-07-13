@@ -30,7 +30,7 @@
                 <li><a href="{% url 'sale_transaction_list' %}">Sale Transactions</a></li>
                 <li><a href="{% url 'discount_list' %}">Discounts</a></li>
                 <li><a href="{% url 'activity_log_list' %}">Activity Logs</a></li>
-                <li><a href="{% url 'financial_summary' %}">Reports</a></li>
+                <li><a href="{% url 'report' %}">Reports</a></li>
                 <li><a href="#" onclick="logout(event)">Logout</a></li>
             </ul>
         </nav>
@@ -87,5 +87,6 @@
             });
         });
     </script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

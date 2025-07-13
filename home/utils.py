@@ -11,8 +11,6 @@ from django.urls import reverse, NoReverseMatch
 from django.utils.dateparse import parse_date
 from django.utils import timezone
 from django.utils.timezone import localtime
-from django.http import HttpResponse
-from django.template.loader import render_to_string
 
 from .models import ActivityLog
 
@@ -32,6 +30,12 @@ def log_activity(user, action, additional_info=""):
         additional_info=additional_info
     )
 
+def get_object_name(obj):
+    try:
+        return getattr(obj, 'name', None) or str(obj)
+    except Exception:
+        return str(obj)  # Safe fallback
+
 def delete_object(request, model, object_id):
     """
     Generic view to handle the deletion of an existing object.
@@ -41,9 +45,10 @@ def delete_object(request, model, object_id):
     :param object_id: The ID of the object to delete.
     """
     model_name = model._meta.verbose_name
+    object_name = None
     try:
         obj = model.objects.get(id=object_id)  # Get the object by ID
-        object_name = str(obj)  # Use the model's string representation (e.g., name, username, etc.)
+        object_name = get_object_name(obj)
 
         obj.delete()  # Delete the object
         # Log the activity
@@ -83,7 +88,7 @@ def add_object(request, form_class, model, success_url):
         form = form_class(request.POST)
         if form.is_valid():
             instance = form.save()  # Save the new object
-            object_name = instance.name if hasattr(instance, 'name') else str(instance)  # Use name or str of the instance
+            object_name = get_object_name(instance)
 
             # Log the activity
             log_activity(
@@ -121,7 +126,7 @@ def edit_object(request, form_class, model, object_id, success_url):
     """
     model_name = model._meta.verbose_name
     obj = get_object_or_404(model, id=object_id)  # Fetch the object by ID
-    object_name = str(obj)  # Use the model's string representation (e.g., name, username, etc.)
+    object_name = get_object_name(obj)
 
     if request.method == 'POST':
         form = form_class(request.POST, instance=obj)  # Bind the form with the existing object

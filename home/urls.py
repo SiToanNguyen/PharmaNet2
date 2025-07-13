@@ -33,6 +33,7 @@ urlpatterns = [
     path('products/delete/<int:product_id>/', views.delete_product, name='delete_product'),
 
     path('inventory/', views.inventory_list, name='inventory_list'),
+    path('inventories/delete/<int:inventory_id>/', views.delete_inventory, name='delete_inventory'),
 
     path('purchase_transactions/', views.purchase_transaction_list, name='purchase_transaction_list'),
     path('purchase_transactions/add/', views.add_purchase_transaction, name='add_purchase_transaction'),
@@ -53,8 +54,8 @@ urlpatterns = [
 
     path('get_inventory_price/<int:inventory_id>/', views.get_inventory_price, name='get_inventory_price'),
 
-    path('financial-summary/', views.financial_summary, name='financial_summary'),
-    path('financial-summary/pdf/', views.export_financial_summary_pdf, name='export_financial_summary_pdf'),
+    path('reports/', views.report, name='report'),
+    path('reports/pdf/', views.export_to_pdf, name='export_to_pdf'),
 
     path('api/get_object_details/<str:model_name>/<int:pk>/', views.get_object_details, name='get_object_details'),
     path("api/get_related_list/<str:related_model_name>/<str:parent_model_name>/<int:parent_id>/", views.get_related_list, name="get_related_list"),

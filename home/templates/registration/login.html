@@ -97,6 +97,14 @@
     <div class="login-wrapper">
         <div class="form-container">
             <h2>PharmaNet</h2>
+            {% if form.non_field_errors %}
+                <div class="error-message">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
             <form method="post">
                 {% csrf_token %}
                 <p>

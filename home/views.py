@@ -6,26 +6,25 @@ from reportlab.lib import colors
 from io import BytesIO
 from collections import defaultdict
 from decimal import Decimal
-import logging
+from dateutil.relativedelta import relativedelta
 
-logger = logging.getLogger(__name__)
-
+from django.apps import apps
 from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
-from django.views.decorators.csrf import csrf_exempt
+from django.contrib import messages
 from django.views.decorators.http import require_POST
-from django.utils.dateparse import parse_date
-from django.utils.timezone import now
-from django.utils import timezone
 from django.db import transaction
-from django.db.models import Sum, F, Value, ExpressionWrapper, DecimalField, ForeignKey, DateTimeField, DateField, ManyToManyField
-from django.db.models.functions import Coalesce
+from django.db.models import Sum, F, Value, ExpressionWrapper, DecimalField, ForeignKey, DateTimeField, DateField, ManyToManyField, Count
+from django.db.models.functions import Coalesce, TruncMonth
 from django.http import JsonResponse, HttpResponse
 from django.forms import modelformset_factory
-from django.forms.models import model_to_dict
-from django.contrib import messages
 from django.urls import reverse
-from django.apps import apps
+from django.utils.dateparse import parse_date
+from django.utils import timezone
+from django.utils.timezone import now
+from django.utils.safestring import mark_safe
 
 from .models import (
     ActivityLog, Customer, 
@@ -41,10 +40,9 @@ from .forms import (
     DiscountForm
 )
 from .utils import paginate_with_query_params, add_object, edit_object, delete_object, list_objects, log_activity, make_aware_datetime, format_value
-from .decorators import superuser_required, superuser_required_403
+from .decorators import superuser_required_403
 
 # Homepage
-
 def homepage(request):
     tab = request.GET.get('tab', 'expiring')
     today = date.today()
@@ -330,8 +328,21 @@ def inventory_list(request):
         extra_context={
             'title': 'Inventory',
             'object_list': base_qs
-        }
+        },
+        delete=True
     )
+
+@require_POST
+def delete_inventory(request, inventory_id):
+    inventory = get_object_or_404(Inventory, id=inventory_id)
+
+    # Instead of deleting, set quantity to 0
+    inventory.quantity = 0
+    inventory.save()
+
+    messages.success(request, f"Inventory '{inventory}' marked as zero quantity.")
+    log_activity(user=request.user, action="deleted inventory item", additional_info=f"Inventory ID: {inventory.id}, Product: {inventory.product.name}")
+    return redirect('inventory_list')
 
 # Purchase Transactions management
 def purchase_transaction_list(request):
@@ -413,6 +424,7 @@ def add_purchase_transaction(request):
         if form.is_valid() and formset.is_valid():
             purchase_transaction = form.save(commit=False)
             purchase_transaction.total_cost = 0  # Initialize total cost
+            purchase_transaction.created_by = request.user if request.user.is_authenticated else None
 
             purchase_transaction.save()
 
@@ -505,7 +517,8 @@ def scan_purchase_transaction(request):
                 manufacturer=manufacturer,
                 purchase_date=make_aware_datetime(data["purchase_date"]),
                 total_cost=data["total_cost"],
-                remarks=data.get("remarks", "")
+                remarks=data.get("remarks", ""),
+                created_by=request.user if request.user.is_authenticated else None
             )
 
             for item in data["products"]:
@@ -566,7 +579,7 @@ def delete_purchase_transaction(request, transaction_id):
             return redirect('purchase_transaction_list')
 
         if inventory.quantity < purchased_product.quantity:
-            messages.error(request, f"Cannot delete: Not enough inventory for {purchased_product.product.name}.")
+            messages.error(request, f"Cannot delete: Insufficient inventory for {purchased_product.product.name}.")
             return redirect('purchase_transaction_list')
 
     # Roll back the inventory
@@ -591,16 +604,20 @@ def delete_purchase_transaction(request, transaction_id):
 
 # Customer management
 def customer_list(request):
+    customers_with_transaction = Customer.objects.annotate(
+        transactions=Count('saletransaction')
+    )
     return list_objects(
         request,
         model=Customer,
-        columns=['full_name', 'birthdate', 'phone_number', 'email', 'address'],
+        columns=['full_name', 'birthdate', 'phone_number', 'email', 'address', 'transactions'],
         search_fields={
             'name': 'full_name'
         },
         add=True,
         edit=True, 
         delete=True,
+        extra_context={'object_list': customers_with_transaction},
         related_model=SaleTransaction,
         related_field_name='customer',
         related_title='Sale Transactions',
@@ -708,7 +725,7 @@ def add_sale_transaction(request):
                 with transaction.atomic():
                     sale_transaction = form.save(commit=False)
                     sale_transaction.transaction_date = timezone.localtime(timezone.now())
-                    sale_transaction.created_by = request.user
+                    sale_transaction.created_by = request.user if request.user.is_authenticated else None
                     sale_transaction.price = 0  # sum of all SoldProduct total_price
                     sale_transaction.total = 0  # total after discount
 
@@ -915,12 +932,20 @@ def delete_sale_transaction(request, transaction_id):
     messages.success(request, f"Sale transaction {transaction.transaction_number} deleted and inventory updated.")
     return redirect('sale_transaction_list')
 
-def financial_summary(request):
+def report(request):
+    tab = request.GET.get('tab', 'summary')
+    
+    # Shared context
+    context = {
+        'active_tab': tab,
+    }
+
+    # Financial Summary
     total_purchase = 0
     total_sales = 0
     total_discount = 0
     profit = 0
-    form = DateRangeForm(request.GET or None)
+    form = DateRangeForm(request.GET if 'generate' in request.GET else None)
 
     product_summary = []
 
@@ -1020,24 +1045,85 @@ def financial_summary(request):
         # Sort by profit in descending order
         product_summary.sort(key=lambda x: x['profit'], reverse=True)
 
-    context = {
+    context.update({
         'form': form,
         'total_purchase': total_purchase,
         'total_sales': total_sales,
         'total_discount': total_discount,
         'profit': profit,
         'product_summary': product_summary,
-    }
-    return render(request, 'financial_summary.html', context)
+    })
 
-def export_financial_summary_pdf(request):
+    # Revenue Chart
+    months = int(request.GET.get('months', 12))
+
+    # Today = first day of current month (e.g. 2025-07-01)
+    today = now().date().replace(day=1)
+
+    # Start month = first day of the month exactly `months` ago (exclude current month)
+    start_month = today - relativedelta(months=months)
+
+    # Aggregate purchases by month
+    purchases = (
+        PurchaseTransaction.objects
+        .filter(purchase_date__date__gte=start_month, purchase_date__date__lt=today)
+        .annotate(month=TruncMonth('purchase_date'))
+        .values('month')
+        .annotate(total=Coalesce(Sum('total_cost', output_field=DecimalField()), Value(0), output_field=DecimalField()))
+    )
+
+    # Aggregate sales by month
+    sales = (
+        SaleTransaction.objects
+        .filter(transaction_date__date__gte=start_month, transaction_date__date__lt=today)
+        .annotate(month=TruncMonth('transaction_date'))
+        .values('month')
+        .annotate(total=Coalesce(Sum('total', output_field=DecimalField()), Value(0), output_field=DecimalField()))
+    )
+
+    purchase_map = {item['month'].strftime('%Y-%m'): float(item['total']) for item in purchases}
+    sales_map = {item['month'].strftime('%Y-%m'): float(item['total']) for item in sales}
+
+    labels, purchase_vals, sales_vals, profit_vals = [], [], [], []
+
+    for i in range(months):
+        date_iter = start_month + relativedelta(months=i)
+        label = date_iter.strftime('%b %Y')
+        key = date_iter.strftime('%Y-%m')
+        p = purchase_map.get(key, 0)
+        s = sales_map.get(key, 0)
+        labels.append(label)
+        purchase_vals.append(p)
+        sales_vals.append(s)
+        profit_vals.append(s - p)
+
+    chart_data = {
+        'labels': labels,
+        'purchase': purchase_vals,
+        'sales': sales_vals,
+        'profit': profit_vals,
+        'colors': {
+            'purchase': request.GET.get('purchase_color', 'red'),
+            'sales': request.GET.get('sales_color', 'blue'),
+            'profit': request.GET.get('profit_color', 'gold'),
+        }
+    }
+
+    context.update({
+        'months': months,
+        'chart_data': mark_safe(json.dumps(chart_data)),
+    })
+
+    return render(request, 'report.html', context)
+
+def export_to_pdf(request):
     form = DateRangeForm(request.GET or None)
 
-    if not form.is_valid():
+    if not (form and form.is_valid()):
         print("[DEBUG] Export PDF form is invalid.")
         print("[DEBUG] GET data:", request.GET.dict())
         print("[DEBUG] Form errors:", form.errors.as_json())
-        return redirect('financial_summary')
+        return redirect('reports')
 
     from_date = form.cleaned_data['from_date']
     to_date = form.cleaned_data['to_date']

@@ -88,11 +88,11 @@ class PurchaseTransaction(models.Model):
     invoice_number = models.CharField(max_length=100, unique=True)  # Unique invoice or bill number
     total_cost = models.DecimalField(max_digits=15, decimal_places=2)  # Total cost of the purchase
     remarks = models.TextField(blank=True, null=True)  # Additional remarks or notes about the transaction
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)  # Date of creation
-    updated_at = models.DateTimeField(auto_now=True)  # Date of last update
 
     class Meta:
-        ordering = ['-updated_at']
+        ordering = ['-created_at']
 
     def __str__(self):
         return f"Invoice #{self.invoice_number} - {self.manufacturer.name} - {self.purchase_date}"
@@ -163,7 +163,7 @@ class SaleTransaction(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['-transaction_date']
+        ordering = ['-created_at']
 
     def __str__(self):
         return f"Transaction #{self.transaction_number}"
