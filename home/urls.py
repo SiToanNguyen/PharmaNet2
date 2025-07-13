@@ -1,8 +1,10 @@
 # home/urls.py
 from django.urls import path
-from django.contrib.auth.views import LoginView
-from django.contrib.auth.views import LogoutView
+from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib import admin
 from . import views
+import os
+
 
 urlpatterns = [
     path('', views.homepage, name='homepage'),
@@ -67,3 +69,9 @@ urlpatterns = [
 
     path("public-api/products/", views.public_product_list, name="public_product_list"),
 ]
+
+# Only include the admin panel if not in production
+if os.getenv('DJANGO_ENV') != 'production':
+    urlpatterns += [
+        path('admin/', admin.site.urls),
+    ]

@@ -1105,7 +1105,7 @@ def report(request):
         'colors': {
             'purchase': request.GET.get('purchase_color', 'red'),
             'sales': request.GET.get('sales_color', 'blue'),
-            'profit': request.GET.get('profit_color', 'gold'),
+            'profit': request.GET.get('profit_color', 'gray'),
         }
     }
 
