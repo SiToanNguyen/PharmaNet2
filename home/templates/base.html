@@ -1,4 +1,5 @@
 {% load static %}
+{% load i18n %} <!-- automatic translation -->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -19,19 +20,19 @@
         <!-- Vertical Navigation Menu -->
         <nav class="sidebar">
             <ul>
-                <li><a href="{% url 'homepage' %}">Home</a></li>
-                <li><a href="{% url 'user_list' %}">Users</a></li>
-                <li><a href="{% url 'customer_list' %}">Customers</a></li>
-                <li><a href="{% url 'manufacturer_list' %}">Manufacturers</a></li>
-                <li><a href="{% url 'category_list' %}">Categories</a></li>
-                <li><a href="{% url 'product_list' %}">Products</a></li>
-                <li><a href="{% url 'inventory_list' %}">Inventory</a></li>
-                <li><a href="{% url 'purchase_transaction_list' %}">Purchase Transactions</a></li>
-                <li><a href="{% url 'sale_transaction_list' %}">Sale Transactions</a></li>
-                <li><a href="{% url 'discount_list' %}">Discounts</a></li>
-                <li><a href="{% url 'activity_log_list' %}">Activity Logs</a></li>
-                <li><a href="{% url 'report' %}">Reports</a></li>
-                <li><a href="#" onclick="logout(event)">Logout</a></li>
+                <li><a href="{% url 'homepage' %}">{% trans "Home" %}</a></li>
+                <li><a href="{% url 'user_list' %}">{% trans "Users" %}</a></li>
+                <li><a href="{% url 'customer_list' %}">{% trans "Customers" %}</a></li>
+                <li><a href="{% url 'manufacturer_list' %}">{% trans "Manufacturers" %}</a></li>
+                <li><a href="{% url 'category_list' %}">{% trans "Categories" %}</a></li>
+                <li><a href="{% url 'product_list' %}">{% trans "Products" %}</a></li>
+                <li><a href="{% url 'inventory_list' %}">{% trans "Inventory" %}</a></li>
+                <li><a href="{% url 'purchase_transaction_list' %}">{% trans "Purchase Transactions" %}</a></li>
+                <li><a href="{% url 'sale_transaction_list' %}">{% trans "Sale Transactions" %}</a></li>
+                <li><a href="{% url 'discount_list' %}">{% trans "Discounts" %}</a></li>
+                <li><a href="{% url 'activity_log_list' %}">{% trans "Activity Logs" %}</a></li>
+                <li><a href="{% url 'report' %}">{% trans "Reports" %}</a></li>
+                <li><a href="#" onclick="logout(event)">{% trans "Logout" %}</a></li>
             </ul>
         </nav>
         
@@ -43,7 +44,33 @@
         <div class="main-content">
             <!-- Header for all pages -->
             <header>
-                <h1>Hello {{ request.user.first_name }}! Welcome to PharmaNet!</h1>
+                <div style="display: flex; align-items: center;">
+                    <div style="flex: 1; text-align: center;">
+                        <h1>{% blocktrans with first_name=request.user.first_name appname=APP_NAME %}Hello {{ first_name }}! Welcome to {{ appname }}!{% endblocktrans %}</h1>
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <form method="post" action="{% url 'switch_language' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-small btn-green">
+                                {% get_current_language as LANGUAGE_CODE %}
+                                {% if LANGUAGE_CODE == 'de' %}
+                                    <img src="{% static 'images/gb.svg' %}" alt="GB" style="width:20px; height:auto;">
+                                    English
+                                {% else %}
+                                    <img src="{% static 'images/de.svg' %}" alt="GB" style="width:20px; height:auto;">
+                                    Deutsch
+                                {% endif %}
+                            </button>
+                        </form>
+
+                        <button id="theme-toggle" class="btn btn-small btn-green" style="display: flex; align-items: center; gap: 6px;">
+                            <img id="icon-sun" src="{% static 'images/moon.svg' %}" alt="Moon icon" style="width:20px; height:auto; display:none;">
+                            <img id="icon-moon" src="{% static 'images/sun.svg' %}" alt="Sun icon" style="width:20px; height:auto; display:none;">
+                            <span id="theme-text"></span>
+                        </button>
+                    </div>
+                </div>
             </header>
             
             <!-- Messages -->
@@ -65,10 +92,18 @@
 
             <!-- Footer for all pages -->
             <footer>
-                <p>© 2025 PharmaNet</p>
+                <p>© 2025 {{ APP_NAME }}</p>
             </footer>
         </div>        
     </div>
+
+    <script id="theme-i18n" type="application/json">
+    {
+        "dark": "{% trans 'Dark Theme' %}",
+        "light": "{% trans 'Light Theme' %}"
+    }
+    </script>
+
 
     <script>
         function logout(event) {
@@ -86,7 +121,40 @@
                 });
             });
         });
+        
+        // Theme toggle functionality
+        document.addEventListener('DOMContentLoaded', function () {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const iconSun = document.getElementById('icon-sun');
+            const iconMoon = document.getElementById('icon-moon');
+            const themeText = document.getElementById('theme-text');
+            const themeLabels = JSON.parse(document.getElementById('theme-i18n').textContent);
+
+            function setTheme(theme) {
+                if (theme === 'light') {
+                    document.body.classList.add('light-theme');
+                    iconSun.style.display = 'inline';
+                    iconMoon.style.display = 'none';
+                    themeText.textContent = themeLabels.dark;;
+                } else {
+                    document.body.classList.remove('light-theme');
+                    iconSun.style.display = 'none';
+                    iconMoon.style.display = 'inline';
+                    themeText.textContent = themeLabels.light;
+                }
+            }
+
+            let currentTheme = localStorage.getItem('theme') || 'dark';
+            setTheme(currentTheme);
+
+            toggleBtn.addEventListener('click', () => {
+                currentTheme = document.body.classList.contains('light-theme') ? 'dark' : 'light';
+                localStorage.setItem('theme', currentTheme);
+                setTheme(currentTheme);
+            });
+        });
     </script>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>

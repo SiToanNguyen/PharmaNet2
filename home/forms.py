@@ -3,6 +3,8 @@ from django import forms
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+
 from .models import (
     Manufacturer, Category, Product, Inventory, PurchaseTransaction, PurchasedProduct, 
     Customer, SaleTransaction, SoldProduct, Discount)
@@ -10,11 +12,21 @@ from .validators import validate_phone_number
 
 # User management
 class UserCreationForm(forms.ModelForm):
+    '''
+    Overrides the default UserCreationForm to:
+    - Disallow passwords that consist only of spaces
+    - Set 'is_active' to True by default
+    '''
     password = forms.CharField(
         widget=forms.PasswordInput,
-        help_text="Password cannot consist only of spaces.",
+        help_text=_("Password cannot consist only of spaces."),
+        label=_("Password"), # translatable label
     )
-    is_active = forms.BooleanField(initial=True, required=False)  # Ensure is_active is True by default
+    is_active = forms.BooleanField(
+        initial=True,
+        required=False,
+        label=_("Active") # translatable label
+    )
 
     class Meta:
         model = User
@@ -39,10 +51,16 @@ class UserCreationForm(forms.ModelForm):
         return user
 
 class UserEditForm(forms.ModelForm):
+    '''
+    Define a custom UserEditForm instead of using Django's default UserChangeForm to:
+    - Allow empty password to keep the current password unchanged.
+    - Allow to change password in the same form. Django's default form redirects to a separate password change form.
+    '''
     password = forms.CharField(
-        widget=forms.PasswordInput, 
-        required=False, 
-        help_text="Leave empty to keep the current password."
+        widget=forms.PasswordInput,
+        required=False,
+        help_text=_("Leave empty to keep the current password."),
+        label=_("Password") # translatable label
     )
     
     class Meta:
@@ -190,7 +208,8 @@ class CustomerForm(forms.ModelForm):
     birthdate = forms.DateField(
         widget=forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
         input_formats=['%Y-%m-%d'],  # Optional, to ensure consistent parsing on submit
-        required=True
+        required=True,
+        label=_("Birthdate")
     ) # Use <input type="date"> for selecting birthdate
 
     class Meta:
@@ -256,8 +275,14 @@ class SaleScanForm(forms.Form):
 
 # Reports management
 class DateRangeForm(forms.Form):
-    from_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
-    to_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    from_date = forms.DateField(
+        label=_("From Date"),
+        widget=forms.DateInput(attrs={'type': 'date'})
+    )
+    to_date = forms.DateField(
+        label=_("To Date"),
+        widget=forms.DateInput(attrs={'type': 'date'})
+    )
 
 # Discount management
 class DiscountForm(forms.ModelForm):

@@ -1,0 +1,19 @@
+{% load i18n %}
+
+<div class="pagination" id="{{ pagination_id|default:'' }}">
+  <span class="step-links">
+    {% if page_obj.has_previous %}
+      <a href="?{{ query_string }}&{{ page_param }}=1{% if anchor %}#{{ anchor }}{% endif %}">&laquo; {% trans "First" %}</a>
+      <a href="?{{ query_string }}&{{ page_param }}={{ page_obj.previous_page_number }}{% if anchor %}#{{ anchor }}{% endif %}">{% trans "Previous" %}</a>
+    {% endif %}
+
+    <span class="current">
+      {% blocktrans with page=page_obj.number total=page_obj.paginator.num_pages %} Page {{ page }} of {{ total }} {% endblocktrans %}
+    </span>
+
+    {% if page_obj.has_next %}
+      <a href="?{{ query_string }}&{{ page_param }}={{ page_obj.next_page_number }}{% if anchor %}#{{ anchor }}{% endif %}">{% trans "Next" %}</a>
+      <a href="?{{ query_string }}&{{ page_param }}={{ page_obj.paginator.num_pages }}{% if anchor %}#{{ anchor }}{% endif %}">{% trans "Last" %} &raquo;</a>
+    {% endif %}
+  </span>
+</div>

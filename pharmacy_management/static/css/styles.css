@@ -643,3 +643,122 @@ form p .error-message {
     font-weight: bold;
     color: #4CAF50;
 }
+
+/* === Softer Light Theme Overrides === */
+body.light-theme {
+    background-color: #e7e7e7; /* Softer than #f0f0f0 */
+    color: #1c1c1c;
+}
+
+body.light-theme header,
+body.light-theme footer {
+    background-color: #d4d4d4; /* Was #e0e0e0 */
+    color: #1c1c1c;
+}
+
+body.light-theme .sidebar {
+    background-color: #cfcfcf; /* Was #dddddd */
+    color: #000;
+}
+
+body.light-theme .sidebar ul li a {
+    color: #000;
+    border-bottom: 1px solid #aaa;
+}
+
+body.light-theme .sidebar ul li a:hover {
+    background-color: #bbb; /* Was #ccc */
+}
+
+body.light-theme .main-content {
+    background-color: #f3f3f3; /* Was #ffffff */
+    color: #000;
+}
+
+body.light-theme .form-container,
+body.light-theme .list-container,
+body.light-theme form fieldset,
+body.light-theme .tab-content,
+body.light-theme .search-container {
+    background-color: #f2f2f2; /* Was #ffffff */
+    color: #000;
+    border-color: #4CAF50;
+}
+
+body.light-theme .global-table th {
+    background-color: #4CAF50;
+    color: white;
+}
+
+body.light-theme .global-table td {
+    background-color: #efefef;
+    color: #000;
+}
+
+body.light-theme .global-table tr:nth-child(even) td {
+    background-color: #dedede;
+}
+
+body.light-theme .global-table tr:hover td {
+    background-color: #cccccc !important;
+    box-shadow: inset 0 0 10px #4CAF50;
+}
+
+body.light-theme .list-title {
+    color: #2b2b2b; /* Dark gray instead of bright white */
+}
+
+body.light-theme .tab {
+    background-color: #f2f2f2; /* Lighter background for tabs */
+    color: #1c1c1c;
+}
+
+body.light-theme .tab:hover {
+    background-color: #e0e0e0; /* Slightly darker for a hover effect */
+}
+
+body.light-theme .tab.active {
+    background-color: #4CAF50; /* Keep the active tab green */
+    color: white;
+}
+
+body.light-theme .search-container {
+    background-color: #f2f2f2; /* Same as light content background */
+    color: #1c1c1c;
+    border: 2px solid #4CAF50; /* Keep green border for consistency */
+}
+
+/* Dropdown in Light Theme */
+body.light-theme .search-container input[type="text"],
+body.light-theme .search-container select {
+    background-color: #ffffff;
+    color: #1c1c1c !important;
+    border: 1px solid #ccc;
+}
+
+body.light-theme .search-container input[type="text"]::placeholder {
+    color: #888;
+}
+
+body.light-theme .search-container input[type="text"]:focus::placeholder {
+    color: #555;
+}
+
+/* Modal in Light Theme */
+body.light-theme .modal-content {
+    background-color: #ffffff;
+    color: #1c1c1c;
+}
+
+body.light-theme .close {
+    color: #1c1c1c;
+}
+
+body.light-theme #modal-body fieldset {
+    background-color: #f8f8f8;
+    border: 2px solid #4CAF50;
+}
+
+body.light-theme #modal-body legend {
+    color: #2b2b2b;
+}

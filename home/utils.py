@@ -7,10 +7,13 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.db import IntegrityError
 from django.contrib import messages
 from django.core.paginator import Paginator
+from django.core.exceptions import FieldDoesNotExist
 from django.urls import reverse, NoReverseMatch
 from django.utils.dateparse import parse_date
 from django.utils import timezone
 from django.utils.timezone import localtime
+from django.utils.translation import gettext, gettext_lazy as _
+from django.utils.text import capfirst, slugify
 
 from .models import ActivityLog
 
@@ -107,8 +110,10 @@ def add_object(request, form_class, model, success_url):
     except NoReverseMatch:
         resolved_success_url = success_url
 
+    title = _('Add New %(model)s') % {'model': model_name.capitalize()}
+
     return render(request, 'form_page.html', {
-        'title': f'Add New {model_name.capitalize()}',  # Dynamic title
+        'title': title,  # Dynamic title
         'form_title': f'{model_name.capitalize()} Details',  # Dynamic form legend/title
         'form': form,  # Form passed to template
         'success_url': resolved_success_url,
@@ -147,16 +152,18 @@ def edit_object(request, form_class, model, object_id, success_url):
         resolved_success_url = reverse(success_url)
     except NoReverseMatch:
         resolved_success_url = success_url
-    
+
+    title = _('Edit %(model)s') % {'model': model_name.capitalize()}
+
     return render(request, 'form_page.html', {
-        'title': f'Edit {model_name.capitalize()}',  # Dynamic title
+        'title': title,  # Dynamic title
         'form_title': f'{model_name.capitalize()} Details',  # Dynamic form legend/title
         'form': form,  # Form passed to template
         'success_url': resolved_success_url,
     })
 
 def list_objects(request, model, columns=None, search_fields=None, sort_fields=None, extra_context=None, add=False, edit=False, delete=False, 
-                 related_model=None, related_field_name=None, related_title=None, related_fields=None):
+                 related_model=None, related_field_name=None, related_title=None, related_fields=None, model_url=None):
     """
     Generic function to display a paginated and searchable list of objects.
 
@@ -176,10 +183,15 @@ def list_objects(request, model, columns=None, search_fields=None, sort_fields=N
     # Columns configuration
     if isinstance(columns, dict):
         column_keys = list(columns.keys())
-        column_labels = columns
+        column_labels = {
+            key: gettext(value) for key, value in columns.items()
+        }
     else:
         column_keys = columns or []
-        column_labels = {col: None for col in column_keys}
+        column_labels = {
+            col: translate_field(model, col)
+            for col in column_keys
+        }
 
     # Search configuration
     search_values = {}
@@ -189,6 +201,17 @@ def list_objects(request, model, columns=None, search_fields=None, sort_fields=N
             if value:
                 objects = objects.filter(**{f"{field}__icontains": value})
             search_values[param] = value  # Preserve search values
+
+    search_labels = {}
+    if search_fields:
+        for param, field in search_fields.items():
+            try:
+                base_field = field.split('__')[0]
+                model_field = model._meta.get_field(base_field)
+                search_labels[param] = str(model_field.verbose_name).title()
+            except FieldDoesNotExist:
+                search_labels[param] = param.replace('_', ' ').title()
+
 
     # Sort configuration
     sort_by = request.GET.get('sort_by', '')
@@ -208,23 +231,25 @@ def list_objects(request, model, columns=None, search_fields=None, sort_fields=N
 
     # Data provided to the template
     context = {
-        'title': extra_context.get('title', model._meta.verbose_name.title()) if extra_context else model._meta.verbose_name.title(), 
-        'model_verbose_name': model._meta.verbose_name.title(),
+        'title': extra_context.get('title', gettext(model._meta.verbose_name).title()) if extra_context else gettext(model._meta.verbose_name).title(),
+        'model_verbose_name': gettext(model._meta.verbose_name).title(),
         'model_name': model._meta.model_name,
+        'model_url': slugify(model_url if model_url else model._meta.model_name),  # produces lowercase, hyphenated name, e.g. 'purchase-transaction'
         'page_obj': page_obj,
         'columns': column_keys,
         'column_labels': column_labels,
-        'search_queries': {param: request.GET.get(param, '') for param in search_fields} if search_fields else {},
+        'search_queries': search_values,
+        'search_labels': search_labels, # Translatable search labels
         'sort_queries': sort_fields,
         'sort_by': sort_by,
-        'add': add, # Determines whether to show Add button
-        'edit': edit,  # Determines whether to show Edit button
-        'delete': delete,  # Determines whether to show Delete button
+        'add': add, # Show Add button
+        'edit': edit,  # Show Edit button
+        'delete': delete,  # Show Delete button
         'action': edit or delete, # Hides actions column if none of the buttons in the column are enabled
         'query_string': query_string,  # Pass the query string for pagination links
+        'related_title': related_title or (gettext(related_model._meta.verbose_name_plural).title() if related_model else None),
         'related_model_name': related_model._meta.model_name if related_model else None,
         'related_field_name': related_field_name,
-        'related_title': related_title,
         'related_fields': related_fields,
         'scan_view_name': f"scan_{model._meta.model_name}",
     }
@@ -269,3 +294,53 @@ def format_value(value):
     elif isinstance(value, datetime.date):
         return value.strftime('%d %b %Y')
     return str(value)
+
+def get_generic_field_translation(field_name):
+    translations = {
+        'stock': _('Stock'),
+        'quantity': _('Quantity'),
+        'expiry_date': _('Expiry Date'),
+        'sale_price': _('Sale Price'),
+        'created_at': _('Created At'),
+        'updated_at': _('Updated At'),
+        'manufacturer': _('Manufacturer'),
+        'category': _('Category'),
+        'address': _('Address'),
+        'phone_number': _('Phone Number'),
+        'full_name': _('Full Name'),
+        'birthdate': _('Birthdate'),
+        'transactions': _('Transactions'),
+        'description': _('Description'),
+        'requires_prescription': _('Requires Prescription'),
+        'low_stock_threshold': _('Low Stock Threshold'),
+        'product': _('Product'),
+        'invoice_number': _('Invoice #'),
+        'purchase_date': _('Purchase Date'),
+        'total_cost': _('Total Cost'),
+        'transaction_number': _('Transaction #'),
+        'customer': _('Customer'),
+        'transaction_date': _('Date'),
+        'price': _('Price'),
+        'discount': _('Discount'),
+        'total': _('Total'),
+        'cash_received': _('Cash'),
+        'payment_method': _('Payment Method'),
+        'percentage': _('Percentage'),
+        'from_date': _('From Date'),
+        'to_date': _('To Date'),
+        'timestamp': _('Timestamp'),
+        'user': _('User'),
+        'action': _('Action'),
+        'additional_info': _('Additional Info'),
+    }
+    return translations.get(field_name, None)
+
+def translate_field(model, field_name):
+    label = get_generic_field_translation(field_name)
+    if label:
+        return label
+
+    try:
+        return capfirst(model._meta.get_field(field_name).verbose_name)
+    except Exception:
+        return _(field_name.replace('_', ' ').capitalize())

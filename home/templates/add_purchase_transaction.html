@@ -1,22 +1,23 @@
 {% extends 'base.html' %}
+{% load i18n %} <!-- automatic translation -->
 
 {% block content %}
   <div class="form-container">
-    <h2>Add Purchase Transaction</h2>
+    <h2>{% trans "Add Purchase Transaction" %}</h2>
 
     <form method="POST" class="global-form">
       {% csrf_token %}
 
       <fieldset>
-        <legend>Purchase Details</legend>
+        <legend>{% trans "Purchase Details" %}</legend>
         <p>
-          <label for="{{ form.invoice_number.id_for_label }}">Invoice Number:</label>
+          <label for="{{ form.invoice_number.id_for_label }}">{% trans "Invoice Number" %}:</label>
           {{ form.invoice_number }}
         </p>
         <p>
-          <label for="{{ form.manufacturer.id_for_label }}">Manufacturer:</label>
+          <label for="{{ form.manufacturer.id_for_label }}">{% trans "Manufacturer" %}:</label>
           <select id="manufacturer_id" name="manufacturer" class="manufacturer-select">
-            <option value="">Select a manufacturer</option>
+            <option value="" disabled selected hidden>{% trans "Select a manufacturer" %}</option>
             {% for manufacturer in manufacturers %}
               <option value="{{ manufacturer.id }}">{{ manufacturer.name }}</option>
             {% endfor %}
@@ -24,30 +25,30 @@
         </p>
 
         <p>
-          <label for="{{ form.purchase_date.id_for_label }}">Purchase Date:</label>
+          <label for="{{ form.purchase_date.id_for_label }}">{% trans "Purchase Date" %}:</label>
           {{ form.purchase_date }}
         </p>
 
         <p>
-          <label for="{{ form.remarks.id_for_label }}">Remarks:</label>
+          <label for="{{ form.remarks.id_for_label }}">{% trans "Remarks" %}:</label>
           {{ form.remarks }}
         </p>
       </fieldset>
 
       <fieldset>
-        <legend>Purchased Products</legend>
+        <legend>{% trans "Purchased Products" %}</legend>
 
         {{ formset.management_form }}
 
         <table id="productsTable" class="global-table">
           <thead>
             <tr>
-              <th>Product</th>
-              <th>Batch Number</th>
-              <th>Quantity</th>
-              <th>Unit Price (€)</th>
-              <th>Expiry Date</th>
-              <th>Actions</th>
+              <th>{% trans "Product" %}</th>
+              <th>{% trans "Batch Number" %}</th>
+              <th>{% trans "Quantity" %}</th>
+              <th>{% trans "Unit Price (€)" %}</th>
+              <th>{% trans "Expiry Date" %}</th>
+              <th>{% trans "Action" %}</th>
             </tr>
           </thead>
           <tbody>
@@ -60,7 +61,7 @@
               <td><p>{{ product_form.expiry_date }}</p></td>
               <td>
                   <p>
-                      <button type="button" class="remove-btn" onclick="removeRow(this)">Remove</button>
+                      <button type="button" class="remove-btn" onclick="removeRow(this)">{% trans "Remove" %}</button>
                   </p>
               </td>
             </tr>
@@ -78,18 +79,18 @@
               <td><p>{{ formset.empty_form.purchase_price.as_widget }}</p></td>
               <td><p>{{ formset.empty_form.expiry_date.as_widget }}</p></td>
               <td>
-                <button type="button" class="remove-btn" onclick="removeRow(this)">Remove</button>
+                <button type="button" class="remove-btn" onclick="removeRow(this)">{% trans "Remove" %}</button>
               </td>
             </tr>
           </table>
         </div>
 
-        <button type="button" id="addRowBtn" class="submit-btn" onclick="addRow()">Add Product</button>
+        <button type="button" id="addRowBtn" class="submit-btn" onclick="addRow()">{% trans "Add Product" %}</button>
       </fieldset>
 
       <div class="form-buttons">
-        <button type="submit" class="submit-btn">Submit</button>
-        <a href="{{ success_url }}" class="cancel-btn">Cancel</a>
+        <button type="submit" class="submit-btn">{% trans "Submit" %}</button>
+        <a href="{{ success_url }}" class="cancel-btn">{% trans "Cancel" %}</a>
       </div>
     </form>
 
@@ -159,7 +160,7 @@
                   console.log("Products received:", data); // Debugging log
                   $("select[name$='-product']").each(function () {
                       var dropdown = $(this);
-                      dropdown.empty().append('<option value="">Select a product</option>');
+                      dropdown.empty().append('<option value="" disabled selected hidden>{% trans "Select a product" %}</option>');
 
                       $.each(data, function (index, product) {
                           dropdown.append(`<option value="${product.id}">${product.name}</option>`);

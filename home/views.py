@@ -25,6 +25,7 @@ from django.utils.dateparse import parse_date
 from django.utils import timezone
 from django.utils.timezone import now
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext as _
 
 from .models import (
     ActivityLog, Customer, 
@@ -123,19 +124,19 @@ def user_list(request):
             'last_name': 'last_name',
         },
         sort_fields={
-            'date_joined': 'Date Joined', 
-            'last_login': 'Last Login'
+            'date_joined': _('Date Joined'), 
+            'last_login': _('Last Login')
         },
         add=True,
         edit=True, 
         delete=True,
         related_model=ActivityLog,
         related_field_name='user',
-        related_title='Activity Log',
+        related_title=_('Activity Log'),
         related_fields={
-            'timestamp': 'Timestamp',
-            'action': 'Action',
-            'additional_info': 'Additional Info',
+            'timestamp': _('Timestamp'),
+            'action': _('Action'),
+            'additional_info': _('Additional Info'),
         }
     )
 
@@ -180,11 +181,11 @@ def manufacturer_list(request):
         delete=True,
         related_model=PurchaseTransaction,
         related_field_name='manufacturer',
-        related_title='Purchase Transactions',
+        related_title=_('Purchase Transactions'),
         related_fields={
-            'invoice_number': 'Invoice',
-            'purchase_date': 'Date',
-            'total_cost': 'Total (€)',
+            'invoice_number': _('Invoice'),
+            'purchase_date': _('Date'),
+            'total_cost': _('Total'),
         }
     )
 
@@ -263,8 +264,8 @@ def product_list(request):
             'manufacturer': 'manufacturer__name'
         },
         sort_fields={
-            'updated_at': 'Last Updated', 
-            'stock': 'Stock'
+            'updated_at': _('Last Updated'), 
+            'stock': _('Stock')
         },
         add=True,
         edit=True, 
@@ -272,10 +273,10 @@ def product_list(request):
         extra_context={'object_list': products_with_stock},
         related_model=Inventory,
         related_field_name='product',
-        related_title='Inventory',
+        related_title=_('Inventory'),
         related_fields={
-            'quantity': 'Quantity',
-            'expiry_date': 'Expiry Date',
+            'quantity': _('Quantity'),
+            'expiry_date': _('Expiry Date'),
         }
     )
 
@@ -313,7 +314,7 @@ def inventory_list(request):
         columns = {
             'product': 'Product',
             'product.manufacturer': 'Manufacturer',
-            'product.sale_price': 'Sale Price (€)',
+            'product.sale_price': 'Sale Price',
             'quantity': 'Quantity',
             'expiry_date': 'Expiry Date',
         },
@@ -322,11 +323,10 @@ def inventory_list(request):
             'manufacturer_name': 'product__manufacturer__name'
         },
         sort_fields={
-            'updated_at': 'Last Updated',
-            'expiry_date': 'Expiry Date'
+            'updated_at': _('Last Updated'),
+            'expiry_date': _('Expiry Date')
         },
         extra_context={
-            'title': 'Inventory',
             'object_list': base_qs
         },
         delete=True
@@ -367,34 +367,34 @@ def purchase_transaction_list(request):
             'invoice_number': 'Invoice #',
             'manufacturer': 'Manufacturer',
             'purchase_date': 'Purchase Date',
-            'total_cost': 'Total Cost (€)',
+            'total_cost': 'Total Cost',
         },
         search_fields={
             'invoice_number': 'invoice_number',
             'manufacturer_name': 'manufacturer__name',
         },
         sort_fields={
-            'purchase_date': 'Purchase Date',
-            'total_cost': 'Total Cost',
+            'purchase_date': _('Purchase Date'),
+            'total_cost': _('Total Cost')
         },
         add=True,
         delete=True,
         extra_context={
-            'title': 'Purchase Transaction',
             'object_list': transactions,
             'scan_form': scan_form,
             'scan_view_name': 'scan_purchase_transaction',
         },
         related_model=PurchasedProduct,
         related_field_name='purchase_transaction',
-        related_title='Purchased Products',
+        related_title=_('Purchased Products'),
         related_fields={
-            'product': 'Product',
-            'quantity': 'Quantity',
-            'purchase_price': 'Purchase Price (€)',
-            'batch_number': 'Batch #',
-            'expiry_date': 'Expiry Date',
-        }
+            'product': _('Product'),
+            'quantity': _('Quantity'),
+            'purchase_price': _('Purchase Price'),
+            'batch_number': _('Batch #'),
+            'expiry_date': _('Expiry Date'),
+        },
+        model_url='purchase-transactions'
     )
 
 def add_purchase_transaction(request):
@@ -620,15 +620,15 @@ def customer_list(request):
         extra_context={'object_list': customers_with_transaction},
         related_model=SaleTransaction,
         related_field_name='customer',
-        related_title='Sale Transactions',
+        related_title=_('Sale Transactions'),
         related_fields={
-            'transaction_number': 'Transaction #',
-            'transaction_date': 'Date',
-            'price': 'Price (€)',
-            'discount': 'Discount (€)',
-            'total': 'Total (€)',
-            'cash_received': 'Cash Received (€)',
-            'payment_method': 'Payment Method',
+            'transaction_number': _('Transaction #'),
+            'transaction_date': _('Date'),
+            'price': _('Price'),
+            'discount': _('Discount'),
+            'total': _('Total'),
+            'cash_received': _('Cash Received'),
+            'payment_method': _('Payment Method'),
         }
     )
 
@@ -678,10 +678,10 @@ def sale_transaction_list(request):
             'transaction_number': 'Transaction #',
             'customer': 'Customer',
             'transaction_date': 'Date',
-            'price': 'Price (€)',
-            'discount': 'Discount (€)',
-            'total': 'Total (€)',
-            'cash_received': 'Cash (€)',
+            'price': 'Price',
+            'discount': 'Discount',
+            'total': 'Total',
+            'cash_received': 'Cash',
             'payment_method': 'Payment Method',
         },
         search_fields={
@@ -689,26 +689,26 @@ def sale_transaction_list(request):
             'customer_name': 'customer__full_name',
         },
         sort_fields={
-            'transaction_date': 'Date',
-            'price': 'Price',
-            'discount': 'Discount',
+            'transaction_date': _('Date'),
+            'price': _('Price'),
+            'discount': _('Discount'),
         },
         add=True,
         delete=True,
         extra_context={
-            'title': 'Sale Transaction',
             'object_list': transactions,
             'scan_form': scan_form,
             'scan_view_name': 'scan_sale_transaction',
         },
         related_model=SoldProduct,
         related_field_name='sale_transaction',
-        related_title='Sold Products',
+        related_title=_('Sold Products'),
         related_fields={
-            'inventory_item': 'Inventory Item',
-            'quantity': 'Quantity',
-            'sale_price': 'Sale Price (€)',
-        }
+            'inventory_item': _('Inventory Item'),
+            'quantity': _('Quantity'),
+            'sale_price': _('Sale Price'),
+        },
+        model_url='sale-transactions'
     )
 
 def add_sale_transaction(request):
@@ -1257,9 +1257,9 @@ def export_to_pdf(request):
     p.drawString(x_name, y, "Name")
     p.drawCentredString(x_bought + col_width // 2, y, "Bought")
     p.drawCentredString(x_sold + col_width // 2, y, "Sold")
-    p.drawCentredString(x_spent + col_width // 2, y, "Spent (€)")
-    p.drawCentredString(x_earned + col_width // 2, y, "Earned (€)")
-    p.drawCentredString(x_profit + col_width // 2, y, "Profit (€)")
+    p.drawCentredString(x_spent + col_width // 2, y, "Spent")
+    p.drawCentredString(x_earned + col_width // 2, y, "Earned")
+    p.drawCentredString(x_profit + col_width // 2, y, "Profit")
     y -= 15
 
     p.setFont("Helvetica", 10)
@@ -1276,9 +1276,9 @@ def export_to_pdf(request):
             p.drawString(x_name, y, "Name")
             p.drawCentredString(x_bought + col_width // 2, y, "Bought")
             p.drawCentredString(x_sold + col_width // 2, y, "Sold")
-            p.drawCentredString(x_spent + col_width // 2, y, "Spent (€)")
-            p.drawCentredString(x_earned + col_width // 2, y, "Earned (€)")
-            p.drawCentredString(x_profit + col_width // 2, y, "Profit (€)")
+            p.drawCentredString(x_spent + col_width // 2, y, "Spent")
+            p.drawCentredString(x_earned + col_width // 2, y, "Earned")
+            p.drawCentredString(x_profit + col_width // 2, y, "Profit")
             y -= 15
             p.setFont("Helvetica", 10)
 
@@ -1440,6 +1440,10 @@ def get_related_list(request, related_model_name, parent_model_name, parent_id):
             if not found:
                 return JsonResponse({'error': f'No FK or reverse M2M between {parent_model_name} and {related_model_name}'}, status=400)
 
+        # Optionally filter out entries with quantity = 0
+        if 'quantity' in [field.name for field in RelatedModel._meta.fields]:
+            related_objects = related_objects.filter(quantity__gt=0)
+
         page_obj, query_string = paginate_with_query_params(request, related_objects)
         
         data = {
@@ -1482,7 +1486,7 @@ def discount_list(request):
             'name': 'Product Name',
             'category': 'Category',
             'manufacturer': 'Manufacturer',
-            'sale_price': 'Sale Price (€)',
+            'sale_price': 'Sale Price',
         }
     )
 
@@ -1523,3 +1527,23 @@ def public_product_list(request):
         for p in products
     ]
     return JsonResponse(data, safe=False)
+
+from django.shortcuts import redirect
+from django.utils import translation
+from django.conf import settings
+
+def switch_language(request):
+    current_language = translation.get_language()
+    next_language = 'de' if current_language.startswith('en') else 'en-gb'
+
+    # Activate immediately
+    translation.activate(next_language)
+
+    # Store in session
+    request.session['django_language'] = next_language
+
+    # Store in cookie
+    response = redirect(request.META.get('HTTP_REFERER', '/'))
+    response.set_cookie('django_language', next_language)
+
+    return response

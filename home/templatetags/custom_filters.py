@@ -51,3 +51,8 @@ def uk_date(value):
 def slug_underscore(value):
     # Convert to lowercase, replace spaces with underscores.
     return str(value).lower().replace(' ', '_')
+
+@register.filter
+def get_item(dictionary, key):
+    # Template filter to get an item from a dictionary.
+    return dictionary.get(key)

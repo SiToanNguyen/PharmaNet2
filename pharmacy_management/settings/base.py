@@ -2,6 +2,8 @@
 import time, os
 from pathlib import Path
 
+APP_NAME = "PharmaNet"
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -29,6 +31,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'home.middleware.LoginRequiredMiddleware',  # Unlogged-in user is redicted to login page
     'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
@@ -53,6 +56,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'home.context_processors.app_name',
             ],
         },
     },
@@ -81,6 +85,10 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
+LANGUAGES = [
+    ('en-gb', 'English'),
+    ('de', 'Deutsch'),
+]
 
 LANGUAGE_CODE = 'en-gb'
 
@@ -90,6 +98,7 @@ USE_I18N = True
 
 USE_TZ = True
 
+LOCALE_PATHS = [BASE_DIR / 'locale']
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %} <!-- automatic translation -->
 
 {% block content %}
   <div class="form-container">
@@ -14,9 +15,8 @@
       </fieldset>
 
       <div class="form-buttons">
-        <button type="submit" class="submit-btn">Submit</button>
-        <!-- Cancel button goes back one level using JavaScript -->
-        <a href="{{ success_url }}" class="cancel-btn">Cancel</a>
+        <button type="submit" class="submit-btn">{% trans "Submit" %}</button>
+        <a href="{{ success_url }}" class="cancel-btn">{% trans "Cancel" %}</a>
       </div>
     </form>
   </div>

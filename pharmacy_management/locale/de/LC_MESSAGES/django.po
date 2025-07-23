@@ -1,0 +1,611 @@
+# pharmacy_management\locale\de\LC_MESSAGES\django.po
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-07-23 10:19+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: .\home\forms.py:22
+msgid "Password cannot consist only of spaces."
+msgstr "Passwort darf nicht nur aus Leerzeichen bestehen."
+
+#: .\home\forms.py:23 .\home\forms.py:63
+msgid "Password"
+msgstr "Passwort"
+
+#: .\home\forms.py:28
+msgid "Active"
+msgstr "Aktiv"
+
+#: .\home\forms.py:62
+msgid "Leave empty to keep the current password."
+msgstr "Lasst leer, um das aktuelle Passwort beizubehalten."
+
+#: .\home\forms.py:212 .\home\models.py:141
+#: .\home\templates\add_sale_transaction.html:157
+#: .\home\templates\add_sale_transaction.html:366 .\home\utils.py:311
+msgid "Birthdate"
+msgstr "Geburtsdatum"
+
+#: .\home\forms.py:279 .\home\models.py:226 .\home\utils.py:329
+msgid "From Date"
+msgstr "Startdatum"
+
+#: .\home\forms.py:283 .\home\models.py:227 .\home\utils.py:330
+msgid "To Date"
+msgstr "Enddatum"
+
+#: .\home\models.py:11 .\home\utils.py:331 .\home\views.py:137
+msgid "Timestamp"
+msgstr "Zeitstempel"
+
+#: .\home\models.py:12 .\home\utils.py:332
+msgid "User"
+msgstr "Benutzer"
+
+#: .\home\models.py:13 .\home\templates\add_purchase_transaction.html:51
+#: .\home\templates\add_sale_transaction.html:56
+#: .\home\templates\list_page.html:65 .\home\utils.py:333 .\home\views.py:138
+msgid "Action"
+msgstr "Aktion"
+
+#: .\home\models.py:14 .\home\utils.py:334 .\home\views.py:139
+msgid "Additional Info"
+msgstr "Weitere Informationen"
+
+#: .\home\models.py:18 .\home\views.py:135
+msgid "Activity Log"
+msgstr "Aktivitätsprotokoll"
+
+#: .\home\models.py:19 ⁨.\home\templates\base copy.html⁩:33
+#: .\home\templates\base.html:33
+msgid "Activity Logs"
+msgstr "Aktivitätsprotokolle"
+
+#: .\home\models.py:26 .\home\models.py:43 .\home\models.py:60
+#: .\home\models.py:223
+msgid "Name"
+msgstr "Name"
+
+#: .\home\models.py:27 .\home\models.py:144 .\home\utils.py:308
+msgid "Address"
+msgstr "Adresse"
+
+#: .\home\models.py:28 .\home\models.py:142
+#: .\home\templates\add_sale_transaction.html:158 .\home\utils.py:309
+msgid "Phone Number"
+msgstr "Telefonnummer"
+
+#: .\home\models.py:29 .\home\models.py:143
+#: .\home\templates\add_sale_transaction.html:159
+msgid "Email"
+msgstr "E-Mail"
+
+#: .\home\models.py:30 .\home\models.py:47 .\home\models.py:65
+#: .\home\models.py:81 .\home\models.py:103 .\home\models.py:145
+#: .\home\models.py:185 .\home\utils.py:304
+msgid "Created At"
+msgstr "Erstellt Am"
+
+#: .\home\models.py:31 .\home\models.py:48 .\home\models.py:66
+#: .\home\models.py:82 .\home\models.py:146 .\home\utils.py:305
+msgid "Updated At"
+msgstr "Aktualisiert Am"
+
+#: .\home\models.py:35 .\home\models.py:62 .\home\models.py:97
+#: .\home\templates\add_purchase_transaction.html:18
+#: .\home\templates\add_sale_transaction.html:118 .\home\utils.py:306
+msgid "Manufacturer"
+msgstr "Hersteller"
+
+#: .\home\models.py:36 ⁨.\home\templates\base copy.html⁩:26
+#: .\home\templates\base.html:26
+msgid "Manufacturers"
+msgstr "Hersteller"
+
+#: .\home\models.py:44 .\home\models.py:64 .\home\utils.py:313
+msgid "Description"
+msgstr "Beschreibung"
+
+#: .\home\models.py:45 .\home\utils.py:314
+msgid "Requires Prescription"
+msgstr "Rezeptpflichtig"
+
+#: .\home\models.py:46 .\home\utils.py:315
+msgid "Low Stock Threshold"
+msgstr "Meldebestand"
+
+#: .\home\models.py:52 .\home\models.py:61 .\home\templates\index.html:69
+#: .\home\utils.py:307
+msgid "Category"
+msgstr "Kategorie"
+
+#: .\home\models.py:53 ⁨.\home\templates\base copy.html⁩:27
+#: .\home\templates\base.html:27
+msgid "Categories"
+msgstr "Kategorien"
+
+#: .\home\models.py:63 .\home\models.py:207 .\home\utils.py:303
+#: .\home\views.py:709
+msgid "Sale Price"
+msgstr "Verkaufspreis"
+
+#: .\home\models.py:70 .\home\models.py:78 .\home\models.py:120
+#: .\home\templates\add_purchase_transaction.html:46
+#: .\home\templates\add_sale_transaction.html:117
+#: .\home\templates\index.html:22 .\home\templates\index.html:68
+#: .\home\utils.py:316 .\home\views.py:391
+msgid "Product"
+msgstr "Produkt"
+
+#: .\home\models.py:71 .\home\models.py:224 ⁨.\home\templates\base copy.html⁩:28
+#: .\home\templates\base.html:28
+msgid "Products"
+msgstr "Produkte"
+
+#: .\home\models.py:79 .\home\models.py:122 .\home\models.py:206
+#: .\home\templates\add_purchase_transaction.html:48
+#: .\home\templates\add_sale_transaction.html:54
+#: .\home\templates\add_sale_transaction.html:120
+#: .\home\templates\index.html:23 .\home\templates\index.html:70
+#: .\home\utils.py:301 .\home\views.py:278 .\home\views.py:392
+#: .\home\views.py:708
+msgid "Quantity"
+msgstr "Menge"
+
+#: .\home\models.py:80 .\home\models.py:124
+#: .\home\templates\add_purchase_transaction.html:50
+#: .\home\templates\add_sale_transaction.html:121
+#: .\home\templates\index.html:24 .\home\utils.py:302 .\home\views.py:279
+#: .\home\views.py:327 .\home\views.py:395
+msgid "Expiry Date"
+msgstr "Ablaufdatum"
+
+#: .\home\models.py:89 ⁨.\home\templates\base copy.html⁩:29
+#: .\home\templates\base.html:29 .\home\views.py:276
+msgid "Inventory"
+msgstr "Lagerbestand"
+
+#: .\home\models.py:90
+msgid "Inventories"
+msgstr "Lagerbestände"
+
+#: .\home\models.py:98 .\home\templates\add_purchase_transaction.html:28
+#: .\home\utils.py:318 .\home\views.py:377
+msgid "Purchase Date"
+msgstr "Kaufdatum"
+
+#: .\home\models.py:99 .\home\templates\add_purchase_transaction.html:14
+msgid "Invoice Number"
+msgstr "Rechnungsnummer"
+
+#: .\home\models.py:100 .\home\utils.py:319 .\home\views.py:378
+msgid "Total Cost"
+msgstr "Gesamtkosten"
+
+#: .\home\models.py:101 .\home\models.py:183
+#: .\home\templates\add_purchase_transaction.html:33
+msgid "Remarks"
+msgstr "Bemerkungen"
+
+#: .\home\models.py:102 .\home\models.py:184
+msgid "Created By"
+msgstr "Erstellt Am"
+
+#: .\home\models.py:107 .\home\models.py:119
+msgid "Purchase Transaction"
+msgstr "Kauftransaktion"
+
+#: .\home\models.py:108 ⁨.\home\templates\base copy.html⁩:30
+#: .\home\templates\base.html:30 .\home\views.py:184
+msgid "Purchase Transactions"
+msgstr "Kauftransaktionen"
+
+#: .\home\models.py:121 .\home\templates\add_purchase_transaction.html:47
+msgid "Batch Number"
+msgstr "Chargennummer"
+
+#: .\home\models.py:123 .\home\views.py:393
+msgid "Purchase Price"
+msgstr "Kaufpreis"
+
+#: .\home\models.py:128
+msgid "Purchased Product"
+msgstr "Gekauftes Produkt"
+
+#: .\home\models.py:129 .\home\templates\add_purchase_transaction.html:39
+#: .\home\views.py:389
+msgid "Purchased Products"
+msgstr "Gekaufte Produkte"
+
+#: .\home\models.py:140 .\home\templates\add_sale_transaction.html:156
+#: .\home\utils.py:310
+msgid "Full Name"
+msgstr "Vollständiger Name"
+
+#: .\home\models.py:150 .\home\models.py:159 .\home\utils.py:321
+msgid "Customer"
+msgstr "Kunde"
+
+#: .\home\models.py:151 ⁨.\home\templates\base copy.html⁩:25
+#: .\home\templates\base.html:25
+msgid "Customers"
+msgstr "Kunden"
+
+#: .\home\models.py:158
+msgid "Transaction Number"
+msgstr "Transaktionsnummer"
+
+#: .\home\models.py:160
+msgid "Transaction Date"
+msgstr "Transaktionsdatum"
+
+#: .\home\models.py:163 .\home\templates\add_sale_transaction.html:119
+#: .\home\utils.py:323 .\home\views.py:627 .\home\views.py:693
+msgid "Price"
+msgstr "Preis"
+
+#: .\home\models.py:164 .\home\models.py:230 .\home\utils.py:324
+#: .\home\views.py:628 .\home\views.py:694
+msgid "Discount"
+msgstr "Rabatt"
+
+#: .\home\models.py:165 .\home\utils.py:325 .\home\views.py:188
+#: .\home\views.py:629
+msgid "Total"
+msgstr "Zu Zahlen"
+
+#: .\home\models.py:166 .\home\views.py:630
+msgid "Cash Received"
+msgstr "Erhaltenes Bargeld"
+
+#: .\home\models.py:173 .\home\utils.py:327 .\home\views.py:631
+msgid "Payment Method"
+msgstr "Zahlungsmethode"
+
+#: .\home\models.py:176 .\home\utils.py:326
+msgid "Cash"
+msgstr "Bar"
+
+#: .\home\models.py:177
+msgid "Card"
+msgstr "Karte"
+
+#: .\home\models.py:178
+msgid "Insurance"
+msgstr "Versicherung"
+
+#: .\home\models.py:189 .\home\models.py:204
+msgid "Sale Transaction"
+msgstr "Verkaufstransaktion"
+
+#: .\home\models.py:190 ⁨.\home\templates\base copy.html⁩:31
+#: .\home\templates\base.html:31 .\home\views.py:623
+msgid "Sale Transactions"
+msgstr "Verkaufstransaktionen"
+
+#: .\home\models.py:205 .\home\templates\add_sale_transaction.html:53
+#: .\home\views.py:707
+msgid "Inventory Item"
+msgstr "Inventargegenstand"
+
+#: .\home\models.py:211
+msgid "Sold Product"
+msgstr "Verkauftes Produkt"
+
+#: .\home\models.py:212 .\home\templates\add_sale_transaction.html:47
+#: .\home\views.py:705
+msgid "Sold Products"
+msgstr "Verkaufte Produkte"
+
+#: .\home\models.py:225 .\home\utils.py:328
+msgid "Percentage"
+msgstr "Prozentsatz"
+
+#: .\home\models.py:225
+msgid "Enter percentage, e.g. 10.00 for 10%"
+msgstr "Geben Sie den Prozentsatz ein, z. B. 10,00 für 10%"
+
+#: .\home\models.py:231 ⁨.\home\templates\base copy.html⁩:32
+#: .\home\templates\base.html:32
+msgid "Discounts"
+msgstr "Rabatte"
+
+#: .\home\templates\add_purchase_transaction.html:6
+msgid "Add Purchase Transaction"
+msgstr "Kauftransaktion Hinzufügen"
+
+#: .\home\templates\add_purchase_transaction.html:12
+msgid "Purchase Details"
+msgstr "Kauftransaktion Details"
+
+#: .\home\templates\add_purchase_transaction.html:20
+msgid "Select a manufacturer"
+msgstr "Hersteller auswählen"
+
+#: .\home\templates\add_purchase_transaction.html:49
+#: .\home\templates\add_sale_transaction.html:55
+msgid "Unit Price (€)"
+msgstr "Stückpreis (€)"
+
+#: .\home\templates\add_purchase_transaction.html:64
+#: .\home\templates\add_purchase_transaction.html:82
+#: .\home\templates\add_sale_transaction.html:26
+#: .\home\templates\add_sale_transaction.html:71
+#: .\home\templates\add_sale_transaction.html:91
+msgid "Remove"
+msgstr "Löschen"
+
+#: .\home\templates\add_purchase_transaction.html:88
+#: .\home\templates\add_sale_transaction.html:97
+msgid "Add Product"
+msgstr "Produkt Hinzufügen"
+
+#: .\home\templates\add_purchase_transaction.html:92
+#: .\home\templates\add_sale_transaction.html:101
+#: .\home\templates\form_page.html:18
+msgid "Submit"
+msgstr "Speichern"
+
+#: .\home\templates\add_purchase_transaction.html:93
+#: .\home\templates\add_sale_transaction.html:102
+#: .\home\templates\form_page.html:19
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: .\home\templates\add_purchase_transaction.html:163
+msgid "Select a product"
+msgstr "Produkt auswählen"
+
+#: .\home\templates\add_sale_transaction.html:6
+msgid "Add Sale Transaction"
+msgstr "Verkaufstransaktion Hinzufügen"
+
+#: .\home\templates\add_sale_transaction.html:12
+msgid "Sale Details"
+msgstr "Kauftransaktion Details"
+
+#: .\home\templates\add_sale_transaction.html:24
+#: .\home\templates\add_sale_transaction.html:383
+msgid "No customer selected"
+msgstr "Kein Kunde ausgewählt"
+
+#: .\home\templates\add_sale_transaction.html:25
+#: .\home\templates\add_sale_transaction.html:65
+#: .\home\templates\add_sale_transaction.html:86
+#: .\home\templates\add_sale_transaction.html:122
+#: .\home\templates\add_sale_transaction.html:134
+#: .\home\templates\add_sale_transaction.html:160
+#: .\home\templates\add_sale_transaction.html:173
+msgid "Select"
+msgstr "Auswählen"
+
+#: .\home\templates\add_sale_transaction.html:64
+#: .\home\templates\add_sale_transaction.html:85
+#: .\home\templates\add_sale_transaction.html:218
+msgid "No item selected"
+msgstr "Kein Artikel ausgewählt"
+
+#: .\home\templates\add_sale_transaction.html:109
+msgid "Select Inventory Item"
+msgstr "Inventargegenstand"
+
+#: .\home\templates\add_sale_transaction.html:146
+msgid "Select Customer"
+msgstr "Kunde auswählen"
+
+#: .\home\templates\add_sale_transaction.html:391
+#, python-brace-format
+msgid "Only ${max} units available."
+msgstr "Nur ${max} Einheiten verfügbar."
+
+#: ⁨.\home\templates\base copy.html⁩:23 .\home\templates\base.html:23
+msgid "Home"
+msgstr "Startseite"
+
+#: ⁨.\home\templates\base copy.html⁩:24 .\home\templates\base.html:24
+msgid "Users"
+msgstr "Benutzer"
+
+#: ⁨.\home\templates\base copy.html⁩:34 .\home\templates\base.html:34
+msgid "Reports"
+msgstr "Berichte"
+
+#: ⁨.\home\templates\base copy.html⁩:35 .\home\templates\base.html:35
+msgid "Logout"
+msgstr "Abmelden"
+
+#: ⁨.\home\templates\base copy.html⁩:49 .\home\templates\base.html:49
+#, python-format
+msgid "Hello %(first_name)s! Welcome to %(appname)s!"
+msgstr "Hallo %(first_name)s! Willkommen bei %(appname)s!"
+
+#: .\home\templates\base.html:102
+msgid "Dark Theme"
+msgstr "Dunkles Design"
+
+#: .\home\templates\base.html:103
+msgid "Light Theme"
+msgstr "Helles Design"
+
+#: .\home\templates\components\pagination.html:6
+#: .\home\templates\list_page.html:143 .\home\templates\list_page.html:154
+msgid "First"
+msgstr "Erste"
+
+#: .\home\templates\components\pagination.html:7
+#: .\home\templates\list_page.html:144 .\home\templates\list_page.html:155
+msgid "Previous"
+msgstr "Zurück"
+
+#: .\home\templates\components\pagination.html:11
+#, python-format
+msgid " Page %(page)s of %(total)s "
+msgstr "Seite %(page)s von %(total)s"
+
+#: .\home\templates\components\pagination.html:15
+#: .\home\templates\list_page.html:145 .\home\templates\list_page.html:156
+msgid "Next"
+msgstr "Nächste"
+
+#: .\home\templates\components\pagination.html:16
+#: .\home\templates\list_page.html:146 .\home\templates\list_page.html:157
+msgid "Last"
+msgstr "Letzte"
+
+#: .\home\templates\index.html:8 .\home\templates\index.html:18
+msgid "Expiring Products"
+msgstr "Auslaufende Produkte"
+
+#: .\home\templates\index.html:11 .\home\templates\index.html:63
+msgid "Low Stock"
+msgstr "Niedriger Lagerbestand"
+
+#: .\home\templates\list_page.html:9 .\home\utils.py:113
+#, python-format
+msgid "Add New %(model)s"
+msgstr "%(model)s Hinzufügen"
+
+#: .\home\templates\list_page.html:21
+msgid "Scan"
+msgstr "Scannen"
+
+#: .\home\templates\list_page.html:26
+#, python-format
+msgid "%(title)s List"
+msgstr "%(title)s Liste"
+
+#: .\home\templates\list_page.html:33 .\home\templates\list_page.html:138
+msgid "Search by"
+msgstr "Suchen nach"
+
+#: .\home\templates\list_page.html:40 .\home\templates\list_page.html:139
+msgid "Sort By"
+msgstr "Sortieren Nach"
+
+#: .\home\templates\list_page.html:50 .\home\templates\list_page.html:140
+msgid "Search"
+msgstr "Suchen"
+
+#: .\home\templates\list_page.html:94 .\home\templates\list_page.html:141
+msgid "Edit"
+msgstr "Bearbeiten"
+
+#: .\home\templates\list_page.html:105 .\home\templates\list_page.html:142
+msgid "Delete"
+msgstr "Löschen"
+
+#: .\home\templates\list_page.html:137
+#, python-format
+msgid "Add New %(model_verbose_name)s"
+msgstr "%(model_verbose_name)s Hinzufügen"
+
+#: .\home\templates\list_page.html:147 .\home\templates\list_page.html:158
+msgid "Page"
+msgstr "Seite"
+
+#: .\home\templates\list_page.html:148 .\home\templates\list_page.html:159
+msgid "of"
+msgstr "von"
+
+#: .\home\templates\list_page.html:149 .\home\templates\list_page.html:160
+msgid "No related items found."
+msgstr "Keine zugehörigen Elemente gefunden."
+
+#: .\home\templates\report.html:8 .\home\templates\report.html:12
+msgid "Financial Summary"
+msgstr "Finanzielle Zusammenfassung"
+
+#: .\home\templates\report.html:9
+msgid "Revenue Chart"
+msgstr "Umsatzdiagramm"
+
+#: .\home\templates\report.html:17
+msgid "Generate"
+msgstr "Erstellen"
+
+#: .\home\templates\report.html:21
+#, python-format
+msgid "Results from %(from_date)s to %(to_date)s:"
+msgstr "Ergebnisse vom %(from_date)s bis %(to_date)s:"
+
+#: .\home\templates\report.html:24 .\home\templates\report.html:105
+msgid "Total Purchase Cost"
+msgstr "Gesamte Einkaufskosten"
+
+#: .\home\templates\report.html:25 .\home\templates\report.html:112
+msgid "Total Sales Revenue"
+msgstr "Gesamter Umsatz"
+
+#: .\home\templates\report.html:26 .\home\templates\report.html:119
+msgid "Estimated Profit"
+msgstr "Geschätzter Gewinn"
+
+#: .\home\templates\report.html:27
+msgid "Total Discount"
+msgstr "Gesamter Rabatt"
+
+#: .\home\templates\report.html:75
+#, python-format
+msgid "Revenue Chart (Last %(months)s Months)"
+msgstr "Umsatzdiagramm (Letzten %(months)s Monaten)"
+
+#: .\home\utils.py:156
+#, python-format
+msgid "Edit %(model)s"
+msgstr "%(model)s Bearbeiten"
+
+#: .\home\utils.py:300 .\home\views.py:268
+msgid "Stock"
+msgstr "Lagerbestand"
+
+#: .\home\utils.py:312
+msgid "Transactions"
+msgstr "Transaktionen"
+
+#: .\home\utils.py:317
+msgid "Invoice #"
+msgstr "Rechnung #"
+
+#: .\home\utils.py:320 .\home\views.py:625
+msgid "Transaction #"
+msgstr "Transaktion #"
+
+#: .\home\utils.py:322 .\home\views.py:187 .\home\views.py:626
+#: .\home\views.py:692
+msgid "Date"
+msgstr "Datum"
+
+#: .\home\views.py:127
+msgid "Date Joined"
+msgstr "Mitglied Seit"
+
+#: .\home\views.py:128
+msgid "Last Login"
+msgstr "Letzte Anmeldung"
+
+#: .\home\views.py:186
+msgid "Invoice"
+msgstr "Rechnung"
+
+#: .\home\views.py:267 .\home\views.py:326
+msgid "Last Updated"
+msgstr "Zuletzt Aktualisiert"
+
+#: .\home\views.py:394
+msgid "Batch #"
+msgstr "Charge #"

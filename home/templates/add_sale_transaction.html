@@ -1,14 +1,15 @@
 {% extends 'base.html' %}
+{% load i18n %} <!-- automatic translation -->
 
 {% block content %}
   <div class="form-container">
-    <h2>Add Sale Transaction</h2>
+    <h2>{% trans "Add Sale Transaction" %}</h2>
 
     <form method="POST" class="global-form">
       {% csrf_token %}
 
       <fieldset>
-        <legend>Sale Details</legend>
+        <legend>{% trans "Sale Details" %}</legend>
         <p>
           {{ form.transaction_number.label_tag }}
           {{ form.transaction_number }}
@@ -20,9 +21,9 @@
         <p>
           {{ form.customer.label_tag }}
           <input type="hidden" name="customer" id="id_customer">
-          <span id="selectedCustomerLabel">No customer selected</span>
-          <button type="button" class="select-btn" onclick="openCustomerModal()">Select</button>
-          <button type="button" class="remove-btn" style="margin-left: 10px;" onclick="removeCustomer()">Remove</button>
+          <span id="selectedCustomerLabel">{% trans "No customer selected" %}</span>
+          <button type="button" class="select-btn" onclick="openCustomerModal()">{% trans "Select" %}</button>
+          <button type="button" class="remove-btn" style="margin-left: 10px;" onclick="removeCustomer()">{% trans "Remove" %}</button>
         </p>        
         <p>
           {{ form.discount.label_tag }}
@@ -43,16 +44,16 @@
       </fieldset>
 
       <fieldset>
-        <legend>Sold Products</legend>
+        <legend>{% trans "Sold Products" %}</legend>
         {{ formset.management_form }}
 
         <table id="productsTable" class="global-table">
           <thead>
             <tr>
-              <th>Inventory Item</th>
-              <th>Quantity</th>
-              <th>Unit Price (€)</th>
-              <th>Actions</th>
+              <th>{% trans "Inventory Item" %}</th>
+              <th>{% trans "Quantity" %}</th>
+              <th>{% trans "Unit Price (€)" %}</th>
+              <th>{% trans "Action" %}</th>
             </tr>
           </thead>
           <tbody>
@@ -60,14 +61,14 @@
               <tr class="productRow">
                 <td>
                   {{ product_form.inventory_item.as_hidden }}
-                  <span class="inventory-label">No item selected</span>
-                  <button class="select-btn" type="button" onclick="openInventoryModal(this)">Select</button>
+                  <span class="inventory-label">{% trans "No item selected" %}</span>
+                  <button class="select-btn" type="button" onclick="openInventoryModal(this)">{% trans "Select" %}</button>
                 </td>                
                 <td><p>{{ product_form.quantity }}</p></td>
                 <td><span class="price-display">-</span></td>
                 <td>
                     <p>
-                        <button type="button" class="remove-btn" onclick="removeRow(this)">Remove</button>
+                        <button type="button" class="remove-btn" onclick="removeRow(this)">{% trans "Remove" %}</button>
                     </p>
                 </td>
               </tr>
@@ -81,31 +82,31 @@
             <tr class="productRow">
               <td>
                 <input type="hidden" name="__prefix__-inventory_item" id="id___prefix__-inventory_item">
-                <span class="inventory-label">No item selected</span>
-                <button class="select-btn" type="button" onclick="openInventoryModal(this)">Select</button>
+                <span class="inventory-label">{% trans "No item selected" %}</span>
+                <button class="select-btn" type="button" onclick="openInventoryModal(this)">{% trans "Select" %}</button>
               </td>              
               <td><p>{{ formset.empty_form.quantity }}</p></td>
               <td><span class="price-display">-</span></td>
               <td>
-                <button type="button" class="remove-btn" onclick="removeRow(this)">Remove</button>
+                <button type="button" class="remove-btn" onclick="removeRow(this)">{% trans "Remove" %}</button>
               </td>
             </tr>
           </table>
         </div>
 
-        <button type="button" id="addRowBtn" class="submit-btn" onclick="addRow()">Add Product</button>
+        <button type="button" id="addRowBtn" class="submit-btn" onclick="addRow()">{% trans "Add Product" %}</button>
       </fieldset>
 
       <div class="form-buttons">
-        <button type="submit" class="submit-btn">Submit</button>
-        <a href="{{ success_url }}" class="cancel-btn">Cancel</a>
+        <button type="submit" class="submit-btn">{% trans "Submit" %}</button>
+        <a href="{{ success_url }}" class="cancel-btn">{% trans "Cancel" %}</a>
       </div>
     </form>
 
     <div id="inventoryModal" class="modal" style="display:none;">
       <div class="modal-content">
         <span class="close" onclick="closeInventoryModal()">&times;</span>
-        <h3>Select Inventory Item</h3>
+        <h3>{% trans "Select Inventory Item" %}</h3>
     
         <form method="GET" class="search-container">
           <input type="text" id="searchInput" placeholder="Search..." onkeyup="filterInventory()">
@@ -113,12 +114,12 @@
         <table id="inventoryTable" class="global-table">
           <thead>
             <tr>
-              <th>Product</th>
-              <th>Manufacturer</th>
-              <th>Price</th>
-              <th>Quantity</th>
-              <th>Expiry</th>
-              <th>Select</th>
+              <th>{% trans "Product" %}</th>
+              <th>{% trans "Manufacturer" %}</th>
+              <th>{% trans "Price" %}</th>
+              <th>{% trans "Quantity" %}</th>
+              <th>{% trans "Expiry Date" %}</th>
+              <th>{% trans "Select" %}</th>
             </tr>
           </thead>
           <tbody>
@@ -130,7 +131,7 @@
               <td>{{ item.quantity }}</td>
               <td>{{ item.expiry_date }}</td>
               <td> <!-- The button still works even with the errors -->
-                <button class="select-btn" type="button" onclick="selectInventory({{ item.id }}, '{{ item.product.name }} (exp: {{ item.expiry_date }})' )">Select</button>
+                <button class="select-btn" type="button" onclick="selectInventory({{ item.id }}, '{{ item.product.name }} (exp: {{ item.expiry_date }})' )">{% trans "Select" %}</button>
               </td>
             </tr>
             {% endfor %}
@@ -142,7 +143,7 @@
     <div id="customerModal" class="modal" style="display:none;">
       <div class="modal-content">
         <span class="close" onclick="closeCustomerModal()">&times;</span>
-        <h3>Select Customer</h3>
+        <h3>{% trans "Select Customer" %}</h3>
 
         <form method="GET" class="search-container">
           <input type="text" id="customerSearchInput" placeholder="Search..." onkeyup="filterCustomers()">
@@ -152,11 +153,11 @@
           <thead>
             <tr>
               <th>ID</th>
-              <th>Full Name</th>
-              <th>Birthdate</th>
-              <th>Phone</th>
-              <th>Email</th>
-              <th>Select</th>
+              <th>{% trans "Full Name" %}</th>
+              <th>{% trans "Birthdate" %}</th>
+              <th>{% trans "Phone Number" %}</th>
+              <th>{% trans "Email" %}</th>
+              <th>{% trans "Select" %}</th>
             </tr>
           </thead>
           <tbody>
@@ -169,7 +170,7 @@
               <td>{{ customer.email }}</td>
               <td>
                 <button class="select-btn" type="button" onclick="selectCustomer({{ customer.id }}, '{{ customer.full_name|escapejs }}', '{{ customer.birthdate }}')">
-                  Select
+                  {% trans "Select" %}
                 </button>
               </td>
             </tr>
@@ -214,7 +215,7 @@
         el.value = "";
       });
 
-      templateRow.querySelector('.inventory-label').textContent = 'No item selected';
+      templateRow.querySelector('.inventory-label').textContent = '{% trans "No item selected" %}';
 
       tableBody.appendChild(templateRow);
       totalFormsInput.value = formIndex + 1;
@@ -278,7 +279,7 @@
           }
 
           $.ajax({
-            url: `/get_inventory_price/${inventoryId}/`,
+            url: `/get-inventory-price/${inventoryId}/`,
             method: "GET",
             success: function (data) {
               priceDisplay.text(data.price.toFixed(2) + " €");
@@ -321,7 +322,7 @@
         }
 
         // Fetch and update price & available quantity
-        fetch(`/get_inventory_price/${id}/`)
+        fetch(`/get-inventory-price/${id}/`)
           .then(response => response.json())
           .then(data => {
             // Update price
@@ -362,7 +363,7 @@
     }
 
     function selectCustomer(id, fullName, birthdate) {
-      const label = `${fullName} (Birthdate: ${birthdate} - ID: ${id})`;
+      const label = `${fullName} ({% trans "Birthdate" %}: ${birthdate} - ID: ${id})`;
       document.getElementById('id_customer').value = id;
       document.getElementById('selectedCustomerLabel').textContent = label;
       closeCustomerModal();
@@ -379,7 +380,7 @@
 
     function removeCustomer() {
       document.getElementById('id_customer').value = '';
-      document.getElementById('selectedCustomerLabel').textContent = 'No customer selected';
+      document.getElementById('selectedCustomerLabel').textContent = '{% trans "No customer selected" %}';
     }
 
 
@@ -387,7 +388,7 @@
       const max = parseFloat(quantityInput.max);
       const value = parseFloat(quantityInput.value);
       if (value > max) {
-        alert(`Only ${max} units available.`);
+        alert(`{% trans "Only ${max} units available." %}`);
         quantityInput.value = max;
       }
     });

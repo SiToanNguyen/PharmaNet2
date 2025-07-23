@@ -1,29 +1,30 @@
 {% extends 'base.html' %}
-
 {% load humanize %}
+{% load i18n %} <!-- automatic translation -->
 
 {% block content %}
     <div class="list-container">
         <div class="tab-container">
-            <a href="?tab=summary" class="tab {% if active_tab == 'summary' %}active{% endif %}">Financial Summary</a>
-            <a href="?tab=chart" class="tab {% if active_tab == 'chart' %}active{% endif %}">Revenue Chart</a>
+            <a href="?tab=summary" class="tab {% if active_tab == 'summary' %}active{% endif %}">{% trans "Financial Summary" %}</a>
+            <a href="?tab=chart" class="tab {% if active_tab == 'chart' %}active{% endif %}">{% trans "Revenue Chart" %}</a>
         </div>
         {% if active_tab == 'summary' %}
-            <h2>Financial Summary</h2>
+            <h2>{% trans "Financial Summary" %}</h2>
 
             <form method="get">
                 <input type="hidden" name="tab" value="summary">  {# preserve tab during submission #}
                 {{ form.as_p }}
-                <button class="submit-btn" type="submit" name="generate" value="1">Generate</button>
+                <button class="submit-btn" type="submit" name="generate" value="1">{% trans "Generate" %}</button>
             </form>
 
             {% if form.is_valid %}
-                <h3>Results from {{ form.cleaned_data.from_date }} to {{ form.cleaned_data.to_date }}:</h3>
+                <h3>{% blocktrans with from_date=form.cleaned_data.from_date to_date=form.cleaned_data.to_date %}Results from {{ from_date }} to {{ to_date }}:{% endblocktrans %}</h3>
+
                 <ul>
-                    <li><strong>Total Purchase Cost:</strong> {{ total_purchase|floatformat:2|intcomma }} €</li>
-                    <li><strong>Total Sales Revenue:</strong> {{ total_sales|floatformat:2|intcomma }} €</li>
-                    <li><strong>Estimated Profit:</strong> {{ profit|floatformat:2|intcomma }} €</li>
-                    <li><strong>Total Discount:</strong> {{ total_discount|floatformat:2|intcomma }} €</li>
+                    <li><strong>{% trans "Total Purchase Cost" %}:</strong> {{ total_purchase|floatformat:2|intcomma }} €</li>
+                    <li><strong>{% trans "Total Sales Revenue" %}:</strong> {{ total_sales|floatformat:2|intcomma }} €</li>
+                    <li><strong>{% trans "Estimated Profit" %}:</strong> {{ profit|floatformat:2|intcomma }} €</li>
+                    <li><strong>{% trans "Total Discount" %}:</strong> {{ total_discount|floatformat:2|intcomma }} €</li>
                 </ul>
 
                 {% if product_summary %}
@@ -71,7 +72,7 @@
                 {% endif %}
             {% endif %}
         {% elif active_tab == 'chart' %}
-            <h2>Revenue Chart (Last {{ months }} Months)</h2>
+            <h2>{% blocktrans with months=months %}Revenue Chart (Last {{ months }} Months){% endblocktrans %}</h2>
             <canvas id="revenueChart"></canvas>
         {% endif %}
     </div> 
@@ -101,21 +102,21 @@
             labels: chartData.labels,
             datasets: [
                 {
-                    label: "Total Purchase Cost",
+                    label: "{% trans 'Total Purchase Cost' %}",
                     data: chartData.purchase,
                     borderColor: chartData.colors.purchase,
                     backgroundColor: chartData.colors.purchase,
                     fill: false
                 },
                 {
-                    label: "Total Sales Revenue",
+                    label: "{% trans 'Total Sales Revenue' %}",
                     data: chartData.sales,
                     borderColor: chartData.colors.sales,
                     backgroundColor: chartData.colors.sales,
                     fill: false
                 },
                 {
-                    label: "Estimated Profit",
+                    label: "{% trans 'Estimated Profit' %}",
                     data: chartData.profit,
                     borderColor: chartData.colors.profit,
                     backgroundColor: chartData.colors.profit,
