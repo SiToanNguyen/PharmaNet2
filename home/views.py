@@ -22,10 +22,11 @@ from django.http import JsonResponse, HttpResponse
 from django.forms import modelformset_factory
 from django.urls import reverse
 from django.utils.dateparse import parse_date
-from django.utils import timezone
 from django.utils.timezone import now
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
+from django.utils import translation, timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from .models import (
     ActivityLog, Customer, 
@@ -1528,10 +1529,6 @@ def public_product_list(request):
     ]
     return JsonResponse(data, safe=False)
 
-from django.shortcuts import redirect
-from django.utils import translation
-from django.conf import settings
-
 def switch_language(request):
     current_language = translation.get_language()
     next_language = 'de' if current_language.startswith('en') else 'en-gb'
@@ -1542,8 +1539,10 @@ def switch_language(request):
     # Store in session
     request.session['django_language'] = next_language
 
-    # Store in cookie
-    response = redirect(request.META.get('HTTP_REFERER', '/'))
-    response.set_cookie('django_language', next_language)
+    next_url = request.GET.get('next') or '/'
+    if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+        next_url = '/'
 
+    response = redirect(next_url)
+    response.set_cookie('django_language', next_language)
     return response

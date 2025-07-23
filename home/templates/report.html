@@ -9,7 +9,7 @@
             <a href="?tab=chart" class="tab {% if active_tab == 'chart' %}active{% endif %}">{% trans "Revenue Chart" %}</a>
         </div>
         {% if active_tab == 'summary' %}
-            <h2>{% trans "Financial Summary" %}</h2>
+            <h2 class="list-title">{% trans "Financial Summary" %}</h2>
 
             <form method="get">
                 <input type="hidden" name="tab" value="summary">  {# preserve tab during submission #}
@@ -72,7 +72,7 @@
                 {% endif %}
             {% endif %}
         {% elif active_tab == 'chart' %}
-            <h2>{% blocktrans with months=months %}Revenue Chart (Last {{ months }} Months){% endblocktrans %}</h2>
+            <h2 class="list-title">{% blocktrans with months=months %}Revenue Chart (Last {{ months }} Months){% endblocktrans %}</h2>
             <canvas id="revenueChart"></canvas>
         {% endif %}
     </div> 

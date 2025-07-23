@@ -377,6 +377,7 @@ form p .error-message {
     margin-bottom: 20px; /* Spacing from other elements */
 }
 
+form input[type="date"],
 .search-container input[type="text"], 
 .search-container select {
     flex: 1;
@@ -729,6 +730,7 @@ body.light-theme .search-container {
 }
 
 /* Dropdown in Light Theme */
+body.light-theme form input[type="date"],
 body.light-theme .search-container input[type="text"],
 body.light-theme .search-container select {
     background-color: #ffffff;
