@@ -61,8 +61,6 @@
                             {% endif %}
                         </a>
 
-                        <p>Switch language URL: {% url 'switch_language' %}?next={{ request.get_full_path|urlencode }}</p>
-
                         <button id="theme-toggle" class="btn btn-small btn-green" style="display: flex; align-items: center; gap: 6px;">
                             <img id="icon-sun" src="{% static 'images/moon.svg' %}" alt="Moon icon" style="width:20px; height:auto; display:none;">
                             <img id="icon-moon" src="{% static 'images/sun.svg' %}" alt="Sun icon" style="width:20px; height:auto; display:none;">
