@@ -51,7 +51,6 @@
 
                     <div style="display: flex; gap: 10px;">
                         <a href="{% url 'switch_language' %}?next={{ request.get_full_path|urlencode }}" class="btn btn-small btn-green">
-                            {% csrf_token %}
                             {% get_current_language as LANGUAGE_CODE %}
                             {% if LANGUAGE_CODE == 'de' %}
                                 <img src="{% static 'images/gb.svg' %}" alt="GB" style="width:20px; height:auto;">
