@@ -50,16 +50,16 @@
                     </div>
 
                     <div style="display: flex; gap: 10px;">
-                        <a href="{% url 'switch_language' %}?next={{ request.get_full_path|urlencode }}" class="btn btn-small btn-green">
-                            {% get_current_language as LANGUAGE_CODE %}
-                            {% if LANGUAGE_CODE == 'de' %}
-                                <img src="{% static 'images/gb.svg' %}" alt="GB" style="width:20px; height:auto;">
-                                English
-                            {% else %}
-                                <img src="{% static 'images/de.svg' %}" alt="GB" style="width:20px; height:auto;">
-                                Deutsch
-                            {% endif %}
-                        </a>
+                        {% get_current_language as LANGUAGE_CODE %}
+                        <img id="flag-icon" src="{% static 'images/gb.svg' %}" alt="Flag" style="width: 20px; height: auto;">
+                        <form id="language-form" action="{% url 'switch_language' %}" method="get">
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <select id="language-select" name="language" onchange="this.form.submit()" class="btn btn-small btn-green" style="text-align: left; text-align-last: left;">
+                                <option value="en-gb" {% if LANGUAGE_CODE == 'en-gb' %}selected{% endif %}>English</option>
+                                <option value="de" {% if LANGUAGE_CODE == 'de' %}selected{% endif %}>Deutsch</option>
+                                <option value="vi" {% if LANGUAGE_CODE == 'vi' %}selected{% endif %}>Tiếng Việt</option>
+                            </select>
+                        </form>
 
                         <button id="theme-toggle" class="btn btn-small btn-green" style="display: flex; align-items: center; gap: 6px;">
                             <img id="icon-sun" src="{% static 'images/moon.svg' %}" alt="Moon icon" style="width:20px; height:auto; display:none;">
@@ -149,6 +149,26 @@
                 localStorage.setItem('theme', currentTheme);
                 setTheme(currentTheme);
             });
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const flagIcon = document.getElementById("flag-icon");
+            const languageSelect = document.getElementById("language-select");
+
+            const flagMap = {
+                "en-gb": "{% static 'images/gb.svg' %}",
+                "de": "{% static 'images/de.svg' %}",
+                "vi": "{% static 'images/vi.svg' %}",
+            };
+
+            function updateFlagIcon() {
+                const selectedLang = languageSelect.value;
+                flagIcon.src = flagMap[selectedLang] || flagMap["en-gb"];
+            }
+
+            updateFlagIcon();  // Set on page load
+
+            languageSelect.addEventListener("change", updateFlagIcon);
         });
     </script>
 

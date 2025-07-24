@@ -764,3 +764,16 @@ body.light-theme #modal-body fieldset {
 body.light-theme #modal-body legend {
     color: #2b2b2b;
 }
+
+/* Scrollbar in Light Theme */
+body.light-theme * {
+  scrollbar-color: #4CAF50 #e7e7e7;
+}
+
+body.light-theme *::-webkit-scrollbar-track {
+  background: #e7e7e7;
+}
+
+body.light-theme *::-webkit-scrollbar-thumb {
+  border: 2px solid #e7e7e7;
+}

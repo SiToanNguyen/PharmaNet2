@@ -14,6 +14,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.conf import settings
 from django.views.decorators.http import require_POST
 from django.db import transaction
 from django.db.models import Sum, F, Value, ExpressionWrapper, DecimalField, ForeignKey, DateTimeField, DateField, ManyToManyField, Count
@@ -1530,13 +1531,11 @@ def public_product_list(request):
     return JsonResponse(data, safe=False)
 
 def switch_language(request):
-    current_language = translation.get_language()
-    next_language = 'de' if current_language.startswith('en') else 'en-gb'
+    next_language = request.GET.get('language')
+    if next_language not in dict(settings.LANGUAGES):
+        next_language = settings.LANGUAGE_CODE  # fallback to default
 
-    # Activate immediately
     translation.activate(next_language)
-
-    # Store in session
     request.session['django_language'] = next_language
 
     next_url = request.GET.get('next') or '/'

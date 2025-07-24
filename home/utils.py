@@ -114,7 +114,7 @@ def add_object(request, form_class, model, success_url):
 
     return render(request, 'form_page.html', {
         'title': title,  # Dynamic title
-        'form_title': f'{model_name.capitalize()} Details',  # Dynamic form legend/title
+        'form_title': f'{model_name.capitalize()}',  # Dynamic form legend/title
         'form': form,  # Form passed to template
         'success_url': resolved_success_url,
     })
@@ -157,7 +157,7 @@ def edit_object(request, form_class, model, object_id, success_url):
 
     return render(request, 'form_page.html', {
         'title': title,  # Dynamic title
-        'form_title': f'{model_name.capitalize()} Details',  # Dynamic form legend/title
+        'form_title': f'{model_name.capitalize()}',  # Dynamic form legend/title
         'form': form,  # Form passed to template
         'success_url': resolved_success_url,
     })

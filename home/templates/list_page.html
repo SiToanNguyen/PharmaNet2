@@ -121,7 +121,7 @@
         <div id="detailModal" class="modal" style="display:none;">
             <div class="modal-content">
                 <span class="close">&times;</span>
-                <h2>{{ model_verbose_name }} Information</h2>
+                <h2>{% blocktrans with model_verbose_name=model_verbose_name %}{{ model_verbose_name }} Information{% endblocktrans %}</h2>
                 <div id="modal-body">
                 <!-- Populated dynamically -->
                 </div>
@@ -275,12 +275,19 @@
                     fetch(`/api/get-object-details/${modelName}/${objId}/`)
                         .then(response => response.json())
                         .then(data => {
-                            let html = `<fieldset><legend>Details</legend>`;
+                            let html = `<fieldset><legend>{% trans "Details" %}</legend>`;
                             function formatFieldLabel(fieldName) {
                                 return fieldName
                                     .replace(/_/g, ' ')
-                                    .replace(/\bid\b/, 'ID')
-                                    .replace(/\b\w/g, c => c.toUpperCase());
+                                    .split(' ')
+                                    .map(word => {
+                                        if (word.toUpperCase() === 'ID') return 'ID'; // Special case
+                                        if (/[a-z]/.test(word) && /[A-Z]/.test(word)) {
+                                            return word; // Mixed-case, leave it, e.g. E-Mail
+                                        }
+                                        return word.toLocaleLowerCase().replace(/^./, c => c.toLocaleUpperCase());
+                                    })
+                                    .join(' ');
                             }
 
                             for (const [key, value] of Object.entries(data)) {

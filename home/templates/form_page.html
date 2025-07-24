@@ -1,14 +1,15 @@
 {% extends 'base.html' %}
 {% load i18n %} <!-- automatic translation -->
+{% load custom_filters %}
 
 {% block content %}
   <div class="form-container">
-    <h2>{{ title }}</h2>  <!-- Dynamic title -->
+    <h2>{{ title|format_field }}</h2>  <!-- Dynamic title -->
     <form method="POST" class="global-form">
       {% csrf_token %}
       
       <fieldset>
-        <legend>{{ form_title }}</legend>  <!-- Dynamic form legend/title -->
+        <legend>{% blocktrans with formatted_form_title=form_title|format_field %}{{ formatted_form_title }} Details{% endblocktrans %}</legend>  <!-- Dynamic form legend/title -->
         
         {{ form.as_p }}
         

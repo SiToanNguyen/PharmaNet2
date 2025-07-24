@@ -22,7 +22,7 @@
               <th>{% trans "Product" %}</th>
               <th>{% trans "Quantity" %}</th>
               <th>{% trans "Expiry Date" %}</th>
-              <th>Status</th>
+              <th>{% trans "Status" %}</th>
             </tr>
           </thead>
           <tbody>
@@ -32,21 +32,21 @@
                       <td>{{ item.product.name }}</td>
                       <td>{{ item.quantity }}</td>
                       <td>{{ item.expiry_date }}</td>
-                      <td>Expired</td>
+                      <td>{% trans "Expired" %}</td>
                   </tr>
               {% elif item.days_diff <= 7 %}
                   <tr class="critical">
                       <td>{{ item.product.name }}</td>
                       <td>{{ item.quantity }}</td>
                       <td>{{ item.expiry_date }}</td>
-                      <td>Expiring in {{ item.days_diff }} days</td>
+                      <td>{% blocktrans with days_diff=item.days_diff %}Expiring in {{ days_diff }} days{% endblocktrans %}</td>
                   </tr>
               {% elif item.days_diff <= 30 %}
                   <tr>
                       <td>{{ item.product.name }}</td>
                       <td>{{ item.quantity }}</td>
                       <td>{{ item.expiry_date }}</td>
-                      <td>Expiring in {{ item.days_diff }} days</td>
+                      <td>{% blocktrans with days_diff=item.days_diff %}Expiring in {{ days_diff }} days{% endblocktrans %}</td>
                   </tr>
               {% endif %}
             {% endfor %}
@@ -56,7 +56,7 @@
         <!-- Pagination Controls for Expiring -->
         {% include "components/pagination.html" with page_obj=inventory_page_obj query_string=inventory_query page_param="page" anchor="expiring" pagination_id="expiring" %}
         {% else %}
-            <p style="text-align: center;">No expiring products currently.</p>
+            <p style="text-align: center;">{% trans "No expiring products currently." %}</p>
         {% endif %} <!-- if inventory_page_obj -->
       </div> <!-- div class="inventory-overview" -->
     {% elif active_tab == 'lowstock' %}
@@ -85,7 +85,7 @@
       {% include "components/pagination.html" with page_obj=low_stock_page_obj query_string=low_stock_query page_param="lowstockpage" anchor="lowstock" pagination_id="lowstock" %}
 
       {% else %}
-          <p style="text-align: center;">No low stock products currently.</p>
+          <p style="text-align: center;">{% trans "No low stock products currently." %}</p>
       {% endif %} <!-- if low_stock_page_obj -->
     {% endif %} <!-- if active_tab == 'expiring' -->
 

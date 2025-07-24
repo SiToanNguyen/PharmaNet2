@@ -1,4 +1,3 @@
-# pharmacy_management\locale\de\LC_MESSAGES\django.po
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
@@ -17,129 +16,129 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
 #: .\home\forms.py:22
 msgid "Password cannot consist only of spaces."
-msgstr "Passwort darf nicht nur aus Leerzeichen bestehen."
+msgstr "Mật khẩu không thể chỉ bao gồm khoảng trống."
 
 #: .\home\forms.py:23 .\home\forms.py:63
 msgid "Password"
-msgstr "Passwort"
+msgstr "Mật Khẩu"
 
 #: .\home\forms.py:28
 msgid "Active"
-msgstr "Aktiv"
+msgstr "Kích Hoạt"
 
 #: .\home\forms.py:62
 msgid "Leave empty to keep the current password."
-msgstr "Lasst leer, um das aktuelle Passwort beizubehalten."
+msgstr "Để trống để giữ nguyên mật khẩu hiện tại."
 
 #: .\home\forms.py:212 .\home\models.py:141
 #: .\home\templates\add_sale_transaction.html:157
 #: .\home\templates\add_sale_transaction.html:366 .\home\utils.py:311
 msgid "Birthdate"
-msgstr "Geburtsdatum"
+msgstr "Ngày Sinh"
 
 #: .\home\forms.py:279 .\home\models.py:226 .\home\utils.py:329
 msgid "From Date"
-msgstr "Startdatum"
+msgstr "Từ Ngày"
 
 #: .\home\forms.py:283 .\home\models.py:227 .\home\utils.py:330
 msgid "To Date"
-msgstr "Enddatum"
+msgstr "Đến Ngày"
 
 #: .\home\models.py:11 .\home\utils.py:331 .\home\views.py:139
 msgid "Timestamp"
-msgstr "Zeitstempel"
+msgstr "Thời Điểm"
 
 #: .\home\models.py:12 .\home\utils.py:332
 msgid "User"
-msgstr "Benutzer"
+msgstr "Người Dùng"
 
 #: .\home\models.py:13 .\home\templates\add_purchase_transaction.html:51
 #: .\home\templates\add_sale_transaction.html:56
 #: .\home\templates\list_page.html:65 .\home\utils.py:333 .\home\views.py:140
 msgid "Action"
-msgstr "Aktion"
+msgstr "Thao Tác"
 
 #: .\home\models.py:14 .\home\utils.py:334 .\home\views.py:141
 msgid "Additional Info"
-msgstr "Weitere Informationen"
+msgstr "Thông Tin Thêm"
 
 #: .\home\models.py:18 .\home\views.py:137
 msgid "Activity Log"
-msgstr "Aktivitätsprotokoll"
+msgstr "Nhật Ký Hoạt Động"
 
 #: .\home\models.py:19 .\home\templates\base.html:33
 msgid "Activity Logs"
-msgstr "Aktivitätsprotokolle"
+msgstr "Nhật Ký Hoạt Động"
 
 #: .\home\models.py:26 .\home\models.py:43 .\home\models.py:60
 #: .\home\models.py:223
 msgid "Name"
-msgstr "Name"
+msgstr "Tên"
 
 #: .\home\models.py:27 .\home\models.py:144 .\home\utils.py:308
 msgid "Address"
-msgstr "Adresse"
+msgstr "Địa Chỉ"
 
 #: .\home\models.py:28 .\home\models.py:142
 #: .\home\templates\add_sale_transaction.html:158 .\home\utils.py:309
 msgid "Phone Number"
-msgstr "Telefonnummer"
+msgstr "Số Điện Thoại"
 
 #: .\home\models.py:29 .\home\models.py:143
 #: .\home\templates\add_sale_transaction.html:159
 msgid "Email"
-msgstr "E-Mail"
+msgstr "Email"
 
 #: .\home\models.py:30 .\home\models.py:47 .\home\models.py:65
 #: .\home\models.py:81 .\home\models.py:103 .\home\models.py:145
 #: .\home\models.py:185 .\home\utils.py:304
 msgid "Created At"
-msgstr "Erstellt Am"
+msgstr "Tạo Lúc"
 
 #: .\home\models.py:31 .\home\models.py:48 .\home\models.py:66
 #: .\home\models.py:82 .\home\models.py:146 .\home\utils.py:305
 msgid "Updated At"
-msgstr "Aktualisiert Am"
+msgstr "Cập Nhật Lúc"
 
 #: .\home\models.py:35 .\home\models.py:62 .\home\models.py:97
 #: .\home\templates\add_purchase_transaction.html:18
 #: .\home\templates\add_sale_transaction.html:118 .\home\utils.py:306
 msgid "Manufacturer"
-msgstr "Hersteller"
+msgstr "Nhà Sản Xuất"
 
 #: .\home\models.py:36 .\home\templates\base.html:26
 msgid "Manufacturers"
-msgstr "Hersteller"
+msgstr "Nhà Sản Xuất"
 
 #: .\home\models.py:44 .\home\models.py:64 .\home\utils.py:313
 msgid "Description"
-msgstr "Beschreibung"
+msgstr "Mô Tả"
 
 #: .\home\models.py:45 .\home\utils.py:314
 msgid "Requires Prescription"
-msgstr "Rezeptpflichtig"
+msgstr "Cần Đơn Thuốc"
 
 #: .\home\models.py:46 .\home\utils.py:315
 msgid "Low Stock Threshold"
-msgstr "Meldebestand"
+msgstr "Lượng Tồn Thấp"
 
 #: .\home\models.py:52 .\home\models.py:61 .\home\templates\index.html:69
 #: .\home\utils.py:307
 msgid "Category"
-msgstr "Kategorie"
+msgstr "Loại Hàng"
 
 #: .\home\models.py:53 .\home\templates\base.html:27
 msgid "Categories"
-msgstr "Kategorien"
+msgstr "Loại Hàng"
 
 #: .\home\models.py:63 .\home\models.py:207 .\home\utils.py:303
 #: .\home\views.py:711
 msgid "Sale Price"
-msgstr "Verkaufspreis"
+msgstr "Giá Mua"
 
 #: .\home\models.py:70 .\home\models.py:78 .\home\models.py:120
 #: .\home\templates\add_purchase_transaction.html:46
@@ -147,11 +146,11 @@ msgstr "Verkaufspreis"
 #: .\home\templates\index.html:22 .\home\templates\index.html:68
 #: .\home\utils.py:316 .\home\views.py:393
 msgid "Product"
-msgstr "Produkt"
+msgstr "Sản Phẩm"
 
 #: .\home\models.py:71 .\home\models.py:224 .\home\templates\base.html:28
 msgid "Products"
-msgstr "Produkte"
+msgstr "Sản Phẩm"
 
 #: .\home\models.py:79 .\home\models.py:122 .\home\models.py:206
 #: .\home\templates\add_purchase_transaction.html:48
@@ -161,7 +160,7 @@ msgstr "Produkte"
 #: .\home\utils.py:301 .\home\views.py:280 .\home\views.py:394
 #: .\home\views.py:710
 msgid "Quantity"
-msgstr "Menge"
+msgstr "Số Lượng"
 
 #: .\home\models.py:80 .\home\models.py:124
 #: .\home\templates\add_purchase_transaction.html:50
@@ -169,169 +168,169 @@ msgstr "Menge"
 #: .\home\templates\index.html:24 .\home\utils.py:302 .\home\views.py:281
 #: .\home\views.py:329 .\home\views.py:397
 msgid "Expiry Date"
-msgstr "Ablaufdatum"
+msgstr "Ngày Hết Hạn"
 
 #: .\home\models.py:89 .\home\templates\base.html:29 .\home\views.py:278
 msgid "Inventory"
-msgstr "Lagerbestand"
+msgstr "Kho Hàng"
 
 #: .\home\models.py:90
 msgid "Inventories"
-msgstr "Lagerbestände"
+msgstr "Kho Hàng"
 
 #: .\home\models.py:98 .\home\templates\add_purchase_transaction.html:28
 #: .\home\utils.py:318 .\home\views.py:379
 msgid "Purchase Date"
-msgstr "Kaufdatum"
+msgstr "Ngày Mua"
 
 #: .\home\models.py:99 .\home\templates\add_purchase_transaction.html:14
 msgid "Invoice Number"
-msgstr "Rechnungsnummer"
+msgstr "Số Đơn Mua"
 
 #: .\home\models.py:100 .\home\utils.py:319 .\home\views.py:380
 msgid "Total Cost"
-msgstr "Gesamtkosten"
+msgstr "Tổng Tiền"
 
 #: .\home\models.py:101 .\home\models.py:183
 #: .\home\templates\add_purchase_transaction.html:33
 msgid "Remarks"
-msgstr "Bemerkungen"
+msgstr "Chú Thích"
 
 #: .\home\models.py:102 .\home\models.py:184
 msgid "Created By"
-msgstr "Erstellt Am"
+msgstr "Tạo Bởi"
 
 #: .\home\models.py:107 .\home\models.py:119
 msgid "Purchase Transaction"
-msgstr "Kauftransaktion"
+msgstr "Hóa Đơn Mua"
 
 #: .\home\models.py:108 .\home\templates\base.html:30 .\home\views.py:186
 msgid "Purchase Transactions"
-msgstr "Kauftransaktionen"
+msgstr "Hóa Đơn Mua"
 
 #: .\home\models.py:121 .\home\templates\add_purchase_transaction.html:47
 msgid "Batch Number"
-msgstr "Chargennummer"
+msgstr "Số Lô"
 
 #: .\home\models.py:123 .\home\views.py:395
 msgid "Purchase Price"
-msgstr "Kaufpreis"
+msgstr "Giá Mua"
 
 #: .\home\models.py:128
 msgid "Purchased Product"
-msgstr "Gekauftes Produkt"
+msgstr "Hàng Mua"
 
 #: .\home\models.py:129 .\home\templates\add_purchase_transaction.html:39
 #: .\home\views.py:391
 msgid "Purchased Products"
-msgstr "Gekaufte Produkte"
+msgstr "Hàng Mua"
 
 #: .\home\models.py:140 .\home\templates\add_sale_transaction.html:156
 #: .\home\utils.py:310
 msgid "Full Name"
-msgstr "Vollständiger Name"
+msgstr "Tên Đầy Đủ"
 
 #: .\home\models.py:150 .\home\models.py:159 .\home\utils.py:321
 msgid "Customer"
-msgstr "Kunde"
+msgstr "Khách Hàng"
 
 #: .\home\models.py:151 .\home\templates\base.html:25
 msgid "Customers"
-msgstr "Kunden"
+msgstr "Khách Hàng"
 
 #: .\home\models.py:158
 msgid "Transaction Number"
-msgstr "Transaktionsnummer"
+msgstr "Số Hóa Đơn"
 
 #: .\home\models.py:160
 msgid "Transaction Date"
-msgstr "Transaktionsdatum"
+msgstr "Ngày Giao Dịch"
 
 #: .\home\models.py:163 .\home\templates\add_sale_transaction.html:119
 #: .\home\utils.py:323 .\home\views.py:629 .\home\views.py:695
 msgid "Price"
-msgstr "Preis"
+msgstr "Giá"
 
 #: .\home\models.py:164 .\home\models.py:230 .\home\utils.py:324
 #: .\home\views.py:630 .\home\views.py:696
 msgid "Discount"
-msgstr "Rabatt"
+msgstr "Giảm Giá"
 
 #: .\home\models.py:165 .\home\utils.py:325 .\home\views.py:190
 #: .\home\views.py:631
 msgid "Total"
-msgstr "Zu Zahlen"
+msgstr "Tổng Tiền"
 
 #: .\home\models.py:166 .\home\views.py:632
 msgid "Cash Received"
-msgstr "Erhaltenes Bargeld"
+msgstr "Tiền Nhận"
 
 #: .\home\models.py:173 .\home\utils.py:327 .\home\views.py:633
 msgid "Payment Method"
-msgstr "Zahlungsmethode"
+msgstr "Cách Chi Trả"
 
 #: .\home\models.py:176 .\home\utils.py:326
 msgid "Cash"
-msgstr "Bar"
+msgstr "Tiền Mặt"
 
 #: .\home\models.py:177
 msgid "Card"
-msgstr "Karte"
+msgstr "Thẻ"
 
 #: .\home\models.py:178
 msgid "Insurance"
-msgstr "Versicherung"
+msgstr "Bảo Hiểm"
 
 #: .\home\models.py:189 .\home\models.py:204
 msgid "Sale Transaction"
-msgstr "Verkaufstransaktion"
+msgstr "Hóa Đơn Bán"
 
 #: .\home\models.py:190 .\home\templates\base.html:31 .\home\views.py:625
 msgid "Sale Transactions"
-msgstr "Verkaufstransaktionen"
+msgstr "Hóa Đơn Bán"
 
 #: .\home\models.py:205 .\home\templates\add_sale_transaction.html:53
 #: .\home\views.py:709
 msgid "Inventory Item"
-msgstr "Inventargegenstand"
+msgstr "Hàng Trong Kho"
 
 #: .\home\models.py:211
 msgid "Sold Product"
-msgstr "Verkauftes Produkt"
+msgstr "Hàng Bán"
 
 #: .\home\models.py:212 .\home\templates\add_sale_transaction.html:47
 #: .\home\views.py:707
 msgid "Sold Products"
-msgstr "Verkaufte Produkte"
+msgstr "Hàng Bán"
 
 #: .\home\models.py:225 .\home\utils.py:328
 msgid "Percentage"
-msgstr "Prozentsatz"
+msgstr "Phần Trăm"
 
 #: .\home\models.py:225
 msgid "Enter percentage, e.g. 10.00 for 10%"
-msgstr "Geben Sie den Prozentsatz ein, z. B. 10,00 für 10%"
+msgstr "Nhập phần trăm, vd: 10,00 là 10%"
 
 #: .\home\models.py:231 .\home\templates\base.html:32
 msgid "Discounts"
-msgstr "Rabatte"
+msgstr "Giảm Giá"
 
 #: .\home\templates\add_purchase_transaction.html:6
 msgid "Add Purchase Transaction"
-msgstr "Kauftransaktion Hinzufügen"
+msgstr "Thêm Hóa Đơn Bán"
 
 #: .\home\templates\add_purchase_transaction.html:12
 msgid "Purchase Details"
-msgstr "Kauftransaktion Details"
+msgstr "Thông Tin Đơn Mua"
 
 #: .\home\templates\add_purchase_transaction.html:20
 msgid "Select a manufacturer"
-msgstr "Hersteller auswählen"
+msgstr "Chọn Nhà Sản Xuất"
 
 #: .\home\templates\add_purchase_transaction.html:49
 #: .\home\templates\add_sale_transaction.html:55
 msgid "Unit Price (€)"
-msgstr "Stückpreis (€)"
+msgstr "Giá Mỗi Cái (€)"
 
 #: .\home\templates\add_purchase_transaction.html:64
 #: .\home\templates\add_purchase_transaction.html:82
@@ -339,41 +338,41 @@ msgstr "Stückpreis (€)"
 #: .\home\templates\add_sale_transaction.html:71
 #: .\home\templates\add_sale_transaction.html:91
 msgid "Remove"
-msgstr "Löschen"
+msgstr "Xóa"
 
 #: .\home\templates\add_purchase_transaction.html:88
 #: .\home\templates\add_sale_transaction.html:97
 msgid "Add Product"
-msgstr "Produkt Hinzufügen"
+msgstr "Thêm Sản Phẩm"
 
 #: .\home\templates\add_purchase_transaction.html:92
 #: .\home\templates\add_sale_transaction.html:101
 #: .\home\templates\form_page.html:19
 msgid "Submit"
-msgstr "Speichern"
+msgstr "Lưu"
 
 #: .\home\templates\add_purchase_transaction.html:93
 #: .\home\templates\add_sale_transaction.html:102
 #: .\home\templates\form_page.html:20
 msgid "Cancel"
-msgstr "Abbrechen"
+msgstr "Từ Bỏ"
 
 #: .\home\templates\add_purchase_transaction.html:163
 msgid "Select a product"
-msgstr "Produkt auswählen"
+msgstr "Chọn Sản Phẩm"
 
 #: .\home\templates\add_sale_transaction.html:6
 msgid "Add Sale Transaction"
-msgstr "Verkaufstransaktion Hinzufügen"
+msgstr "Thêm Đơn Bán"
 
 #: .\home\templates\add_sale_transaction.html:12
 msgid "Sale Details"
-msgstr "Kauftransaktion Details"
+msgstr "Thông Tin Đơn Bán"
 
 #: .\home\templates\add_sale_transaction.html:24
 #: .\home\templates\add_sale_transaction.html:383
 msgid "No customer selected"
-msgstr "Kein Kunde ausgewählt"
+msgstr "Chưa Chọn Khách Hàng"
 
 #: .\home\templates\add_sale_transaction.html:25
 #: .\home\templates\add_sale_transaction.html:65
@@ -383,254 +382,254 @@ msgstr "Kein Kunde ausgewählt"
 #: .\home\templates\add_sale_transaction.html:160
 #: .\home\templates\add_sale_transaction.html:173
 msgid "Select"
-msgstr "Auswählen"
+msgstr "Chọn"
 
 #: .\home\templates\add_sale_transaction.html:64
 #: .\home\templates\add_sale_transaction.html:85
 #: .\home\templates\add_sale_transaction.html:218
 msgid "No item selected"
-msgstr "Kein Artikel ausgewählt"
+msgstr "Chưa Chọn Hàng"
 
 #: .\home\templates\add_sale_transaction.html:109
 msgid "Select Inventory Item"
-msgstr "Inventargegenstand"
+msgstr "Chọn Hàng Trong Kho"
 
 #: .\home\templates\add_sale_transaction.html:146
 msgid "Select Customer"
-msgstr "Kunde auswählen"
+msgstr "Chọn Khách Hàng"
 
 #: .\home\templates\add_sale_transaction.html:391
 #, python-brace-format
 msgid "Only ${max} units available."
-msgstr "Nur ${max} Einheiten verfügbar."
+msgstr "Chỉ còn có ${max} cái."
 
 #: .\home\templates\base.html:23
 msgid "Home"
-msgstr "Startseite"
+msgstr "Trang Chủ"
 
 #: .\home\templates\base.html:24
 msgid "Users"
-msgstr "Benutzer"
+msgstr "Người Dùng"
 
 #: .\home\templates\base.html:34
 msgid "Reports"
-msgstr "Berichte"
+msgstr "Báo Cáo"
 
 #: .\home\templates\base.html:35
 msgid "Logout"
-msgstr "Abmelden"
+msgstr "Đăng Xuất"
 
 #: .\home\templates\base.html:49
 #, python-format
 msgid "Hello %(first_name)s! Welcome to %(appname)s!"
-msgstr "Hallo %(first_name)s! Willkommen bei %(appname)s!"
+msgstr "Xin chào %(first_name)s! Chào mừng tới %(appname)s!"
 
 #: .\home\templates\base.html:99
 msgid "Dark Theme"
-msgstr "Dunkles Design"
+msgstr "Giao Diện Tối"
 
 #: .\home\templates\base.html:100
 msgid "Light Theme"
-msgstr "Helles Design"
+msgstr "Giao Diện Sáng"
 
 #: .\home\templates\components\pagination.html:6
 #: .\home\templates\list_page.html:143 .\home\templates\list_page.html:154
 msgid "First"
-msgstr "Erste"
+msgstr "Đầu"
 
 #: .\home\templates\components\pagination.html:7
 #: .\home\templates\list_page.html:144 .\home\templates\list_page.html:155
 msgid "Previous"
-msgstr "Zurück"
+msgstr "Lùi"
 
 #: .\home\templates\components\pagination.html:11
 #, python-format
 msgid " Page %(page)s of %(total)s "
-msgstr "Seite %(page)s von %(total)s"
+msgstr "Trang %(page)s / %(total)s"
 
 #: .\home\templates\components\pagination.html:15
 #: .\home\templates\list_page.html:145 .\home\templates\list_page.html:156
 msgid "Next"
-msgstr "Nächste"
+msgstr "Tới"
 
 #: .\home\templates\components\pagination.html:16
 #: .\home\templates\list_page.html:146 .\home\templates\list_page.html:157
 msgid "Last"
-msgstr "Letzte"
+msgstr "Cuối"
 
 #: .\home\templates\form_page.html:12
 #, python-format
 msgid "%(formatted_form_title)s Details"
-msgstr "%(formatted_form_title)s Details"
+msgstr "Chi Tiết %(formatted_form_title)s"
 
 #: .\home\templates\index.html:8 .\home\templates\index.html:18
 msgid "Expiring Products"
-msgstr "Auslaufende Produkte"
+msgstr "Sản Phẩm Sắp Hết Hạn"
 
 #: .\home\templates\index.html:11 .\home\templates\index.html:63
 msgid "Low Stock"
-msgstr "Niedriger Lagerbestand"
+msgstr "Lượng Tồn Thấp"
 
 #: .\home\templates\index.html:25
 msgid "Status"
-msgstr "Status"
+msgstr "Trạng Thái"
 
 #: .\home\templates\index.html:35
 msgid "Expired"
-msgstr "Abgelaufen"
+msgstr "Đã Hết Hạn"
 
 #: .\home\templates\index.html:42 .\home\templates\index.html:49
 #, python-format
 msgid "Expiring in %(days_diff)s days"
-msgstr "Läuft in %(days_diff)s Tagen ab"
+msgstr "Sắp hết hạn trong %(days_diff)s ngày"
 
 #: .\home\templates\index.html:59
 msgid "No expiring products currently."
-msgstr "Derzeit keine auslaufenden Produkte."
+msgstr "Hiện tại không có sản phẩm sắp hết hạn."
 
 #: .\home\templates\index.html:88
 msgid "No low stock products currently."
-msgstr "Derzeit keine Produkte mit geringem Lagerbestand."
+msgstr "Hiện tại không có hàng với lượng tồn thấp."
 
 #: .\home\templates\list_page.html:9 .\home\utils.py:113
 #, python-format
 msgid "Add New %(model)s"
-msgstr "%(model)s Hinzufügen"
+msgstr "Thêm %(model)s"
 
 #: .\home\templates\list_page.html:21
 msgid "Scan"
-msgstr "Scannen"
+msgstr "Scan"
 
 #: .\home\templates\list_page.html:26
 #, python-format
 msgid "%(title)s List"
-msgstr "%(title)s Liste"
+msgstr "Danh Sách %(title)s"
 
 #: .\home\templates\list_page.html:33 .\home\templates\list_page.html:138
 msgid "Search by"
-msgstr "Suchen nach"
+msgstr "Tìm Theo"
 
 #: .\home\templates\list_page.html:40 .\home\templates\list_page.html:139
 msgid "Sort By"
-msgstr "Sortieren Nach"
+msgstr "Sắp Xếp Theo"
 
 #: .\home\templates\list_page.html:50 .\home\templates\list_page.html:140
 msgid "Search"
-msgstr "Suchen"
+msgstr "Tìm"
 
 #: .\home\templates\list_page.html:94 .\home\templates\list_page.html:141
 msgid "Edit"
-msgstr "Bearbeiten"
+msgstr "Sửa"
 
 #: .\home\templates\list_page.html:105 .\home\templates\list_page.html:142
 msgid "Delete"
-msgstr "Löschen"
+msgstr "Xóa"
 
 #: .\home\templates\list_page.html:124
 msgid "%(model_verbose_name)s Information"
-msgstr "%(model_verbose_name)s Information"
+msgstr "Thông Tin %(model_verbose_name)s"
 
 #: .\home\templates\list_page.html:137
 #, python-format
 msgid "Add New %(model_verbose_name)s"
-msgstr "%(model_verbose_name)s Hinzufügen"
+msgstr "Thêm %(model_verbose_name)s"
 
 #: .\home\templates\list_page.html:147 .\home\templates\list_page.html:158
 msgid "Page"
-msgstr "Seite"
+msgstr "Trang"
 
 #: .\home\templates\list_page.html:148 .\home\templates\list_page.html:159
 msgid "of"
-msgstr "von"
+msgstr "/"
 
 #: .\home\templates\list_page.html:149 .\home\templates\list_page.html:160
 msgid "No related items found."
-msgstr "Keine zugehörigen Elemente gefunden."
+msgstr "Không Tìm Thấy Hàng"
 
 #: .\home\templates\list_page.html:278
 msgid "Details"
-msgstr "Details"
+msgstr "Chi Tiết"
 
 #: .\home\templates\report.html:8 .\home\templates\report.html:12
 msgid "Financial Summary"
-msgstr "Finanzielle Zusammenfassung"
+msgstr "Báo Cáo Tài Chính"
 
 #: .\home\templates\report.html:9
 msgid "Revenue Chart"
-msgstr "Umsatzdiagramm"
+msgstr "Biểu Đồ Doanh Thu"
 
 #: .\home\templates\report.html:17
 msgid "Generate"
-msgstr "Erstellen"
+msgstr "Tạo"
 
 #: .\home\templates\report.html:21
 #, python-format
 msgid "Results from %(from_date)s to %(to_date)s:"
-msgstr "Ergebnisse vom %(from_date)s bis %(to_date)s:"
+msgstr "Kết quả từ %(from_date)s đến %(to_date)s:"
 
 #: .\home\templates\report.html:24 .\home\templates\report.html:105
 msgid "Total Purchase Cost"
-msgstr "Gesamte Einkaufskosten"
+msgstr "Tổng Tiền Mua"
 
 #: .\home\templates\report.html:25 .\home\templates\report.html:112
 msgid "Total Sales Revenue"
-msgstr "Gesamter Umsatz"
+msgstr "Tổng Tiền Bán"
 
 #: .\home\templates\report.html:26 .\home\templates\report.html:119
 msgid "Estimated Profit"
-msgstr "Geschätzter Gewinn"
+msgstr "Lợi Nhuận"
 
 #: .\home\templates\report.html:27
 msgid "Total Discount"
-msgstr "Gesamter Rabatt"
+msgstr "Tổng Giảm Giá"
 
 #: .\home\templates\report.html:75
 #, python-format
 msgid "Revenue Chart (Last %(months)s Months)"
-msgstr "Umsatzdiagramm (Letzten %(months)s Monaten)"
+msgstr "Biểu Đồ Doanh Thu (%(months)s Tháng Gần Nhất)"
 
 #: .\home\utils.py:156
 #, python-format
 msgid "Edit %(model)s"
-msgstr "%(model)s Bearbeiten"
+msgstr "Sửa %(model)s"
 
 #: .\home\utils.py:300 .\home\views.py:270
 msgid "Stock"
-msgstr "Lagerbestand"
+msgstr "Lượng Tồn"
 
 #: .\home\utils.py:312
 msgid "Transactions"
-msgstr "Transaktionen"
+msgstr "Giao Dịch"
 
 #: .\home\utils.py:317
 msgid "Invoice #"
-msgstr "Rechnung #"
+msgstr "Số Đơn Mua"
 
 #: .\home\utils.py:320 .\home\views.py:627
 msgid "Transaction #"
-msgstr "Transaktion #"
+msgstr "Số Đơn Bán"
 
 #: .\home\utils.py:322 .\home\views.py:189 .\home\views.py:628
 #: .\home\views.py:694
 msgid "Date"
-msgstr "Datum"
+msgstr "Ngày"
 
 #: .\home\views.py:129
 msgid "Date Joined"
-msgstr "Mitglied Seit"
+msgstr "Ngày Tham Gia"
 
 #: .\home\views.py:130
 msgid "Last Login"
-msgstr "Letzte Anmeldung"
+msgstr "Lần Cuối Đăng Nhập"
 
 #: .\home\views.py:188
 msgid "Invoice"
-msgstr "Rechnung"
+msgstr "Đơn Mua"
 
 #: .\home\views.py:269 .\home\views.py:328
 msgid "Last Updated"
-msgstr "Zuletzt Aktualisiert"
+msgstr "Lần Cuối Cập Nhật"
 
 #: .\home\views.py:396
 msgid "Batch #"
-msgstr "Charge #"
+msgstr "Số Lô"
