@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-24 14:56+0200\n"
+"POT-Creation-Date: 2025-07-24 22:46+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -49,7 +49,7 @@ msgstr "Startdatum"
 msgid "To Date"
 msgstr "Enddatum"
 
-#: .\home\models.py:11 .\home\utils.py:331 .\home\views.py:139
+#: .\home\models.py:11 .\home\utils.py:331 .\home\views.py:149
 msgid "Timestamp"
 msgstr "Zeitstempel"
 
@@ -59,15 +59,15 @@ msgstr "Benutzer"
 
 #: .\home\models.py:13 .\home\templates\add_purchase_transaction.html:51
 #: .\home\templates\add_sale_transaction.html:56
-#: .\home\templates\list_page.html:65 .\home\utils.py:333 .\home\views.py:140
+#: .\home\templates\list_page.html:65 .\home\utils.py:333 .\home\views.py:150
 msgid "Action"
 msgstr "Aktion"
 
-#: .\home\models.py:14 .\home\utils.py:334 .\home\views.py:141
+#: .\home\models.py:14 .\home\utils.py:334 .\home\views.py:151
 msgid "Additional Info"
 msgstr "Weitere Informationen"
 
-#: .\home\models.py:18 .\home\views.py:137
+#: .\home\models.py:18 .\home\views.py:147
 msgid "Activity Log"
 msgstr "Aktivitätsprotokoll"
 
@@ -137,7 +137,7 @@ msgid "Categories"
 msgstr "Kategorien"
 
 #: .\home\models.py:63 .\home\models.py:207 .\home\utils.py:303
-#: .\home\views.py:711
+#: .\home\views.py:728
 msgid "Sale Price"
 msgstr "Verkaufspreis"
 
@@ -145,7 +145,7 @@ msgstr "Verkaufspreis"
 #: .\home\templates\add_purchase_transaction.html:46
 #: .\home\templates\add_sale_transaction.html:117
 #: .\home\templates\index.html:22 .\home\templates\index.html:68
-#: .\home\utils.py:316 .\home\views.py:393
+#: .\home\templates\report.html:35 .\home\utils.py:316 .\home\views.py:403
 msgid "Product"
 msgstr "Produkt"
 
@@ -158,20 +158,20 @@ msgstr "Produkte"
 #: .\home\templates\add_sale_transaction.html:54
 #: .\home\templates\add_sale_transaction.html:120
 #: .\home\templates\index.html:23 .\home\templates\index.html:70
-#: .\home\utils.py:301 .\home\views.py:280 .\home\views.py:394
-#: .\home\views.py:710
+#: .\home\utils.py:301 .\home\views.py:290 .\home\views.py:404
+#: .\home\views.py:727
 msgid "Quantity"
 msgstr "Menge"
 
 #: .\home\models.py:80 .\home\models.py:124
 #: .\home\templates\add_purchase_transaction.html:50
 #: .\home\templates\add_sale_transaction.html:121
-#: .\home\templates\index.html:24 .\home\utils.py:302 .\home\views.py:281
-#: .\home\views.py:329 .\home\views.py:397
+#: .\home\templates\index.html:24 .\home\utils.py:302 .\home\views.py:291
+#: .\home\views.py:339 .\home\views.py:407
 msgid "Expiry Date"
 msgstr "Ablaufdatum"
 
-#: .\home\models.py:89 .\home\templates\base.html:29 .\home\views.py:278
+#: .\home\models.py:89 .\home\templates\base.html:29 .\home\views.py:288
 msgid "Inventory"
 msgstr "Lagerbestand"
 
@@ -180,7 +180,7 @@ msgid "Inventories"
 msgstr "Lagerbestände"
 
 #: .\home\models.py:98 .\home\templates\add_purchase_transaction.html:28
-#: .\home\utils.py:318 .\home\views.py:379
+#: .\home\utils.py:318 .\home\views.py:389
 msgid "Purchase Date"
 msgstr "Kaufdatum"
 
@@ -188,7 +188,7 @@ msgstr "Kaufdatum"
 msgid "Invoice Number"
 msgstr "Rechnungsnummer"
 
-#: .\home\models.py:100 .\home\utils.py:319 .\home\views.py:380
+#: .\home\models.py:100 .\home\utils.py:319 .\home\views.py:390
 msgid "Total Cost"
 msgstr "Gesamtkosten"
 
@@ -205,7 +205,7 @@ msgstr "Erstellt Am"
 msgid "Purchase Transaction"
 msgstr "Kauftransaktion"
 
-#: .\home\models.py:108 .\home\templates\base.html:30 .\home\views.py:186
+#: .\home\models.py:108 .\home\templates\base.html:30 .\home\views.py:196
 msgid "Purchase Transactions"
 msgstr "Kauftransaktionen"
 
@@ -213,7 +213,7 @@ msgstr "Kauftransaktionen"
 msgid "Batch Number"
 msgstr "Chargennummer"
 
-#: .\home\models.py:123 .\home\views.py:395
+#: .\home\models.py:123 .\home\views.py:405
 msgid "Purchase Price"
 msgstr "Kaufpreis"
 
@@ -222,7 +222,7 @@ msgid "Purchased Product"
 msgstr "Gekauftes Produkt"
 
 #: .\home\models.py:129 .\home\templates\add_purchase_transaction.html:39
-#: .\home\views.py:391
+#: .\home\views.py:401
 msgid "Purchased Products"
 msgstr "Gekaufte Produkte"
 
@@ -248,25 +248,25 @@ msgid "Transaction Date"
 msgstr "Transaktionsdatum"
 
 #: .\home\models.py:163 .\home\templates\add_sale_transaction.html:119
-#: .\home\utils.py:323 .\home\views.py:629 .\home\views.py:695
+#: .\home\utils.py:323 .\home\views.py:646 .\home\views.py:712
 msgid "Price"
 msgstr "Preis"
 
 #: .\home\models.py:164 .\home\models.py:230 .\home\utils.py:324
-#: .\home\views.py:630 .\home\views.py:696
+#: .\home\views.py:647 .\home\views.py:713
 msgid "Discount"
 msgstr "Rabatt"
 
-#: .\home\models.py:165 .\home\utils.py:325 .\home\views.py:190
-#: .\home\views.py:631
+#: .\home\models.py:165 .\home\utils.py:325 .\home\views.py:200
+#: .\home\views.py:648
 msgid "Total"
 msgstr "Zu Zahlen"
 
-#: .\home\models.py:166 .\home\views.py:632
+#: .\home\models.py:166 .\home\views.py:649
 msgid "Cash Received"
 msgstr "Erhaltenes Bargeld"
 
-#: .\home\models.py:173 .\home\utils.py:327 .\home\views.py:633
+#: .\home\models.py:173 .\home\utils.py:327 .\home\views.py:650
 msgid "Payment Method"
 msgstr "Zahlungsmethode"
 
@@ -286,12 +286,12 @@ msgstr "Versicherung"
 msgid "Sale Transaction"
 msgstr "Verkaufstransaktion"
 
-#: .\home\models.py:190 .\home\templates\base.html:31 .\home\views.py:625
+#: .\home\models.py:190 .\home\templates\base.html:31 .\home\views.py:642
 msgid "Sale Transactions"
 msgstr "Verkaufstransaktionen"
 
 #: .\home\models.py:205 .\home\templates\add_sale_transaction.html:53
-#: .\home\views.py:709
+#: .\home\views.py:726
 msgid "Inventory Item"
 msgstr "Inventargegenstand"
 
@@ -300,7 +300,7 @@ msgid "Sold Product"
 msgstr "Verkauftes Produkt"
 
 #: .\home\models.py:212 .\home\templates\add_sale_transaction.html:47
-#: .\home\views.py:707
+#: .\home\views.py:724
 msgid "Sold Products"
 msgstr "Verkaufte Produkte"
 
@@ -394,6 +394,11 @@ msgstr "Kein Artikel ausgewählt"
 #: .\home\templates\add_sale_transaction.html:109
 msgid "Select Inventory Item"
 msgstr "Inventargegenstand"
+
+#: .\home\templates\add_sale_transaction.html:112
+#: .\home\templates\list_page.html:50 .\home\templates\list_page.html:140
+msgid "Search"
+msgstr "Suchen"
 
 #: .\home\templates\add_sale_transaction.html:146
 msgid "Select Customer"
@@ -514,10 +519,6 @@ msgstr "Suchen nach"
 msgid "Sort By"
 msgstr "Sortieren Nach"
 
-#: .\home\templates\list_page.html:50 .\home\templates\list_page.html:140
-msgid "Search"
-msgstr "Suchen"
-
 #: .\home\templates\list_page.html:94 .\home\templates\list_page.html:141
 msgid "Edit"
 msgstr "Bearbeiten"
@@ -527,6 +528,7 @@ msgid "Delete"
 msgstr "Löschen"
 
 #: .\home\templates\list_page.html:124
+#, python-format
 msgid "%(model_verbose_name)s Information"
 msgstr "%(model_verbose_name)s Information"
 
@@ -584,6 +586,34 @@ msgstr "Geschätzter Gewinn"
 msgid "Total Discount"
 msgstr "Gesamter Rabatt"
 
+#: .\home\templates\report.html:31
+msgid "Product Summary"
+msgstr "Produktzusammenfassung"
+
+#: .\home\templates\report.html:36
+msgid "Purchased #"
+msgstr "Gekauft #"
+
+#: .\home\templates\report.html:37
+msgid "Sold #"
+msgstr "Verkauft #"
+
+#: .\home\templates\report.html:38
+msgid "Spent (€)"
+msgstr "Ausgegeben (€)"
+
+#: .\home\templates\report.html:39
+msgid "Earned (€)"
+msgstr "Verdient (€)"
+
+#: .\home\templates\report.html:40
+msgid "Profit (€)"
+msgstr "Gewinn (€)"
+
+#: .\home\templates\report.html:61
+msgid "Export to PDF"
+msgstr "Als PDF Exportieren"
+
 #: .\home\templates\report.html:75
 #, python-format
 msgid "Revenue Chart (Last %(months)s Months)"
@@ -594,7 +624,7 @@ msgstr "Umsatzdiagramm (Letzten %(months)s Monaten)"
 msgid "Edit %(model)s"
 msgstr "%(model)s Bearbeiten"
 
-#: .\home\utils.py:300 .\home\views.py:270
+#: .\home\utils.py:300 .\home\views.py:280
 msgid "Stock"
 msgstr "Lagerbestand"
 
@@ -606,31 +636,31 @@ msgstr "Transaktionen"
 msgid "Invoice #"
 msgstr "Rechnung #"
 
-#: .\home\utils.py:320 .\home\views.py:627
+#: .\home\utils.py:320 .\home\views.py:644
 msgid "Transaction #"
 msgstr "Transaktion #"
 
-#: .\home\utils.py:322 .\home\views.py:189 .\home\views.py:628
-#: .\home\views.py:694
+#: .\home\utils.py:322 .\home\views.py:199 .\home\views.py:645
+#: .\home\views.py:711
 msgid "Date"
 msgstr "Datum"
 
-#: .\home\views.py:129
+#: .\home\views.py:139
 msgid "Date Joined"
 msgstr "Mitglied Seit"
 
-#: .\home\views.py:130
+#: .\home\views.py:140
 msgid "Last Login"
 msgstr "Letzte Anmeldung"
 
-#: .\home\views.py:188
+#: .\home\views.py:198
 msgid "Invoice"
 msgstr "Rechnung"
 
-#: .\home\views.py:269 .\home\views.py:328
+#: .\home\views.py:279 .\home\views.py:338
 msgid "Last Updated"
 msgstr "Zuletzt Aktualisiert"
 
-#: .\home\views.py:396
+#: .\home\views.py:406
 msgid "Batch #"
 msgstr "Charge #"

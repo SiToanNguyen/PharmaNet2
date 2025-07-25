@@ -28,16 +28,16 @@
                 </ul>
 
                 {% if product_summary %}
-                <h3>Product Summary</h3>
+                <h3>{% trans "Product Summary" %}</h3>
                 <table class="global-table">
                     <thead>
                         <tr>
-                            <th>Product</th>
-                            <th>Purchased #</th>
-                            <th>Sold #</th>
-                            <th>Spent (€)</th>
-                            <th>Earned (€)</th>
-                            <th>Profit (€)</th>
+                            <th>{% trans "Product" %}</th>
+                            <th>{% trans "Purchased #" %}</th>
+                            <th>{% trans "Sold #" %}</th>
+                            <th>{% trans "Spent (€)" %}</th>
+                            <th>{% trans "Earned (€)" %}</th>
+                            <th>{% trans "Profit (€)" %}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -58,7 +58,7 @@
                 <form action="{% url 'export_to_pdf' %}" method="get" style="margin-top: 20px;">
                     <input type="hidden" name="from_date" value="{{ form.cleaned_data.from_date|date:'Y-m-d' }}">
                     <input type="hidden" name="to_date" value="{{ form.cleaned_data.to_date|date:'Y-m-d' }}">
-                    <button type="submit" class="submit-btn">Export to PDF</button>
+                    <button type="submit" class="submit-btn">{% trans "Export to PDF" %}</button>
                 </form>
 
                 {% if form.errors %}

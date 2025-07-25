@@ -119,7 +119,17 @@ def user_list(request):
     return list_objects(
         request,
         model=User,
-        columns=['username', 'email', 'first_name', 'last_name', 'date_joined', 'last_login', 'is_active', 'is_staff', 'is_superuser'],
+        columns=[
+            'username', 
+            'email', 
+            'first_name', 
+            'last_name', 
+            'date_joined', 
+            'last_login', 
+            'is_active', 
+            #'is_staff', 
+            #'is_superuser',
+        ],
         search_fields={
             'username': 'username',
             'first_name': 'first_name',
@@ -612,7 +622,14 @@ def customer_list(request):
     return list_objects(
         request,
         model=Customer,
-        columns=['full_name', 'birthdate', 'phone_number', 'email', 'address', 'transactions'],
+        columns=[
+            'full_name', 
+            'birthdate', 
+            'phone_number', 
+            'email', 
+            #'address', 
+            'transactions',
+        ],
         search_fields={
             'name': 'full_name'
         },
