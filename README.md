@@ -16,18 +16,9 @@ The screenshots of the project’s preview and AWS setup can be viewed here:
 [https://photos.app.goo.gl/2xr2reRrrC7ASP4Q7](https://photos.app.goo.gl/2xr2reRrrC7ASP4Q7)
 
 ## Accessing the Demo Website on AWS
-
-To try out the live demo hosted on AWS:
-
-1. Start the server by visiting the proxy page:  
-   [http://pharmanet-proxy-page.s3-website.eu-north-1.amazonaws.com/](http://pharmanet-proxy-page.s3-website.eu-north-1.amazonaws.com/)   
-   (Amazon S3 static website hosting is free, but only supports HTTP, not HTTPS. Please check its source code in aws_lambda/proxy.html)
-
-2. Wait for the server to boot up. This may take up to 2 minutes.
-
-3. When the server is ready, its URL will be displayed on the page.
-
-4. The server shuts down automatically after 2 hours to save cost.
+   [https://pharmanet.duckdns.org/](https://pharmanet.duckdns.org/)
+- Username: guest
+- Password: currywurst!
 
 ## Installation
 
